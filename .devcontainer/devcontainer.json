@@ -1,0 +1,21 @@
+{
+  "name": "epub-web",
+  "image": "mcr.microsoft.com/devcontainers/go:2.1.1-1.26-bookworm@sha256:4da2693c134c65e87f73fcebcd4b3c0e8a9b208384fd8c1f84c4414b5cd06c20",
+  "features": {
+		"ghcr.io/devcontainers/features/docker-in-docker:2.16.1": {
+			"version": "29.3.1"
+		},
+    "ghcr.io/devcontainers/features/github-cli:1.1.0": {
+      "version": "2.88.1"
+    },
+    "ghcr.io/devcontainers/features/node:1.7.1": {
+      "version": "24.14.1"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["bradlc.vscode-tailwindcss", "golang.go", "oxc.oxc-vscode"]
+    }
+  },
+  "postCreateCommand": "go mod download"
+}

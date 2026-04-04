@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["DOM", "DOM.Iterable", "ES2024"],
+    "noEmit": true,
+    "module": "es2022",
+    "moduleResolution": "bundler",
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "es2025",
+    "types": ["node", "vite/client", "vitest/globals"],
+    "verbatimModuleSyntax": true
+  }
+}

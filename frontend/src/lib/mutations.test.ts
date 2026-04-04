@@ -1,0 +1,105 @@
+import {
+  ApiError,
+  buildMutationFn,
+  extractMutationFn,
+  getApiErrorMessage,
+} from "./mutations";
+import { zipAsync } from "./zip";
+
+describe("mutations", () => {
+  const fetchMock = vi.fn<typeof fetch>();
+  const createObjectURL = vi.fn<() => string>(() => "blob:mock");
+
+  beforeEach(() => {
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("URL", {
+      ...URL,
+      createObjectURL,
+    });
+    fetchMock.mockReset();
+    createObjectURL.mockClear();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("buildMutationFn returns blob and parsed filename", async () => {
+    const blob = new Blob(["epub"]);
+    fetchMock.mockResolvedValueOnce(
+      new Response(blob, {
+        headers: {
+          "Content-Disposition": 'attachment; filename="book.epub"',
+        },
+        status: 200,
+      })
+    );
+
+    const result = await buildMutationFn({
+      direction: "rtl",
+      files: [new File(["x"], "a.png", { type: "image/png" })],
+      spread: "right",
+      title: "book",
+    });
+
+    expect(result.filename).toBe("book.epub");
+    expect(result.blob.size).toBe(blob.size);
+  }, 1000);
+
+  it("extractMutationFn extracts image files only", async () => {
+    const zipped = await zipAsync({
+      "images/1.jpg": new Uint8Array([1, 2, 3]),
+      "notes/readme.txt": new Uint8Array([5, 6, 7]),
+    });
+    fetchMock.mockResolvedValueOnce(
+      new Response(new Blob([new Uint8Array(zipped)]), { status: 200 })
+    );
+
+    const result = await extractMutationFn({
+      file: new File(["dummy"], "test.epub", { type: "application/epub+zip" }),
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.name).toBe("1.jpg");
+    expect(createObjectURL).toHaveBeenCalledOnce();
+  }, 1000);
+
+  it("buildMutationFn throws ApiError from JSON response", async () => {
+    fetchMock.mockResolvedValueOnce(
+      Response.json(
+        {
+          code: "page_limit_exceeded",
+          message: "Page limit exceeded.",
+        },
+        {
+          status: 400,
+        }
+      )
+    );
+
+    await expect(
+      buildMutationFn({
+        direction: "rtl",
+        files: [new File(["x"], "a.png", { type: "image/png" })],
+        spread: "right",
+        title: "book",
+      })
+    ).rejects.toMatchObject({
+      code: "page_limit_exceeded",
+      message: "Page limit exceeded.",
+      name: "ApiError",
+    });
+  }, 1000);
+
+  it("getApiErrorMessage maps code to localized message", () => {
+    const message = getApiErrorMessage(
+      new ApiError("request_too_large", "Request too large."),
+      {
+        defaultMessage: "画像抽出に失敗しました。",
+        maxUploadMB: 8,
+      }
+    );
+
+    expect(message).toBe("1リクエストあたり最大 8 MiB です。");
+  }, 1000);
+});

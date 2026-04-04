@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <meta
+      content="画像からePubを生成し、ePubから画像を抽出できる変換ツール。サーバーで処理し、結果はすぐにダウンロードできます。"
+      name="description"
+    />
+    <meta content="#f7efe6" name="theme-color" />
+
+    <meta content="ePub Web | 画像・ePub変換" property="og:title" />
+    <meta
+      content="画像からePubを生成し、ePubから画像を抽出できる変換ツール。"
+      property="og:description"
+    />
+    <meta content="website" property="og:type" />
+    <meta content="ja_JP" property="og:locale" />
+
+    <meta content="summary" name="twitter:card" />
+    <meta content="ePub Web | 画像・ePub変換" name="twitter:title" />
+    <meta
+      content="画像からePubを生成し、ePubから画像を抽出できる変換ツール。"
+      name="twitter:description"
+    />
+
+    <style>
+      .noscript-card {
+        margin: 1rem;
+        border: 1px solid #006f7933;
+        border-radius: 12px;
+        background: #fffdfa;
+        padding: 1rem;
+        color: #1f2937;
+        font-family: "Noto Sans JP", "Yu Gothic", sans-serif;
+        line-height: 1.6;
+      }
+
+      .noscript-title {
+        margin: 0 0 0.5rem;
+        font-weight: 700;
+      }
+
+      .noscript-body {
+        margin: 0;
+      }
+    </style>
+
+    <link href="/src/style.css" rel="stylesheet" />
+    <title>ePub Web | 画像・ePub変換</title>
+  </head>
+  <body>
+    <noscript>
+      <div class="noscript-card">
+        <p class="noscript-title">JavaScript が無効です</p>
+        <p class="noscript-body">
+          ePub Web は画像変換・抽出処理のために JavaScript
+          を利用します。ブラウザ設定で JavaScript
+          を有効にしてから、ページを再読み込みしてください。
+        </p>
+      </div>
+    </noscript>
+    <div id="root"></div>
+    <script src="/src/main.tsx" type="module"></script>
+  </body>
+</html>
