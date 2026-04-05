@@ -32,7 +32,7 @@ export const Badge = ({
 }: React.HTMLAttributes<HTMLSpanElement>) => (
   <span
     className={twMerge(
-      "inline-block rounded-full bg-primary-tint px-3 py-1.5 text-sm font-bold uppercase tracking-badge text-primary font-heading",
+      "inline-block rounded-full bg-primary-tint px-3 py-1.5 text-sm font-bold uppercase tracking-wide text-primary font-heading",
       className
     )}
     {...props}
@@ -250,7 +250,7 @@ export const SelectInput = ({
   return (
     <select
       className={twMerge(
-        "w-full rounded-xl border border-primary/22 bg-input px-4 py-3 outline-none focus:ring-2 focus:ring-secondary/60 disabled:border-primary/10 disabled:text-foreground/35 disabled:cursor-not-allowed",
+        "w-full appearance-none rounded-xl border border-primary/22 bg-input px-4 py-3 outline-none focus:ring-2 focus:ring-secondary/60 disabled:border-primary/10 disabled:text-foreground/35 disabled:cursor-not-allowed",
         className
       )}
       onChange={handleChange}
