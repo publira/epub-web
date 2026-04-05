@@ -34,6 +34,16 @@ func withLog(next http.Handler) http.Handler {
 	})
 }
 
+func withCache(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if value, ok := cacheControlForFrontend(r.URL.Path); ok {
+			w.Header().Set("Cache-Control", value)
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func withLimit(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		maxSize := getMaxUploadSize()
