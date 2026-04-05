@@ -1,8 +1,26 @@
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  horizontalListSortingStrategy,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { useStore } from "@tanstack/react-store";
 import { X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   formatInteger,
@@ -27,6 +45,105 @@ const getFileImagePixels = async (file: File): Promise<number> => {
   const pixels = bitmap.width * bitmap.height;
   bitmap.close();
   return pixels;
+};
+
+const buildFileKey = (file: File) =>
+  `${file.name}:${file.size}:${file.lastModified}`;
+
+interface ImagePreview {
+  id: string;
+  index: number;
+  name: string;
+  sizeLabel: string;
+  url: string;
+}
+
+interface SortableImagePreviewCardProps {
+  preview: ImagePreview;
+  dimensionsLabel: string;
+  onRemove: React.MouseEventHandler<HTMLButtonElement>;
+}
+
+const ImagePreviewCard = ({
+  preview,
+  dimensionsLabel,
+}: {
+  preview: ImagePreview;
+  dimensionsLabel: string;
+}) => (
+  <div className="w-32 shrink-0">
+    <div className="mb-2 aspect-square flex cursor-grabbing items-center justify-center overflow-hidden rounded-lg bg-muted shadow-lg ring-2 ring-primary/30">
+      <img
+        src={preview.url}
+        alt={preview.name}
+        className="h-full w-full object-cover"
+      />
+    </div>
+    <p className="truncate text-xs text-muted-foreground" title={preview.name}>
+      {preview.name}
+    </p>
+    <p className="mt-1 m-0 text-[11px] text-muted-foreground/90">
+      {preview.sizeLabel} / {dimensionsLabel}
+    </p>
+  </div>
+);
+
+const SortableImagePreviewCard = ({
+  preview,
+  dimensionsLabel,
+  onRemove,
+}: SortableImagePreviewCardProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: preview.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="group w-32 shrink-0 snap-start"
+    >
+      <div
+        className="relative mb-2 aspect-square flex cursor-grab items-center justify-center overflow-hidden rounded-lg bg-muted active:cursor-grabbing"
+        style={{ opacity: isDragging ? 0.3 : 1 }}
+        {...attributes}
+        {...listeners}
+      >
+        <img
+          src={preview.url}
+          alt={preview.name}
+          className="h-full w-full object-cover"
+        />
+        <button
+          type="button"
+          data-index={preview.index}
+          className="absolute top-1.5 right-1.5 inline-flex size-7 cursor-pointer touch-none items-center justify-center rounded-full border border-slate-900/20 bg-slate-50/90 text-slate-700 shadow-sm transition hover:scale-105 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/75"
+          onClick={onRemove}
+          aria-label={`${preview.name} を選択から削除`}
+        >
+          <X aria-hidden="true" size={14} strokeWidth={2.25} />
+        </button>
+      </div>
+      <p
+        className="truncate text-xs text-muted-foreground"
+        title={preview.name}
+      >
+        {preview.name}
+      </p>
+      <p className="mt-1 m-0 text-[11px] text-muted-foreground/90">
+        {preview.sizeLabel} / {dimensionsLabel}
+      </p>
+    </div>
+  );
 };
 
 export const BuildFormSkeleton = () => (
@@ -149,29 +266,64 @@ export const BuildForm = () => {
   const buildFiles = useStore(form.store, (s) => s.values.buildFiles);
   const isSubmitting = useStore(form.store, (s) => s.isSubmitting);
 
-  const imagePreviews = useMemo(
-    () =>
-      buildFiles.map((file, index) => ({
+  const objectUrlCacheRef = useRef<Map<string, string>>(new Map());
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const imagePreviews = useMemo(() => {
+    const cache = objectUrlCacheRef.current;
+    const activeKeys = new Set<string>();
+
+    const previews = buildFiles.map((file, index) => {
+      const key = buildFileKey(file);
+      activeKeys.add(key);
+
+      let url = cache.get(key);
+      if (!url) {
+        url = URL.createObjectURL(file);
+        cache.set(key, url);
+      }
+
+      return {
+        id: `${key}:${index}`,
         index,
-        key: `${file.name}:${file.size}:${file.lastModified}`,
         name: file.name,
         sizeLabel: formatSizeLabel(file.size),
-        url: URL.createObjectURL(file),
-      })),
-    [buildFiles]
+        url,
+      };
+    });
+
+    for (const [key, url] of cache) {
+      if (!activeKeys.has(key)) {
+        URL.revokeObjectURL(url);
+        cache.delete(key);
+      }
+    }
+
+    return previews;
+  }, [buildFiles]);
+  const sortablePreviewIds = useMemo(
+    () => imagePreviews.map((preview) => preview.id),
+    [imagePreviews]
   );
+  const activePreview = useMemo(() => {
+    if (activeId === null) {
+      return null;
+    }
+
+    return imagePreviews.find((preview) => preview.id === activeId) ?? null;
+  }, [activeId, imagePreviews]);
   const [previewDimensions, setPreviewDimensions] = useState<
     Record<string, string>
   >({});
 
-  useEffect(
-    () => () => {
-      for (const preview of imagePreviews) {
-        URL.revokeObjectURL(preview.url);
+  useEffect(() => {
+    const cache = objectUrlCacheRef.current;
+    return () => {
+      for (const url of cache.values()) {
+        URL.revokeObjectURL(url);
       }
-    },
-    [imagePreviews]
-  );
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -180,7 +332,7 @@ export const BuildForm = () => {
       const next: Record<string, string> = {};
 
       for (const file of buildFiles) {
-        const key = `${file.name}:${file.size}:${file.lastModified}`;
+        const key = buildFileKey(file);
         try {
           const bitmap = await createImageBitmap(file);
           next[key] = `${bitmap.width}x${bitmap.height}`;
@@ -229,6 +381,49 @@ export const BuildForm = () => {
     setSuccess(null);
     form.setFieldValue("buildFiles", []);
   }, [form]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragStart = useCallback(({ active }: DragStartEvent) => {
+    setActiveId(String(active.id));
+  }, []);
+
+  const handleDragEnd = useCallback(
+    ({ active, over }: DragEndEvent) => {
+      setActiveId(null);
+      if (!over || active.id === over.id) {
+        return;
+      }
+
+      const oldIndex = imagePreviews.findIndex(
+        (preview) => preview.id === active.id
+      );
+      const newIndex = imagePreviews.findIndex(
+        (preview) => preview.id === over.id
+      );
+
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) {
+        return;
+      }
+
+      setError(null);
+      setSuccess(null);
+      form.setFieldValue(
+        "buildFiles",
+        arrayMove(buildFiles, oldIndex, newIndex)
+      );
+    },
+    [buildFiles, form, imagePreviews]
+  );
 
   const limitItems: string[] = [];
   if (config.maxUploadMB > 0) {
@@ -365,43 +560,49 @@ export const BuildForm = () => {
               >
                 全削除
               </button>
+              <p className="m-0 text-xs text-muted-foreground">
+                画像をドラッグして順番を変更できます。
+              </p>
             </div>
 
-            <div className="flex w-full max-w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-2 touch-pan-x">
-              {imagePreviews.map((preview) => (
-                <div
-                  key={preview.key}
-                  className="group w-32 shrink-0 snap-start"
-                >
-                  <div className="relative mb-2 aspect-square flex items-center justify-center overflow-hidden rounded-lg bg-muted">
-                    <img
-                      src={preview.url}
-                      alt={preview.name}
-                      className="h-full w-full object-cover"
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={sortablePreviewIds}
+                strategy={horizontalListSortingStrategy}
+              >
+                <div className="flex w-full max-w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-2 touch-pan-x">
+                  {imagePreviews.map((preview) => (
+                    <SortableImagePreviewCard
+                      key={preview.id}
+                      preview={preview}
+                      dimensionsLabel={
+                        previewDimensions[
+                          buildFileKey(buildFiles[preview.index])
+                        ] ?? "..."
+                      }
+                      onRemove={handleRemoveImage}
                     />
-                    <button
-                      type="button"
-                      data-index={preview.index}
-                      className="absolute top-1.5 right-1.5 inline-flex size-7 items-center justify-center rounded-full border border-slate-900/20 bg-slate-50/90 text-slate-700 shadow-sm transition hover:scale-105 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/75"
-                      onClick={handleRemoveImage}
-                      aria-label={`${preview.name} を選択から削除`}
-                    >
-                      <X aria-hidden="true" size={14} strokeWidth={2.25} />
-                    </button>
-                  </div>
-                  <p
-                    className="truncate text-xs text-muted-foreground"
-                    title={preview.name}
-                  >
-                    {preview.name}
-                  </p>
-                  <p className="mt-1 m-0 text-[11px] text-muted-foreground/90">
-                    {preview.sizeLabel} /{" "}
-                    {previewDimensions[preview.key] ?? "..."}
-                  </p>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </SortableContext>
+              <DragOverlay>
+                {activePreview !== null && (
+                  <ImagePreviewCard
+                    preview={activePreview}
+                    dimensionsLabel={
+                      previewDimensions[
+                        buildFileKey(buildFiles[activePreview.index])
+                      ] ?? "..."
+                    }
+                  />
+                )}
+              </DragOverlay>
+            </DndContext>
           </div>
         )}
 
