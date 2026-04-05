@@ -25,6 +25,7 @@ docker run --rm -p 8080:8080 epub-web
 | `EPUB_WEB_MAX_ASSET_BYTES` | `33554432` | 1ファイルあたり最大サイズ (bytes)。`0`で無制限 |
 | `EPUB_WEB_MAX_IMAGE_PIXELS` | `50000000` | 画像の最大ピクセル数 (width × height)。`0`で無制限 |
 | `EPUB_WEB_REQUEST_TIMEOUT` | `60s` | APIタイムアウト (Go duration形式)。`0`で無制限 |
+| `EPUB_WEB_SHUTDOWN_TIMEOUT` | `10s` | グレースフルシャットダウンの待機時間 (Go duration形式)。`0`で無制限 |
 
 ### 起動例
 
@@ -36,10 +37,19 @@ EPUB_WEB_MAX_PAGES=2000 \
 EPUB_WEB_MAX_ASSET_BYTES=67108864 \
 EPUB_WEB_MAX_IMAGE_PIXELS=100000000 \
 EPUB_WEB_REQUEST_TIMEOUT=90s \
+EPUB_WEB_SHUTDOWN_TIMEOUT=15s \
 go run ./...
 ```
 
 ## API
+
+### `GET /livez`
+
+liveness 用に `200 OK` を返します。
+
+### `GET /readyz`
+
+通常時は `200 OK`、シャットダウン開始後は `503 Service Unavailable` を返します。
 
 ### `GET /api/config`
 

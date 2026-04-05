@@ -166,3 +166,35 @@ func TestGetRequestTimeout_InvalidReturnsDefault(t *testing.T) {
 		t.Fatalf("expected %v, got %v", defaultRequestTimeout, got)
 	}
 }
+
+func TestGetShutdownTimeout(t *testing.T) {
+	t.Setenv("EPUB_WEB_SHUTDOWN_TIMEOUT", "5s")
+
+	if got := getShutdownTimeout(); got != 5*time.Second {
+		t.Fatalf("expected %v, got %v", 5*time.Second, got)
+	}
+}
+
+func TestGetShutdownTimeout_DefaultWhenUnset(t *testing.T) {
+	t.Setenv("EPUB_WEB_SHUTDOWN_TIMEOUT", "")
+
+	if got := getShutdownTimeout(); got != defaultShutdownTimeout {
+		t.Fatalf("expected %v, got %v", defaultShutdownTimeout, got)
+	}
+}
+
+func TestGetShutdownTimeout_ZeroDisablesTimeout(t *testing.T) {
+	t.Setenv("EPUB_WEB_SHUTDOWN_TIMEOUT", "0s")
+
+	if got := getShutdownTimeout(); got != 0 {
+		t.Fatalf("expected %v, got %v", time.Duration(0), got)
+	}
+}
+
+func TestGetShutdownTimeout_InvalidReturnsDefault(t *testing.T) {
+	t.Setenv("EPUB_WEB_SHUTDOWN_TIMEOUT", "invalid")
+
+	if got := getShutdownTimeout(); got != defaultShutdownTimeout {
+		t.Fatalf("expected %v, got %v", defaultShutdownTimeout, got)
+	}
+}

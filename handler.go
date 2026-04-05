@@ -10,6 +10,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"strings"
+	"sync/atomic"
 
 	_ "image/gif"
 	_ "image/jpeg"
@@ -37,6 +38,16 @@ type BuildRequest struct {
 	Direction string
 	Layout    string
 	Spread    string
+}
+
+var isReady atomic.Bool
+
+func init() {
+	isReady.Store(true)
+}
+
+func setReady(ready bool) {
+	isReady.Store(ready)
 }
 
 func parseBuildRequest(r *http.Request) BuildRequest {
@@ -68,6 +79,11 @@ func handleLivez(w http.ResponseWriter, _ *http.Request) {
 }
 
 func handleReadyz(w http.ResponseWriter, _ *http.Request) {
+	if !isReady.Load() {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 }
 

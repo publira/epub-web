@@ -15,6 +15,7 @@ const (
 	defaultMaxAssetBytes   = int64(32 * 1024 * 1024)
 	defaultMaxImagePixels  = int64(50_000_000)
 	defaultRequestTimeout  = 60 * time.Second
+	defaultShutdownTimeout = 10 * time.Second
 )
 
 func getListenAddress() string {
@@ -104,6 +105,23 @@ func getRequestTimeout() time.Duration {
 	timeout, err := time.ParseDuration(value)
 	if err != nil || timeout < 0 {
 		return defaultRequestTimeout
+	}
+	if timeout == 0 {
+		return 0
+	}
+
+	return timeout
+}
+
+func getShutdownTimeout() time.Duration {
+	value := os.Getenv("EPUB_WEB_SHUTDOWN_TIMEOUT")
+	if value == "" {
+		return defaultShutdownTimeout
+	}
+
+	timeout, err := time.ParseDuration(value)
+	if err != nil || timeout < 0 {
+		return defaultShutdownTimeout
 	}
 	if timeout == 0 {
 		return 0
