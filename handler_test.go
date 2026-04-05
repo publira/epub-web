@@ -52,6 +52,9 @@ func TestHandleExtract_RejectsOverPageLimit(t *testing.T) {
 }
 
 func TestHandleConfig_ReturnsLimits(t *testing.T) {
+	setReady(true)
+	t.Cleanup(func() { setReady(true) })
+
 	t.Setenv("EPUB_WEB_MAX_UPLOAD_SIZE", "32")
 	t.Setenv("EPUB_WEB_MAX_PAGES", "250")
 	t.Setenv("EPUB_WEB_MAX_ASSET_BYTES", "5242880")
@@ -86,6 +89,34 @@ func TestHandleConfig_ReturnsLimits(t *testing.T) {
 	}
 	if payload.RequestTimeoutMs != 45000 {
 		t.Fatalf("expected requestTimeoutMs %d, got %d", 45000, payload.RequestTimeoutMs)
+	}
+}
+
+func TestHandleReadyz_ReturnsOKWhenReady(t *testing.T) {
+	setReady(true)
+	t.Cleanup(func() { setReady(true) })
+
+	req := httptest.NewRequest(http.MethodGet, "/readyz", nil)
+	rec := httptest.NewRecorder()
+
+	handleReadyz(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+}
+
+func TestHandleReadyz_ReturnsServiceUnavailableWhenShuttingDown(t *testing.T) {
+	setReady(false)
+	t.Cleanup(func() { setReady(true) })
+
+	req := httptest.NewRequest(http.MethodGet, "/readyz", nil)
+	rec := httptest.NewRecorder()
+
+	handleReadyz(rec, req)
+
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected status %d, got %d", http.StatusServiceUnavailable, rec.Code)
 	}
 }
 
