@@ -1,22 +1,19 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  Activity,
-  Suspense,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { Activity, Suspense, useCallback, useEffect, useRef } from "react";
+import * as z from "zod";
 
+import { useSearchParamsState } from "../lib/hooks";
 import { BuildForm, BuildFormSkeleton } from "./build-form";
 import { ExtractForm, ExtractFormSkeleton } from "./extract-form";
 import { PrivacyDialog } from "./privacy-dialog";
 import { TermsDialog } from "./terms-dialog";
 import { Badge, Card, TabButton } from "./ui/primitives";
 
+const modeSchema = z.enum(["build", "extract"]);
+
 export const App = () => {
   const queryClient = new QueryClient();
-  const [mode, setMode] = useState<"build" | "extract">("build");
+  const [mode, setMode] = useSearchParamsState("mode", modeSchema, "build");
   const termsDialogRef = useRef<HTMLDialogElement>(null);
   const privacyDialogRef = useRef<HTMLDialogElement>(null);
 
@@ -31,8 +28,8 @@ export const App = () => {
     }
   }, []);
 
-  const handleBuildMode = useCallback(() => setMode("build"), []);
-  const handleExtractMode = useCallback(() => setMode("extract"), []);
+  const handleBuildMode = useCallback(() => setMode("build"), [setMode]);
+  const handleExtractMode = useCallback(() => setMode("extract"), [setMode]);
   const handleOpenTerms = useCallback(() => {
     const dialog = termsDialogRef.current;
     if (dialog && !dialog.open) {
