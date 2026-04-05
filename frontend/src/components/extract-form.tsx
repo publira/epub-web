@@ -1,7 +1,14 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { useStore } from "@tanstack/react-store";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffectEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import {
   formatInteger,
@@ -15,28 +22,65 @@ import { extractMutationFn, getApiErrorMessage } from "../lib/mutations";
 import { triggerDownload } from "../lib/utils";
 import { LimitNotes } from "./limit-notes";
 import { Card, DropOverlay, FilePicker, PrimaryButton } from "./ui/primitives";
+import { Skeleton } from "./ui/skeleton";
 
 export const ExtractFormSkeleton = () => (
-  <Card className="min-w-0 p-fluid-sm animate-pulse">
-    {/* ファイルピッカー */}
-    <div className="mb-4 h-28 rounded-xl bg-muted" />
-    {/* ボタン */}
-    <div className="h-12 rounded-xl bg-muted" />
+  <Card className="min-w-0 p-fluid-sm">
+    <Skeleton className="mb-4 h-28" />
+    <Skeleton className="h-12" />
   </Card>
 );
 
 export const ExtractForm = () => {
   const [extractedImages, setExtractedImages] = useState<ExtractedImage[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isClientValidationBlocked, setIsClientValidationBlocked] =
+    useState(false);
   const [success, setSuccess] = useState<string | null>(null);
 
   const { data: config } = useAppConfig();
+
+  const getExtractClientValidationError = useCallback(
+    (file: File | null): string | null => {
+      if (!file) {
+        return "抽出するePubファイルを選択してください。";
+      }
+
+      const isEpub =
+        file.type === "application/epub+zip" || /\.epub$/i.test(file.name);
+      if (!isEpub) {
+        return "ePubファイルを選択してください。";
+      }
+
+      if (config.maxUploadMB > 0) {
+        const maxUploadBytes = config.maxUploadMB * 1024 * 1024;
+        if (file.size > maxUploadBytes) {
+          return `1リクエストあたり最大 ${config.maxUploadMB} MiB です。`;
+        }
+      }
+
+      return null;
+    },
+    [config.maxUploadMB]
+  );
+
+  const setClientValidationError = useCallback((message: string) => {
+    setError(message);
+    setSuccess(null);
+    setExtractedImages([]);
+    setIsClientValidationBlocked(true);
+  }, []);
+
+  const clearClientValidationBlock = useCallback(() => {
+    setIsClientValidationBlocked(false);
+  }, []);
 
   const resetFormRef = useRef<(() => void) | null>(null);
 
   const mutation = useMutation({
     mutationFn: extractMutationFn,
     onError: (caughtError) => {
+      clearClientValidationBlock();
       setError(
         getApiErrorMessage(caughtError, {
           defaultMessage: "画像抽出に失敗しました。",
@@ -51,6 +95,7 @@ export const ExtractForm = () => {
       setExtractedImages([]);
     },
     onSuccess: (images) => {
+      clearClientValidationBlock();
       setExtractedImages(images);
       setSuccess(`${images.length} 個の画像を抽出しました。`);
       resetFormRef.current?.();
@@ -62,24 +107,25 @@ export const ExtractForm = () => {
       extractFile: null as File | null,
     },
     onSubmit: async ({ value }) => {
-      if (!value.extractFile) {
+      const validationError = getExtractClientValidationError(
+        value.extractFile
+      );
+      if (validationError) {
+        setClientValidationError(validationError);
         return;
       }
 
-      if (config.maxUploadMB > 0) {
-        const maxUploadBytes = config.maxUploadMB * 1024 * 1024;
-        if (value.extractFile.size > maxUploadBytes) {
-          setError(`1リクエストあたり最大 ${config.maxUploadMB} MiB です。`);
-          setSuccess(null);
-          setExtractedImages([]);
-          return;
-        }
+      const selectedFile = value.extractFile;
+      if (!selectedFile) {
+        setClientValidationError("抽出するePubファイルを選択してください。");
+        return;
       }
 
+      clearClientValidationBlock();
       setError(null);
       setSuccess(null);
       setExtractedImages([]);
-      await mutation.mutateAsync({ file: value.extractFile });
+      await mutation.mutateAsync({ file: selectedFile });
     },
   });
 
@@ -89,6 +135,7 @@ export const ExtractForm = () => {
     form.store,
     (s) => s.values.extractFile?.name
   );
+  const extractFile = useStore(form.store, (s) => s.values.extractFile);
   const isSubmitting = useStore(form.store, (s) => s.isSubmitting);
 
   const handleSubmit = useCallback<React.SubmitEventHandler<HTMLFormElement>>(
@@ -99,34 +146,57 @@ export const ExtractForm = () => {
     [form]
   );
 
+  const handleExtractFileChange = useCallback(
+    (file: File | null) => {
+      form.setFieldValue("extractFile", file);
+
+      const validationError = getExtractClientValidationError(file);
+      if (validationError) {
+        setClientValidationError(validationError);
+        return;
+      }
+
+      clearClientValidationBlock();
+      setError(null);
+      setSuccess(null);
+      setExtractedImages([]);
+    },
+    [
+      clearClientValidationBlock,
+      form,
+      getExtractClientValidationError,
+      setClientValidationError,
+    ]
+  );
+
   const handleCardDropFiles = useCallback(
     (droppedFiles: readonly File[]) => {
       const droppedEpub = droppedFiles.find((file) =>
         /\.epub$/i.test(file.name)
       );
       if (!droppedEpub) {
-        setError("ePubファイルをドロップしてください。");
-        setSuccess(null);
-        setExtractedImages([]);
+        setClientValidationError("ePubファイルをドロップしてください。");
         return;
       }
 
-      if (config.maxUploadMB > 0) {
-        const maxUploadBytes = config.maxUploadMB * 1024 * 1024;
-        if (droppedEpub.size > maxUploadBytes) {
-          setError(`1リクエストあたり最大 ${config.maxUploadMB} MiB です。`);
-          setSuccess(null);
-          setExtractedImages([]);
-          return;
-        }
+      const validationError = getExtractClientValidationError(droppedEpub);
+      if (validationError) {
+        setClientValidationError(validationError);
+        return;
       }
 
+      clearClientValidationBlock();
       setError(null);
       setSuccess(null);
       setExtractedImages([]);
       form.setFieldValue("extractFile", droppedEpub);
     },
-    [config.maxUploadMB, form]
+    [
+      clearClientValidationBlock,
+      form,
+      getExtractClientValidationError,
+      setClientValidationError,
+    ]
   );
 
   const { isDragOver: isFormDragOver, dragProps } =
@@ -144,6 +214,25 @@ export const ExtractForm = () => {
       })),
     [extractedImages]
   );
+
+  const revalidateIfBlocked = useEffectEvent(() => {
+    if (!isClientValidationBlocked) {
+      return;
+    }
+
+    const validationError = getExtractClientValidationError(extractFile);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setIsClientValidationBlocked(false);
+    setError(null);
+  });
+
+  useEffect(() => {
+    revalidateIfBlocked();
+  }, [extractFile]);
 
   useEffect(() => {
     let cancelled = false;
@@ -247,7 +336,7 @@ export const ExtractForm = () => {
                 aria-label="ePubファイル（必須）"
                 aria-required="true"
                 disabled={isSubmitting}
-                onFileChange={field.handleChange}
+                onFileChange={handleExtractFileChange}
               />
               {field.state.meta.errors.length > 0 && (
                 <p className="m-0 text-sm font-semibold text-error">
@@ -265,7 +354,7 @@ export const ExtractForm = () => {
         <PrimaryButton
           className="inline-flex items-center justify-center gap-2"
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isClientValidationBlocked}
         >
           {isSubmitting && (
             <span

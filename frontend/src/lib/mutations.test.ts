@@ -123,4 +123,46 @@ describe("mutations", () => {
 
     expect(message).toBe("1リクエストあたり最大 8 MiB です。");
   }, 1000);
+
+  it("getApiErrorMessage maps build option validation codes", () => {
+    expect(
+      getApiErrorMessage(new ApiError("invalid_layout", "Invalid layout."), {
+        defaultMessage: "ePubの生成に失敗しました。",
+      })
+    ).toBe("レイアウト指定が不正です。");
+
+    expect(
+      getApiErrorMessage(new ApiError("invalid_spread", "Invalid spread."), {
+        defaultMessage: "ePubの生成に失敗しました。",
+      })
+    ).toBe("見開き指定が不正です。");
+  }, 1000);
+
+  it("getApiErrorMessage preserves server message for unknown api codes", () => {
+    const message = getApiErrorMessage(
+      new ApiError("unexpected_code", "Server supplied message."),
+      {
+        defaultMessage: "ePubの生成に失敗しました。",
+      }
+    );
+
+    expect(message).toBe("Server supplied message.");
+  }, 1000);
+
+  it("buildMutationFn converts network failures to ApiError", async () => {
+    fetchMock.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+
+    await expect(
+      buildMutationFn({
+        authors: [],
+        direction: "rtl",
+        files: [new File(["x"], "a.png", { type: "image/png" })],
+        spread: "right",
+        title: "book",
+      })
+    ).rejects.toMatchObject({
+      code: "network_error",
+      name: "ApiError",
+    });
+  }, 1000);
 });

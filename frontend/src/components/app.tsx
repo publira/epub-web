@@ -1,9 +1,17 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Activity, Suspense, useCallback, useEffect, useRef } from "react";
+import {
+  Activity,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import * as z from "zod";
 
 import { useSearchParamsState } from "../lib/hooks";
 import { BuildForm, BuildFormSkeleton } from "./build-form";
+import { ConfigQueryBoundary } from "./config-query-boundary";
 import { ExtractForm, ExtractFormSkeleton } from "./extract-form";
 import { PrivacyDialog } from "./privacy-dialog";
 import { TermsDialog } from "./terms-dialog";
@@ -12,7 +20,7 @@ import { Badge, Card, TabButton } from "./ui/primitives";
 const modeSchema = z.enum(["build", "extract"]);
 
 export const App = () => {
-  const queryClient = new QueryClient();
+  const [queryClient] = useState(() => new QueryClient());
   const [mode, setMode] = useSearchParamsState("mode", modeSchema, "build");
   const termsDialogRef = useRef<HTMLDialogElement>(null);
   const privacyDialogRef = useRef<HTMLDialogElement>(null);
@@ -103,15 +111,19 @@ export const App = () => {
           </div>
 
           <Activity mode={mode === "build" ? "visible" : "hidden"}>
-            <Suspense fallback={<BuildFormSkeleton />}>
-              <BuildForm />
-            </Suspense>
+            <ConfigQueryBoundary>
+              <Suspense fallback={<BuildFormSkeleton />}>
+                <BuildForm />
+              </Suspense>
+            </ConfigQueryBoundary>
           </Activity>
 
           <Activity mode={mode === "extract" ? "visible" : "hidden"}>
-            <Suspense fallback={<ExtractFormSkeleton />}>
-              <ExtractForm />
-            </Suspense>
+            <ConfigQueryBoundary>
+              <Suspense fallback={<ExtractFormSkeleton />}>
+                <ExtractForm />
+              </Suspense>
+            </ConfigQueryBoundary>
           </Activity>
 
           <TermsDialog dialogRef={termsDialogRef} onClose={handleTermsClose} />

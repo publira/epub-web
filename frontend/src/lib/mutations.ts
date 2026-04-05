@@ -58,6 +58,8 @@ const apiErrorMessageResolvers: Record<
     options.maxAssetBytes && options.maxAssetBytes > 0
       ? `画像1枚あたり最大 ${formatMiBFromBytes(options.maxAssetBytes)} です。`
       : "画像ファイルのサイズ上限を超えています。",
+  build_failed: () => "ePubの生成に失敗しました。",
+  extract_failed: () => "画像抽出に失敗しました。",
   extract_images_failed: () => "画像抽出に失敗しました。",
   image_pixels_limit_exceeded: (options) =>
     options.maxImagePixels && options.maxImagePixels > 0
@@ -65,7 +67,11 @@ const apiErrorMessageResolvers: Record<
       : "画像の解像度が上限を超えています。",
   invalid_epub: () => "ePubの解析に失敗しました。",
   invalid_image: () => "画像の解析に失敗しました。",
+  invalid_layout: () => "レイアウト指定が不正です。",
+  invalid_spread: () => "見開き指定が不正です。",
   missing_epub_file: () => "ePubファイルを選択してください。",
+  network_error: () =>
+    "サーバーに接続できませんでした。ネットワーク状態を確認して再試行してください。",
   no_images_provided: () => "画像を1枚以上選択してください。",
   open_image_failed: () => "画像ファイルを開けませんでした。",
   page_limit_exceeded: (options) =>
@@ -106,7 +112,7 @@ export const getApiErrorMessage = (
       return resolver(options);
     }
 
-    return options.defaultMessage;
+    return error.message || options.defaultMessage;
   }
 
   if (error instanceof Error && error.message) {
@@ -131,10 +137,18 @@ export const buildMutationFn = async (
     data.append("images", file);
   }
 
-  const res = await fetch("/api/build", {
-    body: data,
-    method: "POST",
-  });
+  let res: Response;
+  try {
+    res = await fetch("/api/build", {
+      body: data,
+      method: "POST",
+    });
+  } catch {
+    throw new ApiError(
+      "network_error",
+      "サーバーに接続できませんでした。ネットワーク状態を確認して再試行してください。"
+    );
+  }
 
   if (!res.ok) {
     throw await toApiError(res, "build_failed", "Failed to build EPUB.");
@@ -155,10 +169,18 @@ export const extractMutationFn = async (
   const formData = new FormData();
   formData.set("epub", params.file);
 
-  const res = await fetch("/api/extract", {
-    body: formData,
-    method: "POST",
-  });
+  let res: Response;
+  try {
+    res = await fetch("/api/extract", {
+      body: formData,
+      method: "POST",
+    });
+  } catch {
+    throw new ApiError(
+      "network_error",
+      "サーバーに接続できませんでした。ネットワーク状態を確認して再試行してください。"
+    );
+  }
 
   if (!res.ok) {
     throw await toApiError(res, "extract_failed", "Failed to extract images.");
