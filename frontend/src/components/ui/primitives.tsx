@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { twJoin, twMerge } from "tailwind-merge";
 
 export const Card = ({
@@ -12,6 +12,18 @@ export const Card = ({
     )}
     {...props}
   />
+);
+
+interface DropOverlayProps {
+  message: string;
+}
+
+export const DropOverlay = ({ message }: DropOverlayProps) => (
+  <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-3xl border-2 border-dashed border-primary/45 bg-slate-900/10 backdrop-blur-sm">
+    <div className="rounded-xl border border-primary/35 bg-card-surface/88 px-4 py-3 text-center shadow-lg">
+      <p className="m-0 text-sm font-bold text-primary">{message}</p>
+    </div>
+  </div>
 );
 
 export const Badge = ({
@@ -112,25 +124,81 @@ export const FilePicker = ({
   multiple,
   ...props
 }: FilePickerProps) => {
-  const handleChange = useCallback<React.ChangeEventHandler<HTMLInputElement>>(
-    (event) => {
-      onChange?.(event);
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const applyFiles = useCallback(
+    (files: File[]) => {
       if (multiple) {
-        onFilesChange?.([...(event.target.files ?? [])]);
+        onFilesChange?.(files);
         return;
       }
 
-      onFileChange?.(event.target.files?.[0] ?? null);
+      onFileChange?.(files[0] ?? null);
     },
-    [multiple, onChange, onFileChange, onFilesChange]
+    [multiple, onFileChange, onFilesChange]
+  );
+
+  const handleChange = useCallback<React.ChangeEventHandler<HTMLInputElement>>(
+    (event) => {
+      onChange?.(event);
+      applyFiles([...(event.target.files ?? [])]);
+    },
+    [applyFiles, onChange]
+  );
+
+  const handleDragEnter = useCallback<React.DragEventHandler<HTMLLabelElement>>(
+    (event) => {
+      event.preventDefault();
+      setIsDragOver(true);
+    },
+    []
+  );
+
+  const handleDragOver = useCallback<React.DragEventHandler<HTMLLabelElement>>(
+    (event) => {
+      event.preventDefault();
+      if (!isDragOver) {
+        setIsDragOver(true);
+      }
+    },
+    [isDragOver]
+  );
+
+  const handleDragLeave = useCallback<React.DragEventHandler<HTMLLabelElement>>(
+    (event) => {
+      event.preventDefault();
+      const nextTarget = event.relatedTarget;
+      if (nextTarget && event.currentTarget.contains(nextTarget as Node)) {
+        return;
+      }
+      setIsDragOver(false);
+    },
+    []
+  );
+
+  const handleDrop = useCallback<React.DragEventHandler<HTMLLabelElement>>(
+    (event) => {
+      event.preventDefault();
+      setIsDragOver(false);
+      applyFiles([...(event.dataTransfer.files ?? [])]);
+    },
+    [applyFiles]
   );
 
   return (
     <label
       className={twMerge(
-        "block w-full cursor-pointer rounded-xl border border-dashed border-primary/30 bg-primary-subtle px-4 py-4 transition hover:bg-primary-subtle-hover",
+        twJoin(
+          "block w-full cursor-pointer rounded-xl border border-dashed border-primary/30 bg-primary-subtle px-4 py-4 transition hover:bg-primary-subtle-hover",
+          isDragOver &&
+            "border-primary/55 bg-primary-subtle-hover ring-2 ring-secondary/50"
+        ),
         className
       )}
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
       <input
         className="sr-only"

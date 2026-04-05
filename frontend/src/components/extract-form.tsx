@@ -9,12 +9,12 @@ import {
   formatSecondsFromMs,
   formatSizeLabel,
 } from "../lib/format";
-import { useAppConfig } from "../lib/hooks";
+import { useAppConfig, useDrop } from "../lib/hooks";
 import type { ExtractedImage } from "../lib/mutations";
 import { extractMutationFn, getApiErrorMessage } from "../lib/mutations";
 import { triggerDownload } from "../lib/utils";
 import { LimitNotes } from "./limit-notes";
-import { Card, FilePicker, PrimaryButton } from "./ui/primitives";
+import { Card, DropOverlay, FilePicker, PrimaryButton } from "./ui/primitives";
 
 export const ExtractFormSkeleton = () => (
   <Card className="min-w-0 p-fluid-sm animate-pulse">
@@ -93,6 +93,39 @@ export const ExtractForm = () => {
     },
     [form]
   );
+
+  const handleCardDropFiles = useCallback(
+    (droppedFiles: readonly File[]) => {
+      const droppedEpub = droppedFiles.find((file) =>
+        /\.epub$/i.test(file.name)
+      );
+      if (!droppedEpub) {
+        setError("ePubファイルをドロップしてください。");
+        setSuccess(null);
+        setExtractedImages([]);
+        return;
+      }
+
+      if (config.maxUploadMB > 0) {
+        const maxUploadBytes = config.maxUploadMB * 1024 * 1024;
+        if (droppedEpub.size > maxUploadBytes) {
+          setError(`1リクエストあたり最大 ${config.maxUploadMB} MiB です。`);
+          setSuccess(null);
+          setExtractedImages([]);
+          return;
+        }
+      }
+
+      setError(null);
+      setSuccess(null);
+      setExtractedImages([]);
+      form.setFieldValue("extractFile", droppedEpub);
+    },
+    [config.maxUploadMB, form]
+  );
+
+  const { isDragOver: isFormDragOver, dragProps } =
+    useDrop(handleCardDropFiles);
 
   const [previewDimensions, setPreviewDimensions] = useState<
     Record<string, string>
@@ -173,7 +206,12 @@ export const ExtractForm = () => {
   }
 
   return (
-    <Card className="min-w-0 space-y-2 animate-rise p-fluid-sm">
+    <Card
+      className="relative min-w-0 space-y-2 animate-rise p-fluid-sm"
+      {...dragProps}
+    >
+      {isFormDragOver && <DropOverlay message="ここにePubファイルをドロップ" />}
+
       <LimitNotes title="抽出時の制限" items={limitItems} />
 
       <form className="grid gap-4" onSubmit={handleSubmit}>
@@ -194,7 +232,7 @@ export const ExtractForm = () => {
                 id="extract-epub"
                 accept=".epub,application/epub+zip"
                 ctaText="ePubファイルを選択"
-                helperText="クリックしてePubファイルを指定"
+                helperText="クリックまたはドラッグ＆ドロップでePubファイルを指定"
                 onFileChange={field.handleChange}
               />
               {field.state.meta.errors.length > 0 && (

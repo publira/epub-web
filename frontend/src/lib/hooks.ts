@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type * as z from "zod";
 
 import { configSchema } from "./mutations";
@@ -54,4 +54,71 @@ export const useSearchParamsState = <T extends string>(
   );
 
   return [state, setParamState];
+};
+
+export const useDrop = (
+  onDropFiles: (files: readonly File[]) => void
+): {
+  isDragOver: boolean;
+  dragProps: {
+    onDragEnter: React.DragEventHandler<HTMLDivElement>;
+    onDragLeave: React.DragEventHandler<HTMLDivElement>;
+    onDragOver: React.DragEventHandler<HTMLDivElement>;
+    onDrop: React.DragEventHandler<HTMLDivElement>;
+  };
+} => {
+  const [isDragOver, setIsDragOver] = useState(false);
+  const dragDepthRef = useRef(0);
+
+  const onDragOver = useCallback<React.DragEventHandler<HTMLDivElement>>(
+    (event) => {
+      event.preventDefault();
+      if (!isDragOver) {
+        setIsDragOver(true);
+      }
+    },
+    [isDragOver]
+  );
+
+  const onDragEnter = useCallback<React.DragEventHandler<HTMLDivElement>>(
+    (event) => {
+      event.preventDefault();
+      dragDepthRef.current += 1;
+      if (!isDragOver) {
+        setIsDragOver(true);
+      }
+    },
+    [isDragOver]
+  );
+
+  const onDragLeave = useCallback<React.DragEventHandler<HTMLDivElement>>(
+    (event) => {
+      event.preventDefault();
+      dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+      if (dragDepthRef.current === 0) {
+        setIsDragOver(false);
+      }
+    },
+    []
+  );
+
+  const onDrop = useCallback<React.DragEventHandler<HTMLDivElement>>(
+    (event) => {
+      event.preventDefault();
+      dragDepthRef.current = 0;
+      setIsDragOver(false);
+      onDropFiles([...(event.dataTransfer.files ?? [])]);
+    },
+    [onDropFiles]
+  );
+
+  return {
+    dragProps: {
+      onDragEnter,
+      onDragLeave,
+      onDragOver,
+      onDrop,
+    },
+    isDragOver,
+  };
 };
