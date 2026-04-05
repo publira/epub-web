@@ -95,7 +95,7 @@ export const TextInput = ({
   return (
     <input
       className={twMerge(
-        "w-full rounded-xl border border-primary/22 bg-input px-4 py-3 outline-none focus:ring-2 focus:ring-secondary/60",
+        "w-full rounded-xl border border-primary/22 bg-input px-4 py-3 outline-none focus:ring-2 focus:ring-secondary/60 disabled:border-primary/10 disabled:text-foreground/35 disabled:cursor-not-allowed",
         className
       )}
       onChange={handleChange}
@@ -122,12 +122,16 @@ export const FilePicker = ({
   onFileChange,
   onFilesChange,
   multiple,
+  disabled,
   ...props
 }: FilePickerProps) => {
   const [isDragOver, setIsDragOver] = useState(false);
 
   const applyFiles = useCallback(
     (files: File[]) => {
+      if (disabled) {
+        return;
+      }
       if (multiple) {
         onFilesChange?.(files);
         return;
@@ -135,7 +139,7 @@ export const FilePicker = ({
 
       onFileChange?.(files[0] ?? null);
     },
-    [multiple, onFileChange, onFilesChange]
+    [disabled, multiple, onFileChange, onFilesChange]
   );
 
   const handleChange = useCallback<React.ChangeEventHandler<HTMLInputElement>>(
@@ -149,19 +153,21 @@ export const FilePicker = ({
   const handleDragEnter = useCallback<React.DragEventHandler<HTMLLabelElement>>(
     (event) => {
       event.preventDefault();
-      setIsDragOver(true);
+      if (!disabled) {
+        setIsDragOver(true);
+      }
     },
-    []
+    [disabled]
   );
 
   const handleDragOver = useCallback<React.DragEventHandler<HTMLLabelElement>>(
     (event) => {
       event.preventDefault();
-      if (!isDragOver) {
+      if (!disabled && !isDragOver) {
         setIsDragOver(true);
       }
     },
-    [isDragOver]
+    [disabled, isDragOver]
   );
 
   const handleDragLeave = useCallback<React.DragEventHandler<HTMLLabelElement>>(
@@ -189,8 +195,11 @@ export const FilePicker = ({
     <label
       className={twMerge(
         twJoin(
-          "block w-full cursor-pointer rounded-xl border border-dashed border-primary/30 bg-primary-subtle px-4 py-4 transition hover:bg-primary-subtle-hover",
+          "block w-full rounded-xl border border-dashed border-primary/30 bg-primary-subtle px-4 py-4 transition",
+          !disabled && "cursor-pointer hover:bg-primary-subtle-hover",
+          disabled && "cursor-not-allowed opacity-50",
           isDragOver &&
+            !disabled &&
             "border-primary/55 bg-primary-subtle-hover ring-2 ring-secondary/50"
         ),
         className
@@ -204,6 +213,7 @@ export const FilePicker = ({
         className="sr-only"
         type="file"
         multiple={multiple}
+        disabled={disabled}
         onChange={handleChange}
         {...props}
       />
@@ -240,7 +250,7 @@ export const SelectInput = ({
   return (
     <select
       className={twMerge(
-        "w-full rounded-xl border border-primary/22 bg-input px-4 py-3 outline-none focus:ring-2 focus:ring-secondary/60",
+        "w-full rounded-xl border border-primary/22 bg-input px-4 py-3 outline-none focus:ring-2 focus:ring-secondary/60 disabled:border-primary/10 disabled:text-foreground/35 disabled:cursor-not-allowed",
         className
       )}
       onChange={handleChange}

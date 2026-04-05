@@ -1,7 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { useStore } from "@tanstack/react-store";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   formatInteger,
@@ -32,6 +32,8 @@ export const ExtractForm = () => {
 
   const { data: config } = useAppConfig();
 
+  const resetFormRef = useRef<(() => void) | null>(null);
+
   const mutation = useMutation({
     mutationFn: extractMutationFn,
     onError: (caughtError) => {
@@ -51,6 +53,7 @@ export const ExtractForm = () => {
     onSuccess: (images) => {
       setExtractedImages(images);
       setSuccess(`${images.length} 個の画像を抽出しました。`);
+      resetFormRef.current?.();
     },
   });
 
@@ -79,6 +82,8 @@ export const ExtractForm = () => {
       await mutation.mutateAsync({ file: value.extractFile });
     },
   });
+
+  resetFormRef.current = form.reset.bind(form);
 
   const extractFilename = useStore(
     form.store,
@@ -233,6 +238,7 @@ export const ExtractForm = () => {
                 accept=".epub,application/epub+zip"
                 ctaText="ePubファイルを選択"
                 helperText="クリックまたはドラッグ＆ドロップでePubファイルを指定"
+                disabled={isSubmitting}
                 onFileChange={field.handleChange}
               />
               {field.state.meta.errors.length > 0 && (
