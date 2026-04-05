@@ -10,6 +10,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -285,6 +286,44 @@ func TestHandleBuild_PreservesPageOrder(t *testing.T) {
 	}
 	if secondPixels != 1200 {
 		t.Fatalf("expected second image pixels %d, got %d", 1200, secondPixels)
+	}
+}
+
+func TestHandleBuild_SetsUTF8ContentDisposition(t *testing.T) {
+	title := "日本語タイトル"
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	if err := writer.WriteField("title", title); err != nil {
+		t.Fatalf("failed to write title field: %v", err)
+	}
+	part, err := writer.CreateFormFile("images", "page.png")
+	if err != nil {
+		t.Fatalf("failed to create image part: %v", err)
+	}
+	if _, err := part.Write(testPNG(t)); err != nil {
+		t.Fatalf("failed to write image part: %v", err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatalf("failed to close multipart writer: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/api/build", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	rec := httptest.NewRecorder()
+
+	withLimit(handleBuild).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+
+	contentDisposition := rec.Header().Get("Content-Disposition")
+	if !strings.Contains(contentDisposition, `filename*=UTF-8''`+url.PathEscape(title+".epub")) {
+		t.Fatalf("expected UTF-8 filename* in content disposition, got %q", contentDisposition)
+	}
+	if !strings.Contains(contentDisposition, `filename="`) {
+		t.Fatalf("expected ASCII fallback filename in content disposition, got %q", contentDisposition)
 	}
 }
 

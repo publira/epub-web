@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -121,7 +120,7 @@ func handleBuild(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/epub+zip")
-	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.epub"`, req.Title))
+	w.Header().Set("Content-Disposition", buildEPUBContentDisposition(req.Title))
 
 	if err := epub.Encode(w, doc); err != nil {
 		slog.Error("build: encode failed", "title", req.Title, "error", err)

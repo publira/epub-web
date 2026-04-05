@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 
@@ -149,6 +150,37 @@ func closeMultipartFiles(files []multipart.File) {
 		}
 		file.Close()
 	}
+}
+
+func buildEPUBContentDisposition(title string) string {
+	filename := strings.TrimSpace(title)
+	if filename == "" {
+		filename = "Untitled"
+	}
+	filename += ".epub"
+
+	fallback := toASCIIFilename(filename)
+	encoded := url.PathEscape(filename)
+
+	return fmt.Sprintf(`attachment; filename="%s"; filename*=UTF-8''%s`, fallback, encoded)
+}
+
+func toASCIIFilename(filename string) string {
+	var b strings.Builder
+	for _, r := range filename {
+		if r >= 0x20 && r <= 0x7E && r != '"' && r != '\\' && r != ';' {
+			b.WriteRune(r)
+			continue
+		}
+		b.WriteByte('_')
+	}
+
+	result := strings.TrimSpace(b.String())
+	if strings.Trim(result, "._-") == "" {
+		return "download.epub"
+	}
+
+	return result
 }
 
 func extractSpineImageRefs(ctx context.Context, file multipart.File, header *multipart.FileHeader) ([]epub.SpineImageReference, error) {
