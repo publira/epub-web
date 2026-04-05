@@ -145,14 +145,27 @@ func TestWithSecurityHeaders_SetsAllHeaders(t *testing.T) {
 	}
 }
 
-func TestWithOriginCheck_AllowsMatchingOrigin(t *testing.T) {
-	h := withOriginCheck(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func TestWithFetchSiteCheck_BlocksPostWithoutSecFetchSite(t *testing.T) {
+	h := withFetchSiteCheck(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
 	req := httptest.NewRequest(http.MethodPost, "/api/build", nil)
-	req.Host = "example.com"
-	req.Header.Set("Origin", "https://example.com")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("expected status %d, got %d", http.StatusForbidden, rec.Code)
+	}
+}
+
+func TestWithFetchSiteCheck_AllowsSameOriginPost(t *testing.T) {
+	h := withFetchSiteCheck(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest(http.MethodPost, "/api/build", nil)
+	req.Header.Set("Sec-Fetch-Site", "same-origin")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 
@@ -161,14 +174,28 @@ func TestWithOriginCheck_AllowsMatchingOrigin(t *testing.T) {
 	}
 }
 
-func TestWithOriginCheck_BlocksMismatchedOrigin(t *testing.T) {
-	h := withOriginCheck(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func TestWithFetchSiteCheck_AllowsSameSitePost(t *testing.T) {
+	h := withFetchSiteCheck(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
 	req := httptest.NewRequest(http.MethodPost, "/api/build", nil)
-	req.Host = "example.com"
-	req.Header.Set("Origin", "https://evil.example.com")
+	req.Header.Set("Sec-Fetch-Site", "same-site")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+}
+
+func TestWithFetchSiteCheck_BlocksCrossSitePost(t *testing.T) {
+	h := withFetchSiteCheck(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest(http.MethodPost, "/api/build", nil)
+	req.Header.Set("Sec-Fetch-Site", "cross-site")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 
@@ -177,23 +204,38 @@ func TestWithOriginCheck_BlocksMismatchedOrigin(t *testing.T) {
 	}
 }
 
-func TestWithOriginCheck_BlocksMissingOriginOnPost(t *testing.T) {
-	h := withOriginCheck(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func TestWithFetchSiteCheck_AllowsNoneSitePost(t *testing.T) {
+	h := withFetchSiteCheck(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
 	req := httptest.NewRequest(http.MethodPost, "/api/build", nil)
-	req.Host = "example.com"
+	req.Header.Set("Sec-Fetch-Site", "none")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusForbidden {
-		t.Fatalf("expected status %d, got %d", http.StatusForbidden, rec.Code)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
 	}
 }
 
-func TestWithOriginCheck_AllowsGetWithoutOrigin(t *testing.T) {
-	h := withOriginCheck(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func TestWithFetchSiteCheck_AllowsUnknownFetchSitePost(t *testing.T) {
+	h := withFetchSiteCheck(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest(http.MethodPost, "/api/build", nil)
+	req.Header.Set("Sec-Fetch-Site", "something-else")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+}
+
+func TestWithFetchSiteCheck_AllowsGetWithoutOrigin(t *testing.T) {
+	h := withFetchSiteCheck(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 

@@ -5,7 +5,6 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
-	"net/url"
 	"sync"
 	"time"
 )
@@ -49,17 +48,16 @@ func withSecurityHeaders(next http.Handler) http.Handler {
 	})
 }
 
-func withOriginCheck(next http.Handler) http.Handler {
+func withFetchSiteCheck(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
-			origin := r.Header.Get("Origin")
-			if origin == "" {
-				writeJSONError(w, http.StatusForbidden, "forbidden", "Missing Origin header.")
+			fetchSite := r.Header.Get("Sec-Fetch-Site")
+			if fetchSite == "" {
+				writeJSONError(w, http.StatusForbidden, "forbidden", "Missing Sec-Fetch-Site header.")
 				return
 			}
-			u, err := url.Parse(origin)
-			if err != nil || u.Host != r.Host {
-				writeJSONError(w, http.StatusForbidden, "forbidden", "Origin mismatch.")
+			if fetchSite == "cross-site" {
+				writeJSONError(w, http.StatusForbidden, "forbidden", "Cross-site request blocked.")
 				return
 			}
 		}
