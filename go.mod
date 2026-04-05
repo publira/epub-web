@@ -4,10 +4,8 @@ go 1.26.1
 
 require (
 	github.com/publira/epub v0.3.0
+	golang.org/x/image v0.38.0
 	golang.org/x/net v0.52.0
 )
 
-require (
-	golang.org/x/image v0.38.0 // indirect
-	golang.org/x/text v0.35.0 // indirect
-)
+require golang.org/x/text v0.35.0 // indirect
