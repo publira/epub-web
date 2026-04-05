@@ -26,12 +26,12 @@ func main() {
 	mux.HandleFunc("GET /livez", handleLivez)
 	mux.HandleFunc("GET /readyz", handleReadyz)
 	mux.HandleFunc("GET /api/config", handleConfig)
-	mux.HandleFunc("POST /api/extract", withTimeout(withLimit(handleExtract)))
-	mux.HandleFunc("POST /api/build", withTimeout(withLimit(handleBuild)))
+	mux.Handle("POST /api/extract", withOriginCheck(withTimeout(withLimit(handleExtract))))
+	mux.Handle("POST /api/build", withOriginCheck(withTimeout(withLimit(handleBuild))))
 
 	mux.Handle("/", withCache(http.FileServer(GetFrontendFS())))
 
-	handler := h2c.NewHandler(withLog(mux), &http2.Server{})
+	handler := h2c.NewHandler(withLog(withSecurityHeaders(mux)), &http2.Server{})
 	addr := getListenAddress()
 	server := &http.Server{
 		Addr:    addr,
