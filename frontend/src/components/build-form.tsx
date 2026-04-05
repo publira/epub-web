@@ -105,7 +105,7 @@ const SortableImagePreviewCard = ({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: preview.id });
+  } = useSortable({ disabled, id: preview.id });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -436,6 +436,10 @@ export const BuildForm = () => {
 
   const handleAddBuildFiles = useCallback(
     (files: File[]) => {
+      if (isSubmitting) {
+        return;
+      }
+
       if (files.length === 0) {
         return;
       }
@@ -444,11 +448,15 @@ export const BuildForm = () => {
       setSuccess(null);
       form.setFieldValue("buildFiles", [...buildFiles, ...files]);
     },
-    [buildFiles, form]
+    [buildFiles, form, isSubmitting]
   );
 
   const handleCardDropFiles = useCallback(
     (droppedFiles: readonly File[]) => {
+      if (isSubmitting) {
+        return;
+      }
+
       const droppedImages = droppedFiles.filter((file) =>
         file.type.startsWith("image/")
       );
@@ -501,14 +509,21 @@ export const BuildForm = () => {
       config.maxPages,
       config.maxUploadMB,
       form,
+      isSubmitting,
     ]
   );
 
-  const { isDragOver: isFormDragOver, dragProps } =
-    useDrop(handleCardDropFiles);
+  const { isDragOver: isFormDragOver, dragProps } = useDrop(
+    handleCardDropFiles,
+    isSubmitting
+  );
 
   const handleRemoveImage = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (isSubmitting) {
+        return;
+      }
+
       const { index } = (e.currentTarget as HTMLButtonElement).dataset;
       const indexNum = Number.parseInt(index || "0", 10);
       setError(null);
@@ -518,14 +533,18 @@ export const BuildForm = () => {
         buildFiles.filter((_, fileIndex) => fileIndex !== indexNum)
       );
     },
-    [buildFiles, form]
+    [buildFiles, form, isSubmitting]
   );
 
   const handleRemoveAllImages = useCallback(() => {
+    if (isSubmitting) {
+      return;
+    }
+
     setError(null);
     setSuccess(null);
     form.setFieldValue("buildFiles", []);
-  }, [form]);
+  }, [form, isSubmitting]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {

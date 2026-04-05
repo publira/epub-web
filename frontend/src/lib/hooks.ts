@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type * as z from "zod";
 
 import { configSchema } from "./mutations";
@@ -57,7 +57,8 @@ export const useSearchParamsState = <T extends string>(
 };
 
 export const useDrop = (
-  onDropFiles: (files: readonly File[]) => void
+  onDropFiles: (files: readonly File[]) => void,
+  disabled = false
 ): {
   isDragOver: boolean;
   dragProps: {
@@ -73,33 +74,45 @@ export const useDrop = (
   const onDragOver = useCallback<React.DragEventHandler<HTMLDivElement>>(
     (event) => {
       event.preventDefault();
+      if (disabled) {
+        return;
+      }
+
       if (!isDragOver) {
         setIsDragOver(true);
       }
     },
-    [isDragOver]
+    [disabled, isDragOver]
   );
 
   const onDragEnter = useCallback<React.DragEventHandler<HTMLDivElement>>(
     (event) => {
       event.preventDefault();
+      if (disabled) {
+        return;
+      }
+
       dragDepthRef.current += 1;
       if (!isDragOver) {
         setIsDragOver(true);
       }
     },
-    [isDragOver]
+    [disabled, isDragOver]
   );
 
   const onDragLeave = useCallback<React.DragEventHandler<HTMLDivElement>>(
     (event) => {
       event.preventDefault();
+      if (disabled) {
+        return;
+      }
+
       dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
       if (dragDepthRef.current === 0) {
         setIsDragOver(false);
       }
     },
-    []
+    [disabled]
   );
 
   const onDrop = useCallback<React.DragEventHandler<HTMLDivElement>>(
@@ -107,10 +120,22 @@ export const useDrop = (
       event.preventDefault();
       dragDepthRef.current = 0;
       setIsDragOver(false);
+      if (disabled) {
+        return;
+      }
+
       onDropFiles([...(event.dataTransfer.files ?? [])]);
     },
-    [onDropFiles]
+    [disabled, onDropFiles]
   );
+
+  useEffect(() => {
+    if (!disabled) {
+      return;
+    }
+    dragDepthRef.current = 0;
+    setIsDragOver(false);
+  }, [disabled]);
 
   return {
     dragProps: {
