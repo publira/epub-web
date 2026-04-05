@@ -12,6 +12,7 @@ import {
 import { useAppConfig } from "../lib/hooks";
 import type { ExtractedImage } from "../lib/mutations";
 import { extractMutationFn, getApiErrorMessage } from "../lib/mutations";
+import { triggerDownload } from "../lib/utils";
 import { LimitNotes } from "./limit-notes";
 import { Card, FilePicker, PrimaryButton } from "./ui/primitives";
 
@@ -134,6 +135,23 @@ export const ExtractForm = () => {
     };
   }, [extractedPreviewItems]);
 
+  const handleDownloadImage = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      const { imageKey } = (e.currentTarget as HTMLButtonElement).dataset;
+      const image = extractedPreviewItems.find((img) => img.key === imageKey);
+      if (image) {
+        triggerDownload(image.blob, image.name);
+      }
+    },
+    [extractedPreviewItems]
+  );
+
+  const handleDownloadAllImages = useCallback(() => {
+    for (const image of extractedImages) {
+      triggerDownload(image.blob, image.name);
+    }
+  }, [extractedImages]);
+
   const limitItems: string[] = [];
   if (config.maxUploadMB > 0) {
     limitItems.push(`1リクエストあたり最大 ${config.maxUploadMB} MiB`);
@@ -209,9 +227,18 @@ export const ExtractForm = () => {
 
       {extractedImages.length > 0 && (
         <div className="mt-6 border-t border-current/20 pt-6">
-          <h3 className="mb-4 text-sm font-semibold">
+          <h3 className="mb-3 text-sm font-semibold">
             抽出された画像 ({extractedImages.length})
           </h3>
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className="cursor-pointer rounded-lg border border-primary/28 bg-primary-subtle px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary-subtle-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/75"
+              onClick={handleDownloadAllImages}
+            >
+              全ダウンロード
+            </button>
+          </div>
           <div className="flex w-full max-w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-2 touch-pan-x">
             {extractedPreviewItems.map((image) => (
               <div key={image.key} className="group w-32 shrink-0 snap-start">
@@ -231,6 +258,14 @@ export const ExtractForm = () => {
                 <p className="mt-1 m-0 text-[11px] text-muted-foreground/90">
                   {image.sizeLabel} / {previewDimensions[image.key] ?? "..."}
                 </p>
+                <button
+                  type="button"
+                  data-image-key={image.key}
+                  className="mt-2 w-full cursor-pointer rounded-lg border border-primary/28 bg-primary-subtle px-2 py-1 text-[11px] font-semibold text-primary transition hover:bg-primary-subtle-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/75"
+                  onClick={handleDownloadImage}
+                >
+                  ダウンロード
+                </button>
               </div>
             ))}
           </div>

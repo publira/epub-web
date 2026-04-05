@@ -1,6 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { useStore } from "@tanstack/react-store";
+import { X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
@@ -150,7 +151,8 @@ export const BuildForm = () => {
 
   const imagePreviews = useMemo(
     () =>
-      buildFiles.map((file) => ({
+      buildFiles.map((file, index) => ({
+        index,
         key: `${file.name}:${file.size}:${file.lastModified}`,
         name: file.name,
         sizeLabel: formatSizeLabel(file.size),
@@ -207,6 +209,26 @@ export const BuildForm = () => {
     },
     [form]
   );
+
+  const handleRemoveImage = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      const { index } = (e.currentTarget as HTMLButtonElement).dataset;
+      const indexNum = Number.parseInt(index || "0", 10);
+      setError(null);
+      setSuccess(null);
+      form.setFieldValue(
+        "buildFiles",
+        buildFiles.filter((_, fileIndex) => fileIndex !== indexNum)
+      );
+    },
+    [buildFiles, form]
+  );
+
+  const handleRemoveAllImages = useCallback(() => {
+    setError(null);
+    setSuccess(null);
+    form.setFieldValue("buildFiles", []);
+  }, [form]);
 
   const limitItems: string[] = [];
   if (config.maxUploadMB > 0) {
@@ -334,28 +356,52 @@ export const BuildForm = () => {
         </p>
 
         {imagePreviews.length > 0 && (
-          <div className="flex w-full max-w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-2 touch-pan-x">
-            {imagePreviews.map((preview) => (
-              <div key={preview.key} className="group w-32 shrink-0 snap-start">
-                <div className="mb-2 aspect-square flex items-center justify-center overflow-hidden rounded-lg bg-muted">
-                  <img
-                    src={preview.url}
-                    alt={preview.name}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <p
-                  className="truncate text-xs text-muted-foreground"
-                  title={preview.name}
+          <div className="grid gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                className="cursor-pointer rounded-lg border border-error/35 bg-error/10 px-3 py-1.5 text-xs font-semibold text-error transition hover:bg-error/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error/45"
+                onClick={handleRemoveAllImages}
+              >
+                全削除
+              </button>
+            </div>
+
+            <div className="flex w-full max-w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-2 touch-pan-x">
+              {imagePreviews.map((preview) => (
+                <div
+                  key={preview.key}
+                  className="group w-32 shrink-0 snap-start"
                 >
-                  {preview.name}
-                </p>
-                <p className="mt-1 m-0 text-[11px] text-muted-foreground/90">
-                  {preview.sizeLabel} /{" "}
-                  {previewDimensions[preview.key] ?? "..."}
-                </p>
-              </div>
-            ))}
+                  <div className="relative mb-2 aspect-square flex items-center justify-center overflow-hidden rounded-lg bg-muted">
+                    <img
+                      src={preview.url}
+                      alt={preview.name}
+                      className="h-full w-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      data-index={preview.index}
+                      className="absolute top-1.5 right-1.5 inline-flex size-7 items-center justify-center rounded-full border border-slate-900/20 bg-slate-50/90 text-slate-700 shadow-sm transition hover:scale-105 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/75"
+                      onClick={handleRemoveImage}
+                      aria-label={`${preview.name} を選択から削除`}
+                    >
+                      <X aria-hidden="true" size={14} strokeWidth={2.25} />
+                    </button>
+                  </div>
+                  <p
+                    className="truncate text-xs text-muted-foreground"
+                    title={preview.name}
+                  >
+                    {preview.name}
+                  </p>
+                  <p className="mt-1 m-0 text-[11px] text-muted-foreground/90">
+                    {preview.sizeLabel} /{" "}
+                    {previewDimensions[preview.key] ?? "..."}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
