@@ -174,7 +174,7 @@ func TestWithFetchSiteCheck_AllowsSameOriginPost(t *testing.T) {
 	}
 }
 
-func TestWithFetchSiteCheck_AllowsSameSitePost(t *testing.T) {
+func TestWithFetchSiteCheck_BlocksSameSitePost(t *testing.T) {
 	h := withFetchSiteCheck(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -184,8 +184,8 @@ func TestWithFetchSiteCheck_AllowsSameSitePost(t *testing.T) {
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("expected status %d, got %d", http.StatusForbidden, rec.Code)
 	}
 }
 
@@ -204,7 +204,7 @@ func TestWithFetchSiteCheck_BlocksCrossSitePost(t *testing.T) {
 	}
 }
 
-func TestWithFetchSiteCheck_AllowsNoneSitePost(t *testing.T) {
+func TestWithFetchSiteCheck_BlocksNoneSitePost(t *testing.T) {
 	h := withFetchSiteCheck(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -214,12 +214,12 @@ func TestWithFetchSiteCheck_AllowsNoneSitePost(t *testing.T) {
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("expected status %d, got %d", http.StatusForbidden, rec.Code)
 	}
 }
 
-func TestWithFetchSiteCheck_AllowsUnknownFetchSitePost(t *testing.T) {
+func TestWithFetchSiteCheck_BlocksUnknownFetchSitePost(t *testing.T) {
 	h := withFetchSiteCheck(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -229,8 +229,8 @@ func TestWithFetchSiteCheck_AllowsUnknownFetchSitePost(t *testing.T) {
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("expected status %d, got %d", http.StatusForbidden, rec.Code)
 	}
 }
 

@@ -52,12 +52,8 @@ func withFetchSiteCheck(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			fetchSite := r.Header.Get("Sec-Fetch-Site")
-			if fetchSite == "" {
-				writeJSONError(w, http.StatusForbidden, "forbidden", "Missing Sec-Fetch-Site header.")
-				return
-			}
-			if fetchSite == "cross-site" {
-				writeJSONError(w, http.StatusForbidden, "forbidden", "Cross-site request blocked.")
+			if fetchSite != "same-origin" {
+				writeJSONError(w, http.StatusForbidden, "forbidden", "Only same-origin requests are allowed.")
 				return
 			}
 		}
