@@ -62,6 +62,7 @@ interface ImagePreview {
 interface SortableImagePreviewCardProps {
   preview: ImagePreview;
   dimensionsLabel: string;
+  disabled?: boolean;
   onRemove: React.MouseEventHandler<HTMLButtonElement>;
 }
 
@@ -92,6 +93,7 @@ const ImagePreviewCard = ({
 const SortableImagePreviewCard = ({
   preview,
   dimensionsLabel,
+  disabled,
   onRemove,
 }: SortableImagePreviewCardProps) => {
   const {
@@ -127,7 +129,8 @@ const SortableImagePreviewCard = ({
         <button
           type="button"
           data-index={preview.index}
-          className="absolute top-1.5 right-1.5 inline-flex size-7 cursor-pointer touch-none items-center justify-center rounded-full border border-slate-900/20 bg-slate-50/90 text-slate-700 shadow-sm transition hover:scale-105 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/75"
+          className="absolute top-1.5 right-1.5 inline-flex size-7 cursor-pointer touch-none items-center justify-center rounded-full border border-slate-900/20 bg-slate-50/90 text-slate-700 shadow-sm transition hover:scale-105 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/75 disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={disabled}
           onClick={onRemove}
           aria-label={`${preview.name} を選択から削除`}
         >
@@ -174,6 +177,8 @@ export const BuildForm = () => {
 
   const { data: config } = useAppConfig();
 
+  const resetFormRef = useRef<(() => void) | null>(null);
+
   const mutation = useMutation({
     mutationFn: buildMutationFn,
     onError: (caughtError) => {
@@ -192,6 +197,7 @@ export const BuildForm = () => {
     onSuccess: ({ blob, filename }) => {
       triggerDownload(blob, filename);
       setSuccess("ePubを生成してダウンロードしました。");
+      resetFormRef.current?.();
     },
   });
 
@@ -259,6 +265,8 @@ export const BuildForm = () => {
       });
     },
   });
+
+  resetFormRef.current = form.reset.bind(form);
 
   const buildFilesCount = useStore(
     form.store,
@@ -467,14 +475,20 @@ export const BuildForm = () => {
     })
   );
 
-  const handleDragStart = useCallback(({ active }: DragStartEvent) => {
-    setActiveId(String(active.id));
-  }, []);
+  const handleDragStart = useCallback(
+    ({ active }: DragStartEvent) => {
+      if (isSubmitting) {
+        return;
+      }
+      setActiveId(String(active.id));
+    },
+    [isSubmitting]
+  );
 
   const handleDragEnd = useCallback(
     ({ active, over }: DragEndEvent) => {
       setActiveId(null);
-      if (!over || active.id === over.id) {
+      if (isSubmitting || !over || active.id === over.id) {
         return;
       }
 
@@ -496,7 +510,7 @@ export const BuildForm = () => {
         arrayMove(buildFiles, oldIndex, newIndex)
       );
     },
-    [buildFiles, form, imagePreviews]
+    [buildFiles, form, imagePreviews, isSubmitting]
   );
 
   const limitItems: string[] = [];
@@ -543,6 +557,7 @@ export const BuildForm = () => {
                 onValueChange={field.handleChange}
                 placeholder="Untitled"
                 maxLength={120}
+                disabled={isSubmitting}
               />
             </label>
           )}
@@ -560,6 +575,7 @@ export const BuildForm = () => {
                   id="build-direction"
                   value={field.state.value}
                   onValueChange={field.handleChange}
+                  disabled={isSubmitting}
                 >
                   <option value="rtl">右綴じ (RTL)</option>
                   <option value="ltr">左綴じ (LTR)</option>
@@ -579,6 +595,7 @@ export const BuildForm = () => {
                   id="build-spread"
                   value={field.state.value}
                   onValueChange={field.handleChange}
+                  disabled={isSubmitting}
                 >
                   <option value="right">右ページ</option>
                   <option value="left">左ページ</option>
@@ -614,6 +631,7 @@ export const BuildForm = () => {
                 multiple
                 ctaText="画像を選択"
                 helperText="クリックまたはドラッグ＆ドロップで画像を追加（複数選択可）"
+                disabled={isSubmitting}
                 onFilesChange={handleAddBuildFiles}
               />
               {field.state.meta.errors.length > 0 && (
@@ -634,7 +652,8 @@ export const BuildForm = () => {
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                className="cursor-pointer rounded-lg border border-error/35 bg-error/10 px-3 py-1.5 text-xs font-semibold text-error transition hover:bg-error/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error/45"
+                className="cursor-pointer rounded-lg border border-error/35 bg-error/10 px-3 py-1.5 text-xs font-semibold text-error transition hover:bg-error/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error/45 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={isSubmitting}
                 onClick={handleRemoveAllImages}
               >
                 全削除
@@ -664,6 +683,7 @@ export const BuildForm = () => {
                           buildFileKey(buildFiles[preview.index])
                         ] ?? "..."
                       }
+                      disabled={isSubmitting}
                       onRemove={handleRemoveImage}
                     />
                   ))}
