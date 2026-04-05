@@ -1,6 +1,7 @@
 package main
 
 import (
+	"archive/zip"
 	"bytes"
 	"encoding/json"
 	"image"
@@ -228,6 +229,65 @@ func TestHandleBuild_RejectsImagePixelsLimit(t *testing.T) {
 	}
 }
 
+func TestHandleBuild_PreservesPageOrder(t *testing.T) {
+	firstImage := testPNGWithSize(t, 10, 20)
+	secondImage := testPNGWithSize(t, 30, 40)
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	if err := writer.WriteField("title", "ordered"); err != nil {
+		t.Fatalf("failed to write title field: %v", err)
+	}
+	for i, imageData := range [][]byte{firstImage, secondImage} {
+		part, err := writer.CreateFormFile("images", "page.png")
+		if err != nil {
+			t.Fatalf("failed to create image part %d: %v", i, err)
+		}
+		if _, err := part.Write(imageData); err != nil {
+			t.Fatalf("failed to write image part %d: %v", i, err)
+		}
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatalf("failed to close multipart writer: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/api/build", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	rec := httptest.NewRecorder()
+
+	withLimit(handleBuild).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+
+	doc, err := epub.Decode(bytes.NewReader(rec.Body.Bytes()), int64(rec.Body.Len()))
+	if err != nil {
+		t.Fatalf("failed to decode built epub: %v", err)
+	}
+	refs, err := doc.ExtractReferencedImagesFromSpine()
+	if err != nil {
+		t.Fatalf("failed to extract spine refs: %v", err)
+	}
+	if len(refs) != 2 {
+		t.Fatalf("expected %d extracted refs, got %d", 2, len(refs))
+	}
+	firstPixels, err := getAssetImagePixels(refs[0].Asset)
+	if err != nil {
+		t.Fatalf("failed to decode first image dimensions: %v", err)
+	}
+	secondPixels, err := getAssetImagePixels(refs[1].Asset)
+	if err != nil {
+		t.Fatalf("failed to decode second image dimensions: %v", err)
+	}
+	if firstPixels != 200 {
+		t.Fatalf("expected first image pixels %d, got %d", 200, firstPixels)
+	}
+	if secondPixels != 1200 {
+		t.Fatalf("expected second image pixels %d, got %d", 1200, secondPixels)
+	}
+}
+
 func TestHandleExtract_RejectsAssetSizeLimit(t *testing.T) {
 	t.Setenv("EPUB_WEB_MAX_ASSET_BYTES", "10")
 
@@ -266,9 +326,66 @@ func TestHandleExtract_RejectsImagePixelsLimit(t *testing.T) {
 	}
 }
 
+func TestHandleExtract_ReturnsZipArchive(t *testing.T) {
+	epubBytes := buildTestEPUBWithImages(t, [][]byte{
+		testPNGWithSize(t, 10, 20),
+		testPNGWithSize(t, 30, 40),
+	})
+	req := newMultipartRequest(t, "/api/extract", "epub", "test.epub", epubBytes)
+	rec := httptest.NewRecorder()
+
+	withLimit(handleExtract).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+	if got := rec.Header().Get("Content-Type"); !strings.Contains(got, "application/zip") {
+		t.Fatalf("expected zip content type, got %q", got)
+	}
+
+	zr, err := zip.NewReader(bytes.NewReader(rec.Body.Bytes()), int64(rec.Body.Len()))
+	if err != nil {
+		t.Fatalf("failed to read extracted zip: %v", err)
+	}
+	if len(zr.File) != 2 {
+		t.Fatalf("expected %d extracted files, got %d", 2, len(zr.File))
+	}
+	if zr.File[0].Name != "item/image/p-001.png" {
+		t.Fatalf("expected first extracted file %q, got %q", "item/image/p-001.png", zr.File[0].Name)
+	}
+	if zr.File[1].Name != "item/image/p-002.png" {
+		t.Fatalf("expected second extracted file %q, got %q", "item/image/p-002.png", zr.File[1].Name)
+	}
+	if zr.File[0].UncompressedSize64 == 0 || zr.File[1].UncompressedSize64 == 0 {
+		t.Fatalf("expected extracted files to be non-empty")
+	}
+}
+
 func buildTestEPUB(t *testing.T, pageCount int) []byte {
 	t.Helper()
 	return buildTestEPUBWithImage(t, testPNG(t), pageCount)
+}
+
+func buildTestEPUBWithImages(t *testing.T, images [][]byte) []byte {
+	t.Helper()
+
+	doc := &epub.Document{
+		Metadata:  epub.Metadata{Title: "test"},
+		Direction: "rtl",
+	}
+
+	for i, imageData := range images {
+		if _, _, err := doc.AddPageWithAsset(bytes.NewReader(imageData), int64(len(imageData)), "right"); err != nil {
+			t.Fatalf("failed to add page asset %d: %v", i, err)
+		}
+	}
+
+	var encoded bytes.Buffer
+	if err := epub.Encode(&encoded, doc); err != nil {
+		t.Fatalf("failed to encode test epub: %v", err)
+	}
+
+	return encoded.Bytes()
 }
 
 func buildTestEPUBWithImage(t *testing.T, imageData []byte, pageCount int) []byte {
