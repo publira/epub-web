@@ -24,6 +24,7 @@ docker run --rm -p 8080:8080 epub-web
 | `EPUB_WEB_MAX_PAGES` | `200` | 最大ページ数。`0`で無制限 |
 | `EPUB_WEB_MAX_ASSET_BYTES` | `33554432` | 1ファイルあたり最大サイズ (bytes)。`0`で無制限 |
 | `EPUB_WEB_MAX_IMAGE_PIXELS` | `50000000` | 画像の最大ピクセル数 (width × height)。`0`で無制限 |
+| `EPUB_WEB_WORKERS` | `4` | 並列処理ワーカー数。`1`以上の整数 |
 | `EPUB_WEB_REQUEST_TIMEOUT` | `60s` | APIタイムアウト (Go duration形式)。`0`で無制限 |
 | `EPUB_WEB_SHUTDOWN_TIMEOUT` | `10s` | グレースフルシャットダウンの待機時間 (Go duration形式)。`0`で無制限 |
 
@@ -36,6 +37,7 @@ EPUB_WEB_MAX_UPLOAD_SIZE=256 \
 EPUB_WEB_MAX_PAGES=2000 \
 EPUB_WEB_MAX_ASSET_BYTES=67108864 \
 EPUB_WEB_MAX_IMAGE_PIXELS=100000000 \
+EPUB_WEB_WORKERS=8 \
 EPUB_WEB_REQUEST_TIMEOUT=90s \
 EPUB_WEB_SHUTDOWN_TIMEOUT=15s \
 go run ./...

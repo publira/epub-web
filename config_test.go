@@ -167,6 +167,38 @@ func TestGetRequestTimeout_InvalidReturnsDefault(t *testing.T) {
 	}
 }
 
+func TestGetWorkerLimit(t *testing.T) {
+	t.Setenv("EPUB_WEB_WORKERS", "8")
+
+	if got := getWorkerLimit(); got != 8 {
+		t.Fatalf("expected %d, got %d", 8, got)
+	}
+}
+
+func TestGetWorkerLimit_DefaultWhenUnset(t *testing.T) {
+	t.Setenv("EPUB_WEB_WORKERS", "")
+
+	if got := getWorkerLimit(); got != defaultWorkers {
+		t.Fatalf("expected %d, got %d", defaultWorkers, got)
+	}
+}
+
+func TestGetWorkerLimit_InvalidReturnsDefault(t *testing.T) {
+	t.Setenv("EPUB_WEB_WORKERS", "invalid")
+
+	if got := getWorkerLimit(); got != defaultWorkers {
+		t.Fatalf("expected %d, got %d", defaultWorkers, got)
+	}
+}
+
+func TestGetWorkerLimit_ZeroReturnsDefault(t *testing.T) {
+	t.Setenv("EPUB_WEB_WORKERS", "0")
+
+	if got := getWorkerLimit(); got != defaultWorkers {
+		t.Fatalf("expected %d, got %d", defaultWorkers, got)
+	}
+}
+
 func TestGetShutdownTimeout(t *testing.T) {
 	t.Setenv("EPUB_WEB_SHUTDOWN_TIMEOUT", "5s")
 

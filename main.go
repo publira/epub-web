@@ -7,11 +7,18 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync/atomic"
 	"syscall"
 
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
+
+var isReady atomic.Bool
+
+func init() {
+	isReady.Store(true)
+}
 
 func main() {
 	mux := http.NewServeMux()

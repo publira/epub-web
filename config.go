@@ -14,6 +14,7 @@ const (
 	defaultMaxPages        = 200
 	defaultMaxAssetBytes   = int64(32 * 1024 * 1024)
 	defaultMaxImagePixels  = int64(50_000_000)
+	defaultWorkers         = 4
 	defaultRequestTimeout  = 60 * time.Second
 	defaultShutdownTimeout = 10 * time.Second
 )
@@ -111,6 +112,20 @@ func getRequestTimeout() time.Duration {
 	}
 
 	return timeout
+}
+
+func getWorkerLimit() int {
+	value := os.Getenv("EPUB_WEB_WORKERS")
+	if value == "" {
+		return defaultWorkers
+	}
+
+	workers, err := strconv.Atoi(value)
+	if err != nil || workers <= 0 {
+		return defaultWorkers
+	}
+
+	return workers
 }
 
 func getShutdownTimeout() time.Duration {
