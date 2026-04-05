@@ -5,6 +5,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 )
@@ -31,6 +32,38 @@ func withLog(next http.Handler) http.Handler {
 			"duration", time.Since(start),
 			"remote", r.RemoteAddr,
 		)
+	})
+}
+
+func withSecurityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := w.Header()
+		h.Set("X-Content-Type-Options", "nosniff")
+		h.Set("X-Frame-Options", "DENY")
+		h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		h.Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=()")
+		h.Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+		h.Set("Cross-Origin-Opener-Policy", "same-origin")
+		h.Set("Cross-Origin-Resource-Policy", "same-origin")
+		next.ServeHTTP(w, r)
+	})
+}
+
+func withOriginCheck(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			origin := r.Header.Get("Origin")
+			if origin == "" {
+				writeJSONError(w, http.StatusForbidden, "forbidden", "Missing Origin header.")
+				return
+			}
+			u, err := url.Parse(origin)
+			if err != nil || u.Host != r.Host {
+				writeJSONError(w, http.StatusForbidden, "forbidden", "Origin mismatch.")
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
 	})
 }
 
