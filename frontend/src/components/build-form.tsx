@@ -28,12 +28,13 @@ import {
   formatSecondsFromMs,
   formatSizeLabel,
 } from "../lib/format";
-import { useAppConfig } from "../lib/hooks";
+import { useAppConfig, useDrop } from "../lib/hooks";
 import { buildMutationFn, getApiErrorMessage } from "../lib/mutations";
 import { triggerDownload } from "../lib/utils";
 import { LimitNotes } from "./limit-notes";
 import {
   Card,
+  DropOverlay,
   FilePicker,
   PrimaryButton,
   SelectInput,
@@ -362,6 +363,79 @@ export const BuildForm = () => {
     [form]
   );
 
+  const handleAddBuildFiles = useCallback(
+    (files: File[]) => {
+      if (files.length === 0) {
+        return;
+      }
+
+      setError(null);
+      setSuccess(null);
+      form.setFieldValue("buildFiles", [...buildFiles, ...files]);
+    },
+    [buildFiles, form]
+  );
+
+  const handleCardDropFiles = useCallback(
+    (droppedFiles: readonly File[]) => {
+      const droppedImages = droppedFiles.filter((file) =>
+        file.type.startsWith("image/")
+      );
+      if (droppedImages.length === 0) {
+        setError("画像ファイルをドロップしてください。");
+        setSuccess(null);
+        return;
+      }
+
+      const nextFiles = [...buildFiles, ...droppedImages];
+
+      if (config.maxPages > 0 && nextFiles.length > config.maxPages) {
+        setError(
+          `ページ数は最大 ${formatInteger(config.maxPages)} ページです。`
+        );
+        setSuccess(null);
+        return;
+      }
+
+      if (config.maxUploadMB > 0) {
+        const maxUploadBytes = config.maxUploadMB * 1024 * 1024;
+        const totalBytes = nextFiles.reduce((sum, file) => sum + file.size, 0);
+        if (totalBytes > maxUploadBytes) {
+          setError(`1リクエストあたり最大 ${config.maxUploadMB} MiB です。`);
+          setSuccess(null);
+          return;
+        }
+      }
+
+      if (config.maxAssetBytes > 0) {
+        const oversized = nextFiles.find(
+          (file) => file.size > config.maxAssetBytes
+        );
+        if (oversized) {
+          setError(
+            `画像1枚あたり最大 ${formatMiBFromBytes(config.maxAssetBytes)} です。`
+          );
+          setSuccess(null);
+          return;
+        }
+      }
+
+      setError(null);
+      setSuccess(null);
+      form.setFieldValue("buildFiles", nextFiles);
+    },
+    [
+      buildFiles,
+      config.maxAssetBytes,
+      config.maxPages,
+      config.maxUploadMB,
+      form,
+    ]
+  );
+
+  const { isDragOver: isFormDragOver, dragProps } =
+    useDrop(handleCardDropFiles);
+
   const handleRemoveImage = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
       const { index } = (e.currentTarget as HTMLButtonElement).dataset;
@@ -449,7 +523,12 @@ export const BuildForm = () => {
   }
 
   return (
-    <Card className="min-w-0 space-y-2 animate-rise p-fluid-sm">
+    <Card
+      className="relative min-w-0 space-y-2 animate-rise p-fluid-sm"
+      {...dragProps}
+    >
+      {isFormDragOver && <DropOverlay message="ここに画像ファイルをドロップ" />}
+
       <LimitNotes title="変換時の制限" items={limitItems} />
 
       <form className="grid gap-4" onSubmit={handleSubmit}>
@@ -534,8 +613,8 @@ export const BuildForm = () => {
                 accept="image/*"
                 multiple
                 ctaText="画像を選択"
-                helperText="クリックして画像を追加（複数選択可）"
-                onFilesChange={field.handleChange}
+                helperText="クリックまたはドラッグ＆ドロップで画像を追加（複数選択可）"
+                onFilesChange={handleAddBuildFiles}
               />
               {field.state.meta.errors.length > 0 && (
                 <p className="m-0 text-sm font-semibold text-error">
