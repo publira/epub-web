@@ -29,7 +29,7 @@ func main() {
 	mux.HandleFunc("POST /api/extract", withTimeout(withLimit(handleExtract)))
 	mux.HandleFunc("POST /api/build", withTimeout(withLimit(handleBuild)))
 
-	mux.Handle("/", http.FileServer(GetFrontendFS()))
+	mux.Handle("/", withCache(http.FileServer(GetFrontendFS())))
 
 	handler := h2c.NewHandler(withLog(mux), &http2.Server{})
 	addr := getListenAddress()
