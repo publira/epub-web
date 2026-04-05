@@ -107,6 +107,70 @@ func TestBuildDocument_SetsAuthorCreators(t *testing.T) {
 	}
 }
 
+func TestBuildDocument_RejectsInvalidLayout(t *testing.T) {
+	fileHeaders := createImageFileHeaders(t, [][]byte{testPNG(t)})
+	_, err := buildDocument(context.Background(), BuildRequest{Title: "book", Direction: "rtl", Layout: "fixed", Spread: "right"}, fileHeaders)
+	if err == nil {
+		t.Fatal("expected error for invalid layout")
+	}
+
+	reqErr, ok := asRequestError(err)
+	if !ok {
+		t.Fatalf("expected requestError, got %T", err)
+	}
+	if reqErr.code != "invalid_layout" {
+		t.Fatalf("expected code %q, got %q", "invalid_layout", reqErr.code)
+	}
+}
+
+func TestBuildDocument_RejectsInvalidSpread(t *testing.T) {
+	fileHeaders := createImageFileHeaders(t, [][]byte{testPNG(t)})
+	_, err := buildDocument(context.Background(), BuildRequest{Title: "book", Direction: "rtl", Layout: "pre-paginated", Spread: "none"}, fileHeaders)
+	if err == nil {
+		t.Fatal("expected error for invalid spread")
+	}
+
+	reqErr, ok := asRequestError(err)
+	if !ok {
+		t.Fatalf("expected requestError, got %T", err)
+	}
+	if reqErr.code != "invalid_spread" {
+		t.Fatalf("expected code %q, got %q", "invalid_spread", reqErr.code)
+	}
+}
+
+func TestBuildDocument_NormalizesBuildOptions(t *testing.T) {
+	fileHeaders := createImageFileHeaders(t, [][]byte{testPNG(t)})
+	doc, err := buildDocument(context.Background(), BuildRequest{Title: "book", Direction: "rtl", Layout: " Reflowable ", Spread: " RIGHT "}, fileHeaders)
+	if err != nil {
+		t.Fatalf("buildDocument failed: %v", err)
+	}
+
+	if doc.Layout != epub.LayoutReflowable {
+		t.Fatalf("expected layout %v, got %v", epub.LayoutReflowable, doc.Layout)
+	}
+}
+
+func TestBuildDocument_NormalizesSpreadAndAssignsPages(t *testing.T) {
+	fileHeaders := createImageFileHeaders(t, [][]byte{
+		testPNGWithSize(t, 10, 10),
+		testPNGWithSize(t, 20, 20),
+		testPNGWithSize(t, 30, 30),
+	})
+
+	doc, err := buildDocument(context.Background(), BuildRequest{
+		Title:     "book",
+		Direction: "rtl",
+		Layout:    " pre-paginated ",
+		Spread:    " LEFT ",
+	}, fileHeaders)
+	if err != nil {
+		t.Fatalf("buildDocument failed: %v", err)
+	}
+
+	assertPageSpreads(t, doc, []string{"center", "left", "right"})
+}
+
 func TestValidateBuildFiles_RejectsAssetSizeLimit(t *testing.T) {
 	t.Setenv("EPUB_WEB_MAX_ASSET_BYTES", "10")
 	fileHeaders := createImageFileHeaders(t, [][]byte{testPNG(t)})
@@ -154,6 +218,79 @@ func TestAddBuildPagesInOrder_PreservesOrder(t *testing.T) {
 	}
 	if secondPixels != 1200 {
 		t.Fatalf("expected second image pixels %d, got %d", 1200, secondPixels)
+	}
+}
+
+func TestAddBuildPagesInOrder_AssignsSpreadFromRight(t *testing.T) {
+	fileHeaders := createImageFileHeaders(t, [][]byte{
+		testPNGWithSize(t, 10, 10),
+		testPNGWithSize(t, 20, 20),
+		testPNGWithSize(t, 30, 30),
+		testPNGWithSize(t, 40, 40),
+	})
+	doc := &epub.Document{Metadata: epub.Metadata{Title: "spread-right"}, Direction: "rtl"}
+
+	if err := addBuildPagesInOrder(context.Background(), doc, fileHeaders, "right"); err != nil {
+		t.Fatalf("addBuildPagesInOrder failed: %v", err)
+	}
+
+	assertPageSpreads(t, doc, []string{"center", "right", "left", "right"})
+}
+
+func TestAddBuildPagesInOrder_AssignsSpreadFromLeft(t *testing.T) {
+	fileHeaders := createImageFileHeaders(t, [][]byte{
+		testPNGWithSize(t, 10, 10),
+		testPNGWithSize(t, 20, 20),
+		testPNGWithSize(t, 30, 30),
+		testPNGWithSize(t, 40, 40),
+	})
+	doc := &epub.Document{Metadata: epub.Metadata{Title: "spread-left"}, Direction: "rtl"}
+
+	if err := addBuildPagesInOrder(context.Background(), doc, fileHeaders, "left"); err != nil {
+		t.Fatalf("addBuildPagesInOrder failed: %v", err)
+	}
+
+	assertPageSpreads(t, doc, []string{"center", "left", "right", "left"})
+}
+
+func TestAddBuildPagesInOrder_AssignsSpreadCenter(t *testing.T) {
+	fileHeaders := createImageFileHeaders(t, [][]byte{
+		testPNGWithSize(t, 10, 10),
+		testPNGWithSize(t, 20, 20),
+		testPNGWithSize(t, 30, 30),
+	})
+	doc := &epub.Document{Metadata: epub.Metadata{Title: "spread-center"}, Direction: "rtl"}
+
+	if err := addBuildPagesInOrder(context.Background(), doc, fileHeaders, "center"); err != nil {
+		t.Fatalf("addBuildPagesInOrder failed: %v", err)
+	}
+
+	assertPageSpreads(t, doc, []string{"center", "center", "center"})
+}
+
+func TestCalculatePageSpread(t *testing.T) {
+	tests := []struct {
+		name   string
+		index  int
+		spread string
+		want   string
+	}{
+		{name: "first page is always center", index: 0, spread: "right", want: "center"},
+		{name: "right start odd index", index: 1, spread: "right", want: "right"},
+		{name: "right start even index", index: 2, spread: "right", want: "left"},
+		{name: "left start odd index", index: 1, spread: "left", want: "left"},
+		{name: "left start even index", index: 2, spread: "left", want: "right"},
+		{name: "center start odd index", index: 1, spread: "center", want: "center"},
+		{name: "center start even index", index: 2, spread: "center", want: "center"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := calculatePageSpread(tt.index, tt.spread)
+			if got != tt.want {
+				t.Fatalf("expected spread %q, got %q", tt.want, got)
+			}
+		})
 	}
 }
 
@@ -209,4 +346,18 @@ func createImageFileHeaders(t *testing.T, images [][]byte) []*multipart.FileHead
 	}
 
 	return req.MultipartForm.File["images"]
+}
+
+func assertPageSpreads(t *testing.T, doc *epub.Document, expected []string) {
+	t.Helper()
+
+	if len(doc.Pages) != len(expected) {
+		t.Fatalf("expected %d pages, got %d", len(expected), len(doc.Pages))
+	}
+
+	for i := range expected {
+		if doc.Pages[i].Spread != expected[i] {
+			t.Fatalf("expected page[%d] spread %q, got %q", i, expected[i], doc.Pages[i].Spread)
+		}
+	}
 }

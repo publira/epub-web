@@ -345,6 +345,11 @@ func buildDocument(ctx context.Context, req BuildRequest, files []*multipart.Fil
 		return nil, newBadRequestError("no_images_provided", "No images provided.", fmt.Errorf("no images provided"))
 	}
 
+	layoutType, spread, err := normalizeAndValidateBuildOptions(req.Layout, req.Spread)
+	if err != nil {
+		return nil, err
+	}
+
 	maxPages := getMaxPages()
 	if maxPages > 0 && len(files) > maxPages {
 		slog.Warn("build: too many pages", "pages", len(files), "maxPages", maxPages)
@@ -359,17 +364,54 @@ func buildDocument(ctx context.Context, req BuildRequest, files []*multipart.Fil
 	doc := &epub.Document{
 		Metadata:  epub.Metadata{Title: req.Title, Creators: creators},
 		Direction: req.Direction,
+		Layout:    layoutType,
 	}
 
 	if err := validateBuildFiles(ctx, files); err != nil {
 		return nil, err
 	}
 
-	if err := addBuildPagesInOrder(ctx, doc, files, req.Spread); err != nil {
+	if err := addBuildPagesInOrder(ctx, doc, files, spread); err != nil {
 		return nil, err
 	}
 
 	return doc, nil
+}
+
+func normalizeAndValidateBuildOptions(layout string, spread string) (epub.LayoutType, string, error) {
+	layoutNormalized := strings.ToLower(strings.TrimSpace(layout))
+	spreadNormalized := strings.ToLower(strings.TrimSpace(spread))
+	if layoutNormalized == "" {
+		layoutNormalized = "pre-paginated"
+	}
+	if spreadNormalized == "" {
+		spreadNormalized = "right"
+	}
+
+	var layoutType epub.LayoutType
+	switch layoutNormalized {
+	case "pre-paginated":
+		layoutType = epub.LayoutPrePaginated
+	case "reflowable":
+		layoutType = epub.LayoutReflowable
+	default:
+		return epub.LayoutUnknown, "", newBadRequestError(
+			"invalid_layout",
+			"Invalid layout.",
+			fmt.Errorf("unsupported layout: %q", layout),
+		)
+	}
+
+	switch spreadNormalized {
+	case "right", "left", "center":
+		return layoutType, spreadNormalized, nil
+	default:
+		return epub.LayoutUnknown, "", newBadRequestError(
+			"invalid_spread",
+			"Invalid spread.",
+			fmt.Errorf("unsupported spread: %q", spread),
+		)
+	}
 }
 
 func validateBuildFiles(ctx context.Context, files []*multipart.FileHeader) error {
@@ -438,7 +480,7 @@ func addBuildPagesInOrder(ctx context.Context, doc *epub.Document, files []*mult
 	openFiles := make([]multipart.File, 0, len(files))
 	defer closeMultipartFiles(openFiles)
 
-	for _, fileHeader := range files {
+	for i, fileHeader := range files {
 		if err := ctx.Err(); err != nil {
 			return newRequestTimeoutError(err)
 		}
@@ -450,13 +492,36 @@ func addBuildPagesInOrder(ctx context.Context, doc *epub.Document, files []*mult
 
 		openFiles = append(openFiles, f)
 
-		if _, _, err := doc.AddPageWithAsset(f, fileHeader.Size, spread); err != nil {
+		pageSpread := calculatePageSpread(i, spread)
+
+		if _, _, err := doc.AddPageWithAsset(f, fileHeader.Size, pageSpread); err != nil {
 			slog.Warn("build: failed to add image", "filename", fileHeader.Filename, "error", err)
 			return newBadRequestError("invalid_image", "Failed to add image.", err)
 		}
 	}
 
 	return nil
+}
+
+func calculatePageSpread(index int, spread string) string {
+	if index == 0 {
+		return "center"
+	}
+
+	switch spread {
+	case "right":
+		if index%2 == 1 {
+			return "right"
+		}
+		return "left"
+	case "left":
+		if index%2 == 1 {
+			return "left"
+		}
+		return "right"
+	default:
+		return "center"
+	}
 }
 
 func getFileSize(file multipart.File) (int64, error) {
