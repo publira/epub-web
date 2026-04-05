@@ -20,7 +20,14 @@ import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { useStore } from "@tanstack/react-store";
 import { X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffectEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import {
   formatInteger,
@@ -42,6 +49,7 @@ import {
   SelectInput,
   TextInput,
 } from "./ui/primitives";
+import { Skeleton } from "./ui/skeleton";
 
 const getFileImagePixels = async (file: File): Promise<number> => {
   const bitmap = await createImageBitmap(file);
@@ -52,6 +60,36 @@ const getFileImagePixels = async (file: File): Promise<number> => {
 
 const buildFileKey = (file: File) =>
   `${file.name}:${file.size}:${file.lastModified}`;
+
+const validateSelectedBuildFiles = (
+  files: File[],
+  options: {
+    maxPages: number;
+    maxUploadMB: number;
+    maxAssetBytes: number;
+  }
+): string | null => {
+  if (options.maxPages > 0 && files.length > options.maxPages) {
+    return `ページ数は最大 ${formatInteger(options.maxPages)} ページです。`;
+  }
+
+  if (options.maxUploadMB > 0) {
+    const maxUploadBytes = options.maxUploadMB * 1024 * 1024;
+    const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
+    if (totalBytes > maxUploadBytes) {
+      return `1リクエストあたり最大 ${options.maxUploadMB} MiB です。`;
+    }
+  }
+
+  if (options.maxAssetBytes > 0) {
+    const oversized = files.find((file) => file.size > options.maxAssetBytes);
+    if (oversized) {
+      return `画像1枚あたり最大 ${formatMiBFromBytes(options.maxAssetBytes)} です。`;
+    }
+  }
+
+  return null;
+};
 
 interface ImagePreview {
   id: string;
@@ -128,6 +166,12 @@ const SortableImagePreviewCard = ({
           alt={preview.name}
           className="h-full w-full object-cover"
         />
+        {disabled && (
+          <div
+            className="pointer-events-auto absolute inset-0 z-10 rounded-lg bg-background/50 backdrop-blur-xs"
+            aria-hidden="true"
+          />
+        )}
         <button
           type="button"
           data-index={preview.index}
@@ -153,28 +197,30 @@ const SortableImagePreviewCard = ({
 };
 
 export const BuildFormSkeleton = () => (
-  <Card className="min-w-0 p-fluid-sm animate-pulse">
+  <Card className="min-w-0 p-fluid-sm">
     <div className="mb-4">
-      <div className="mb-1.5 h-4 w-16 rounded bg-muted" />
-      <div className="h-10 rounded-xl bg-muted" />
+      <Skeleton className="mb-1.5 h-4 w-16 rounded-md" />
+      <Skeleton className="h-10" />
     </div>
     <div className="mb-4 grid gap-3 md:grid-cols-2">
       <div>
-        <div className="mb-1.5 h-4 w-20 rounded bg-muted" />
-        <div className="h-10 rounded-xl bg-muted" />
+        <Skeleton className="mb-1.5 h-4 w-20 rounded-md" />
+        <Skeleton className="h-10" />
       </div>
       <div>
-        <div className="mb-1.5 h-4 w-20 rounded bg-muted" />
-        <div className="h-10 rounded-xl bg-muted" />
+        <Skeleton className="mb-1.5 h-4 w-20 rounded-md" />
+        <Skeleton className="h-10" />
       </div>
     </div>
-    <div className="mb-4 h-28 rounded-xl bg-muted" />
-    <div className="h-12 rounded-xl bg-muted" />
+    <Skeleton className="mb-4 h-28" />
+    <Skeleton className="h-12" />
   </Card>
 );
 
 export const BuildForm = () => {
   const [error, setError] = useState<string | null>(null);
+  const [isClientValidationBlocked, setIsClientValidationBlocked] =
+    useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const authorIdRef = useRef(0);
 
@@ -194,11 +240,61 @@ export const BuildForm = () => {
 
   const { data: config } = useAppConfig();
 
+  const getBuildClientValidationError = useCallback(
+    (files: File[]): string | null => {
+      if (files.length === 0) {
+        return "画像を1枚以上選択してください。";
+      }
+
+      return validateSelectedBuildFiles(files, {
+        maxAssetBytes: config.maxAssetBytes,
+        maxPages: config.maxPages,
+        maxUploadMB: config.maxUploadMB,
+      });
+    },
+    [config.maxAssetBytes, config.maxPages, config.maxUploadMB]
+  );
+
+  const getImagePixelsValidationError = useCallback(
+    async (files: File[]): Promise<string | null> => {
+      if (config.maxImagePixels <= 0) {
+        return null;
+      }
+
+      for (const file of files) {
+        let pixels: number;
+        try {
+          pixels = await getFileImagePixels(file);
+        } catch {
+          return "画像の解像度を確認できませんでした。別の画像でお試しください。";
+        }
+
+        if (pixels > config.maxImagePixels) {
+          return `画像の解像度は最大 ${formatInteger(config.maxImagePixels)} px です。`;
+        }
+      }
+
+      return null;
+    },
+    [config.maxImagePixels]
+  );
+
+  const setClientValidationError = useCallback((message: string) => {
+    setError(message);
+    setSuccess(null);
+    setIsClientValidationBlocked(true);
+  }, []);
+
+  const clearClientValidationBlock = useCallback(() => {
+    setIsClientValidationBlocked(false);
+  }, []);
+
   const resetFormRef = useRef<(() => void) | null>(null);
 
   const mutation = useMutation({
     mutationFn: buildMutationFn,
     onError: (caughtError) => {
+      clearClientValidationBlock();
       setError(
         getApiErrorMessage(caughtError, {
           defaultMessage: "ePubの生成に失敗しました。",
@@ -212,6 +308,7 @@ export const BuildForm = () => {
       setSuccess(null);
     },
     onSuccess: ({ blob, filename }) => {
+      clearClientValidationBlock();
       triggerDownload(blob, filename);
       setSuccess("ePubを生成してダウンロードしました。");
       resetFormRef.current?.();
@@ -230,50 +327,22 @@ export const BuildForm = () => {
       setError(null);
       setSuccess(null);
 
-      if (config.maxUploadMB > 0) {
-        const totalBytes = value.buildFiles.reduce(
-          (sum, file) => sum + file.size,
-          0
-        );
-        const maxUploadBytes = config.maxUploadMB * 1024 * 1024;
-        if (totalBytes > maxUploadBytes) {
-          setError(`1リクエストあたり最大 ${config.maxUploadMB} MiB です。`);
-          return;
-        }
+      const title = value.title.trim();
+      const selectedFiles = [...value.buildFiles];
+
+      const selectionError = getBuildClientValidationError(selectedFiles);
+      if (selectionError) {
+        setClientValidationError(selectionError);
+        return;
       }
 
-      if (config.maxAssetBytes > 0) {
-        const oversized = value.buildFiles.find(
-          (file) => file.size > config.maxAssetBytes
-        );
-        if (oversized) {
-          setError(
-            `画像1枚あたり最大 ${formatMiBFromBytes(config.maxAssetBytes)} です。`
-          );
-          return;
-        }
+      const pixelsError = await getImagePixelsValidationError(selectedFiles);
+      if (pixelsError) {
+        setClientValidationError(pixelsError);
+        return;
       }
 
-      if (config.maxImagePixels > 0) {
-        for (const file of value.buildFiles) {
-          let pixels: number;
-          try {
-            pixels = await getFileImagePixels(file);
-          } catch {
-            setError(
-              "画像の解像度を確認できませんでした。別の画像でお試しください。"
-            );
-            return;
-          }
-
-          if (pixels > config.maxImagePixels) {
-            setError(
-              `画像の解像度は最大 ${formatInteger(config.maxImagePixels)} px です。`
-            );
-            return;
-          }
-        }
-      }
+      clearClientValidationBlock();
 
       const authors = value.authors
         .map((author) => author.value.trim())
@@ -282,9 +351,9 @@ export const BuildForm = () => {
       await mutation.mutateAsync({
         authors,
         direction: value.direction,
-        files: value.buildFiles,
+        files: selectedFiles,
         spread: value.spread,
-        title: value.title,
+        title,
       });
     },
   });
@@ -440,15 +509,43 @@ export const BuildForm = () => {
         return;
       }
 
-      if (files.length === 0) {
+      const imageFiles = files.filter(
+        (file) =>
+          file.type.startsWith("image/") ||
+          /\.(png|jpe?g|gif|webp|avif|bmp|svg)$/i.test(file.name)
+      );
+      if (imageFiles.length === 0) {
+        setError("画像ファイルを選択してください。");
+        setSuccess(null);
         return;
       }
 
+      const nextFiles = [...buildFiles, ...imageFiles];
+      const validationError = validateSelectedBuildFiles(nextFiles, {
+        maxAssetBytes: config.maxAssetBytes,
+        maxPages: config.maxPages,
+        maxUploadMB: config.maxUploadMB,
+      });
+      if (validationError) {
+        setClientValidationError(validationError);
+        return;
+      }
+
+      clearClientValidationBlock();
       setError(null);
       setSuccess(null);
-      form.setFieldValue("buildFiles", [...buildFiles, ...files]);
+      form.setFieldValue("buildFiles", nextFiles);
     },
-    [buildFiles, form, isSubmitting]
+    [
+      buildFiles,
+      clearClientValidationBlock,
+      config.maxAssetBytes,
+      config.maxPages,
+      config.maxUploadMB,
+      form,
+      isSubmitting,
+      setClientValidationError,
+    ]
   );
 
   const handleCardDropFiles = useCallback(
@@ -457,59 +554,42 @@ export const BuildForm = () => {
         return;
       }
 
-      const droppedImages = droppedFiles.filter((file) =>
-        file.type.startsWith("image/")
+      const droppedImages = droppedFiles.filter(
+        (file) =>
+          file.type.startsWith("image/") ||
+          /\.(png|jpe?g|gif|webp|avif|bmp|svg)$/i.test(file.name)
       );
       if (droppedImages.length === 0) {
-        setError("画像ファイルをドロップしてください。");
-        setSuccess(null);
+        setClientValidationError("画像ファイルをドロップしてください。");
         return;
       }
 
       const nextFiles = [...buildFiles, ...droppedImages];
 
-      if (config.maxPages > 0 && nextFiles.length > config.maxPages) {
-        setError(
-          `ページ数は最大 ${formatInteger(config.maxPages)} ページです。`
-        );
-        setSuccess(null);
+      const validationError = validateSelectedBuildFiles(nextFiles, {
+        maxAssetBytes: config.maxAssetBytes,
+        maxPages: config.maxPages,
+        maxUploadMB: config.maxUploadMB,
+      });
+      if (validationError) {
+        setClientValidationError(validationError);
         return;
       }
 
-      if (config.maxUploadMB > 0) {
-        const maxUploadBytes = config.maxUploadMB * 1024 * 1024;
-        const totalBytes = nextFiles.reduce((sum, file) => sum + file.size, 0);
-        if (totalBytes > maxUploadBytes) {
-          setError(`1リクエストあたり最大 ${config.maxUploadMB} MiB です。`);
-          setSuccess(null);
-          return;
-        }
-      }
-
-      if (config.maxAssetBytes > 0) {
-        const oversized = nextFiles.find(
-          (file) => file.size > config.maxAssetBytes
-        );
-        if (oversized) {
-          setError(
-            `画像1枚あたり最大 ${formatMiBFromBytes(config.maxAssetBytes)} です。`
-          );
-          setSuccess(null);
-          return;
-        }
-      }
-
+      clearClientValidationBlock();
       setError(null);
       setSuccess(null);
       form.setFieldValue("buildFiles", nextFiles);
     },
     [
       buildFiles,
+      clearClientValidationBlock,
       config.maxAssetBytes,
       config.maxPages,
       config.maxUploadMB,
       form,
       isSubmitting,
+      setClientValidationError,
     ]
   );
 
@@ -545,6 +625,43 @@ export const BuildForm = () => {
     setSuccess(null);
     form.setFieldValue("buildFiles", []);
   }, [form, isSubmitting]);
+
+  const revalidateIfBlocked = useEffectEvent(
+    async (isCancelled: () => boolean) => {
+      if (!isClientValidationBlocked) {
+        return;
+      }
+
+      const selectionError = getBuildClientValidationError(buildFiles);
+      if (selectionError) {
+        if (!isCancelled()) {
+          setError(selectionError);
+        }
+        return;
+      }
+
+      const pixelsError = await getImagePixelsValidationError(buildFiles);
+      if (isCancelled()) {
+        return;
+      }
+
+      if (pixelsError) {
+        setError(pixelsError);
+        return;
+      }
+
+      setIsClientValidationBlocked(false);
+      setError(null);
+    }
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    void revalidateIfBlocked(() => cancelled);
+    return () => {
+      cancelled = true;
+    };
+  }, [buildFiles]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -818,7 +935,7 @@ export const BuildForm = () => {
         <PrimaryButton
           className="inline-flex items-center justify-center gap-2"
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isClientValidationBlocked}
         >
           {isSubmitting && (
             <span

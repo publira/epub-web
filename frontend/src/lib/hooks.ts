@@ -4,19 +4,58 @@ import type * as z from "zod";
 
 import { configSchema } from "./mutations";
 
-export const useAppConfig = () =>
-  useSuspenseQuery({
-    queryFn: async () => {
-      const res = await fetch("/api/config");
-      if (!res.ok) {
-        throw new Error("Failed to fetch config");
-      }
+export type AppConfig = z.infer<typeof configSchema>;
 
-      return configSchema.parse(await res.json());
-    },
+export const toConfigFetchError = (cause: unknown): Error => {
+  if (cause instanceof Error && cause.message.length > 0) {
+    return cause;
+  }
+
+  return new Error(
+    "設定の取得に失敗しました。ネットワーク状態を確認して再試行してください。"
+  );
+};
+
+const fetchAppConfig = async (): Promise<AppConfig> => {
+  let response: Response;
+  try {
+    response = await fetch("/api/config");
+  } catch {
+    throw new Error(
+      "サーバーに接続できませんでした。ネットワーク状態を確認して再試行してください。"
+    );
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      "設定の取得に失敗しました。時間をおいて再試行してください。"
+    );
+  }
+
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new Error("設定レスポンスの解析に失敗しました。");
+  }
+
+  const parsed = configSchema.safeParse(payload);
+  if (!parsed.success) {
+    throw new Error("サーバー設定の形式が不正です。");
+  }
+
+  return parsed.data;
+};
+
+export const useSuspenseAppConfigQuery = () =>
+  useSuspenseQuery({
+    queryFn: fetchAppConfig,
     queryKey: ["config"],
+    retry: 1,
     staleTime: Infinity,
   });
+
+export const useAppConfig = () => useSuspenseAppConfigQuery();
 
 export const useSearchParamsState = <T extends string>(
   key: string,
