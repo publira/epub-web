@@ -1,10 +1,6 @@
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap");
 @import "tailwindcss";
 
 @theme {
-  --font-heading: "Outfit", "Hiragino Sans", sans-serif;
-  --font-body: "Noto Sans JP", "Yu Gothic", sans-serif;
-
   --color-primary: #006f79;
   --color-secondary: #dc7f00;
 
@@ -41,8 +37,6 @@
 
   --shadow-card: 0 24px 40px -35px rgb(31 41 55 / 55%);
 
-  --letter-spacing-badge: 0.02em;
-
   --text-hero: clamp(1.8rem, 4vw, 3rem);
   --text-hero--line-height: 1.08;
 
@@ -66,18 +60,11 @@
 }
 
 @layer base {
+  body {
+    @apply m-0 min-h-dvh bg-app-canvas bg-background font-sans text-foreground;
+  }
+
   #root {
     @apply min-h-dvh;
-  }
-
-  body {
-    @apply m-0 min-h-dvh bg-app-canvas bg-background font-body text-foreground;
-  }
-
-  h1,
-  h2,
-  h3,
-  legend {
-    @apply font-heading;
   }
 }
