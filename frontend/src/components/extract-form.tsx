@@ -232,12 +232,20 @@ export const ExtractForm = () => {
               className="grid gap-1.5 font-semibold"
               htmlFor="extract-epub"
             >
-              ePubファイル
+              <span>
+                ePubファイル{" "}
+                <span className="text-error" aria-hidden="true">
+                  *
+                </span>
+                <span className="sr-only">必須</span>
+              </span>
               <FilePicker
                 id="extract-epub"
                 accept=".epub,application/epub+zip"
                 ctaText="ePubファイルを選択"
                 helperText="クリックまたはドラッグ＆ドロップでePubファイルを指定"
+                aria-label="ePubファイル（必須）"
+                aria-required="true"
                 disabled={isSubmitting}
                 onFileChange={field.handleChange}
               />

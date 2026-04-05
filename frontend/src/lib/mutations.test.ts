@@ -36,6 +36,7 @@ describe("mutations", () => {
     );
 
     const result = await buildMutationFn({
+      authors: [],
       direction: "rtl",
       files: [new File(["x"], "a.png", { type: "image/png" })],
       spread: "right",
@@ -44,6 +45,25 @@ describe("mutations", () => {
 
     expect(result.filename).toBe("book.epub");
     expect(result.blob.size).toBe(blob.size);
+  }, 1000);
+
+  it("buildMutationFn sends multiple authors", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(new Blob(["epub"]), { status: 200 })
+    );
+
+    await buildMutationFn({
+      authors: ["Alice", "Bob"],
+      direction: "rtl",
+      files: [new File(["x"], "a.png", { type: "image/png" })],
+      spread: "right",
+      title: "book",
+    });
+
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit | undefined;
+    expect(requestInit?.body).toBeInstanceOf(FormData);
+    const formData = requestInit?.body as FormData;
+    expect(formData.getAll("authors")).toStrictEqual(["Alice", "Bob"]);
   }, 1000);
 
   it("extractMutationFn extracts image files only", async () => {
@@ -79,6 +99,7 @@ describe("mutations", () => {
 
     await expect(
       buildMutationFn({
+        authors: [],
         direction: "rtl",
         files: [new File(["x"], "a.png", { type: "image/png" })],
         spread: "right",

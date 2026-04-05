@@ -24,6 +24,7 @@ type ErrorResponse struct {
 
 type BuildRequest struct {
 	Title     string
+	Authors   []string
 	Direction string
 	Layout    string
 	Spread    string

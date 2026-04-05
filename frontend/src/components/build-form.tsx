@@ -9,11 +9,11 @@ import {
 } from "@dnd-kit/core";
 import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import {
-  SortableContext,
   arrayMove,
   horizontalListSortingStrategy,
   sortableKeyboardCoordinates,
   useSortable,
+  SortableContext,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useForm } from "@tanstack/react-form";
@@ -32,6 +32,8 @@ import { useAppConfig, useDrop } from "../lib/hooks";
 import { buildMutationFn, getApiErrorMessage } from "../lib/mutations";
 import { triggerDownload } from "../lib/utils";
 import { LimitNotes } from "./limit-notes";
+import { AddableSortableTextFields } from "./ui/addable-sortable-text-fields";
+import type { SortableTextFieldItem } from "./ui/addable-sortable-text-fields";
 import {
   Card,
   DropOverlay,
@@ -174,6 +176,21 @@ export const BuildFormSkeleton = () => (
 export const BuildForm = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const authorIdRef = useRef(0);
+
+  const createAuthorField = useCallback((name = ""): SortableTextFieldItem => {
+    authorIdRef.current += 1;
+    return { id: `author-${authorIdRef.current}`, value: name };
+  }, []);
+
+  const defaultAuthorFields = useMemo<SortableTextFieldItem[]>(
+    () => [{ id: "author-1", value: "" }],
+    []
+  );
+
+  useEffect(() => {
+    authorIdRef.current = 1;
+  }, []);
 
   const { data: config } = useAppConfig();
 
@@ -203,6 +220,7 @@ export const BuildForm = () => {
 
   const form = useForm({
     defaultValues: {
+      authors: defaultAuthorFields,
       buildFiles: [] as File[],
       direction: "rtl",
       spread: "right",
@@ -257,7 +275,12 @@ export const BuildForm = () => {
         }
       }
 
+      const authors = value.authors
+        .map((author) => author.value.trim())
+        .filter((name) => name.length > 0);
+
       await mutation.mutateAsync({
+        authors,
         direction: value.direction,
         files: value.buildFiles,
         spread: value.spread,
@@ -367,6 +390,46 @@ export const BuildForm = () => {
     (e) => {
       e.preventDefault();
       form.handleSubmit();
+    },
+    [form]
+  );
+
+  const handleAddAuthorField = useCallback(() => {
+    const currentAuthors = form.state.values.authors;
+    form.setFieldValue("authors", [...currentAuthors, createAuthorField("")]);
+  }, [createAuthorField, form]);
+
+  const handleChangeAuthor = useCallback(
+    (authorId: string, value: string) => {
+      const currentAuthors = form.state.values.authors;
+      form.setFieldValue(
+        "authors",
+        currentAuthors.map((author) =>
+          author.id === authorId ? { ...author, value } : author
+        )
+      );
+    },
+    [form]
+  );
+
+  const handleRemoveAuthor = useCallback(
+    (authorId: string) => {
+      const currentAuthors = form.state.values.authors;
+      if (currentAuthors.length <= 1) {
+        form.setFieldValue("authors", [createAuthorField("")]);
+        return;
+      }
+      form.setFieldValue(
+        "authors",
+        currentAuthors.filter((author) => author.id !== authorId)
+      );
+    },
+    [createAuthorField, form]
+  );
+
+  const handleReorderAuthors = useCallback(
+    (nextAuthors: SortableTextFieldItem[]) => {
+      form.setFieldValue("authors", nextAuthors);
     },
     [form]
   );
@@ -563,6 +626,26 @@ export const BuildForm = () => {
           )}
         </form.Field>
 
+        <form.Field name="authors">
+          {(field) => (
+            <AddableSortableTextFields
+              label="著者"
+              items={field.state.value}
+              addButtonLabel="追加"
+              inputIdPrefix="build-author"
+              placeholder="著者名を入力"
+              disabled={isSubmitting}
+              addDisabled={field.state.value.some(
+                (author) => author.value.trim().length === 0
+              )}
+              onAdd={handleAddAuthorField}
+              onChange={handleChangeAuthor}
+              onRemove={handleRemoveAuthor}
+              onReorder={handleReorderAuthors}
+            />
+          )}
+        </form.Field>
+
         <div className="grid gap-3 md:grid-cols-2">
           <form.Field name="direction">
             {(field) => (
@@ -624,13 +707,21 @@ export const BuildForm = () => {
               className="grid gap-1.5 font-semibold"
               htmlFor="build-images"
             >
-              画像ファイル
+              <span>
+                画像ファイル{" "}
+                <span className="text-error" aria-hidden="true">
+                  *
+                </span>
+                <span className="sr-only">必須</span>
+              </span>
               <FilePicker
                 id="build-images"
                 accept="image/*"
                 multiple
                 ctaText="画像を選択"
                 helperText="クリックまたはドラッグ＆ドロップで画像を追加（複数選択可）"
+                aria-label="画像ファイル（必須）"
+                aria-required="true"
                 disabled={isSubmitting}
                 onFilesChange={handleAddBuildFiles}
               />

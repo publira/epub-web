@@ -35,6 +35,7 @@ interface ExtractMutationParams {
 
 interface BuildMutationParams {
   title: string;
+  authors: string[];
   direction: string;
   spread: string;
   files: File[];
@@ -122,6 +123,9 @@ export const buildMutationFn = async (
   data.set("title", params.title);
   data.set("direction", params.direction);
   data.set("spread", params.spread);
+  for (const author of params.authors) {
+    data.append("authors", author);
+  }
 
   for (const file of params.files) {
     data.append("images", file);

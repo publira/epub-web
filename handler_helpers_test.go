@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/publira/epub"
@@ -21,6 +22,9 @@ func TestParseBuildRequest_Defaults(t *testing.T) {
 	if parsed.Title != "Untitled" {
 		t.Fatalf("expected default title %q, got %q", "Untitled", parsed.Title)
 	}
+	if len(parsed.Authors) != 0 {
+		t.Fatalf("expected default authors length %d, got %d", 0, len(parsed.Authors))
+	}
 	if parsed.Direction != "rtl" {
 		t.Fatalf("expected default direction %q, got %q", "rtl", parsed.Direction)
 	}
@@ -29,6 +33,20 @@ func TestParseBuildRequest_Defaults(t *testing.T) {
 	}
 	if parsed.Spread != "right" {
 		t.Fatalf("expected default spread %q, got %q", "right", parsed.Spread)
+	}
+}
+
+func TestParseBuildRequest_AuthorsAreTrimmed(t *testing.T) {
+	body := strings.NewReader("title=Book&authors=%20Alice%20&authors=%20Bob%20")
+	req := httptest.NewRequest(http.MethodPost, "/api/build", body)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	parsed := parseBuildRequest(req)
+	if len(parsed.Authors) != 2 {
+		t.Fatalf("expected 2 authors, got %d", len(parsed.Authors))
+	}
+	if parsed.Authors[0] != "Alice" || parsed.Authors[1] != "Bob" {
+		t.Fatalf("expected authors %q and %q, got %q", "Alice", "Bob", parsed.Authors)
 	}
 }
 
@@ -56,6 +74,36 @@ func TestBuildDocument_NoImages(t *testing.T) {
 	}
 	if reqErr.code != "no_images_provided" {
 		t.Fatalf("expected code %q, got %q", "no_images_provided", reqErr.code)
+	}
+}
+
+func TestBuildDocument_AuthorIsOptional(t *testing.T) {
+	fileHeaders := createImageFileHeaders(t, [][]byte{testPNG(t)})
+	doc, err := buildDocument(context.Background(), BuildRequest{Title: "book", Direction: "rtl", Spread: "right"}, fileHeaders)
+	if err != nil {
+		t.Fatalf("buildDocument failed: %v", err)
+	}
+
+	if len(doc.Metadata.Creators) != 0 {
+		t.Fatalf("expected no creators, got %d", len(doc.Metadata.Creators))
+	}
+}
+
+func TestBuildDocument_SetsAuthorCreators(t *testing.T) {
+	fileHeaders := createImageFileHeaders(t, [][]byte{testPNG(t)})
+	doc, err := buildDocument(context.Background(), BuildRequest{Title: "book", Authors: []string{"Alice", "Bob"}, Direction: "rtl", Spread: "right"}, fileHeaders)
+	if err != nil {
+		t.Fatalf("buildDocument failed: %v", err)
+	}
+
+	if len(doc.Metadata.Creators) != 2 {
+		t.Fatalf("expected 2 creators, got %d", len(doc.Metadata.Creators))
+	}
+	if doc.Metadata.Creators[0].Name != "Alice" {
+		t.Fatalf("expected creator name %q, got %q", "Alice", doc.Metadata.Creators[0].Name)
+	}
+	if doc.Metadata.Creators[1].Name != "Bob" {
+		t.Fatalf("expected creator name %q, got %q", "Bob", doc.Metadata.Creators[1].Name)
 	}
 }
 

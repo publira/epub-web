@@ -52,11 +52,33 @@ func setReady(ready bool) {
 }
 
 func parseBuildRequest(r *http.Request) BuildRequest {
+	title := strings.TrimSpace(r.FormValue("title"))
+	direction := r.FormValue("direction")
+	layout := r.FormValue("layout")
+	spread := r.FormValue("spread")
+
+	authors := []string{}
+	for _, name := range r.Form["authors"] {
+		trimmed := strings.TrimSpace(name)
+		if trimmed == "" {
+			continue
+		}
+		authors = append(authors, trimmed)
+	}
+	for _, name := range r.Form["author"] {
+		trimmed := strings.TrimSpace(name)
+		if trimmed == "" {
+			continue
+		}
+		authors = append(authors, trimmed)
+	}
+
 	req := BuildRequest{
-		Title:     r.FormValue("title"),
-		Direction: r.FormValue("direction"),
-		Layout:    r.FormValue("layout"),
-		Spread:    r.FormValue("spread"),
+		Title:     title,
+		Authors:   authors,
+		Direction: direction,
+		Layout:    layout,
+		Spread:    spread,
 	}
 
 	if req.Title == "" {
@@ -297,8 +319,13 @@ func buildDocument(ctx context.Context, req BuildRequest, files []*multipart.Fil
 		return nil, newBadRequestError("page_limit_exceeded", "Page limit exceeded.", fmt.Errorf("page count %d exceeded max pages %d", len(files), maxPages))
 	}
 
+	creators := make([]epub.Creator, 0, len(req.Authors))
+	for _, name := range req.Authors {
+		creators = append(creators, epub.Creator{Name: name})
+	}
+
 	doc := &epub.Document{
-		Metadata:  epub.Metadata{Title: req.Title},
+		Metadata:  epub.Metadata{Title: req.Title, Creators: creators},
 		Direction: req.Direction,
 	}
 
