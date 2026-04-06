@@ -129,6 +129,20 @@ export const BuildForm = () => {
     [config.maxImagePixels]
   );
 
+  const compressBuildFiles = useCallback(
+    (files: File[]): Promise<File[]> => {
+      if (config.maxImageLongEdge <= 0) {
+        return Promise.resolve([...files]);
+      }
+
+      const concurrency = getSafeImageConcurrency();
+      return mapConcurrent(files, concurrency, (file) =>
+        compressImageFile(file, config.maxImageLongEdge)
+      );
+    },
+    [config.maxImageLongEdge]
+  );
+
   const setClientValidationError = useCallback((message: string) => {
     setError(message);
     setSuccess(null);
@@ -183,16 +197,9 @@ export const BuildForm = () => {
         .map((author) => author.value.trim())
         .filter((name) => name.length > 0);
 
-      const concurrency = getSafeImageConcurrency();
-
       let compressedFiles: File[] = [];
       try {
-        compressedFiles =
-          config.maxImageLongEdge > 0
-            ? await mapConcurrent(value.buildFiles, concurrency, (file) =>
-                compressImageFile(file, config.maxImageLongEdge)
-              )
-            : [...value.buildFiles];
+        compressedFiles = await compressBuildFiles(value.buildFiles);
       } catch {
         setError("画像の圧縮処理中にエラーが発生しました。");
         return;
@@ -313,13 +320,10 @@ export const BuildForm = () => {
       }
 
       const nextFiles = [...buildFiles, ...imageFiles];
-      const validationError = validateSelectedBuildFiles(nextFiles, {
-        maxAssetBytes: config.maxAssetBytes,
-        maxPages: config.maxPages,
-        maxUploadMB: config.maxUploadMB,
-      });
-      if (validationError) {
-        setClientValidationError(validationError);
+      if (config.maxPages > 0 && nextFiles.length > config.maxPages) {
+        setClientValidationError(
+          `ページ数は最大 ${formatInteger(config.maxPages)} ページです。`
+        );
         return;
       }
 
@@ -331,9 +335,7 @@ export const BuildForm = () => {
     [
       buildFiles,
       clearClientValidationBlock,
-      config.maxAssetBytes,
       config.maxPages,
-      config.maxUploadMB,
       form,
       isSubmitting,
       setClientValidationError,
@@ -358,13 +360,10 @@ export const BuildForm = () => {
 
       const nextFiles = [...buildFiles, ...droppedImages];
 
-      const validationError = validateSelectedBuildFiles(nextFiles, {
-        maxAssetBytes: config.maxAssetBytes,
-        maxPages: config.maxPages,
-        maxUploadMB: config.maxUploadMB,
-      });
-      if (validationError) {
-        setClientValidationError(validationError);
+      if (config.maxPages > 0 && nextFiles.length > config.maxPages) {
+        setClientValidationError(
+          `ページ数は最大 ${formatInteger(config.maxPages)} ページです。`
+        );
         return;
       }
 
@@ -376,9 +375,7 @@ export const BuildForm = () => {
     [
       buildFiles,
       clearClientValidationBlock,
-      config.maxAssetBytes,
       config.maxPages,
-      config.maxUploadMB,
       form,
       isSubmitting,
       setClientValidationError,
@@ -419,21 +416,35 @@ export const BuildForm = () => {
   }, [form, isSubmitting]);
 
   const revalidateIfBlocked = useEffectEvent(
-    async (isCancelled: () => boolean) => {
+    async (nextBuildFiles: File[], signal: AbortSignal) => {
       if (!isClientValidationBlocked) {
         return;
       }
 
-      const selectionError = getBuildClientValidationError(buildFiles);
+      let compressedFiles: File[] = [];
+      try {
+        compressedFiles = await compressBuildFiles(nextBuildFiles);
+      } catch {
+        if (!signal.aborted) {
+          setError("画像の圧縮処理中にエラーが発生しました。");
+        }
+        return;
+      }
+
+      if (signal.aborted) {
+        return;
+      }
+
+      const selectionError = getBuildClientValidationError(compressedFiles);
       if (selectionError) {
-        if (!isCancelled()) {
+        if (!signal.aborted) {
           setError(selectionError);
         }
         return;
       }
 
-      const pixelsError = await getImagePixelsValidationError(buildFiles);
-      if (isCancelled()) {
+      const pixelsError = await getImagePixelsValidationError(compressedFiles);
+      if (signal.aborted) {
         return;
       }
 
@@ -448,10 +459,10 @@ export const BuildForm = () => {
   );
 
   useEffect(() => {
-    let cancelled = false;
-    void revalidateIfBlocked(() => cancelled);
+    const controller = new AbortController();
+    void revalidateIfBlocked(buildFiles, controller.signal);
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [buildFiles]);
 
