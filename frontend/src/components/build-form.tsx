@@ -29,6 +29,7 @@ import {
   useState,
 } from "react";
 
+import { getSafeImageConcurrency, mapConcurrent } from "../lib/async";
 import {
   formatInteger,
   formatMiBFromBytes,
@@ -36,6 +37,7 @@ import {
   formatSizeLabel,
 } from "../lib/format";
 import { useAppConfig, useDrop } from "../lib/hooks";
+import { compressImageFile } from "../lib/image";
 import { buildMutationFn, getApiErrorMessage } from "../lib/mutations";
 import { triggerDownload } from "../lib/utils";
 import { LimitNotes } from "./limit-notes";
@@ -328,15 +330,31 @@ export const BuildForm = () => {
       setSuccess(null);
 
       const title = value.title.trim();
-      const selectedFiles = [...value.buildFiles];
+      const authors = value.authors
+        .map((author) => author.value.trim())
+        .filter((name) => name.length > 0);
 
-      const selectionError = getBuildClientValidationError(selectedFiles);
+      const concurrency = getSafeImageConcurrency();
+
+      let compressedFiles: File[] = [];
+      try {
+        compressedFiles = await mapConcurrent(
+          value.buildFiles,
+          concurrency,
+          (file) => compressImageFile(file, 1920)
+        );
+      } catch {
+        setError("画像の圧縮処理中にエラーが発生しました。");
+        return;
+      }
+
+      const selectionError = getBuildClientValidationError(compressedFiles);
       if (selectionError) {
         setClientValidationError(selectionError);
         return;
       }
 
-      const pixelsError = await getImagePixelsValidationError(selectedFiles);
+      const pixelsError = await getImagePixelsValidationError(compressedFiles);
       if (pixelsError) {
         setClientValidationError(pixelsError);
         return;
@@ -344,14 +362,10 @@ export const BuildForm = () => {
 
       clearClientValidationBlock();
 
-      const authors = value.authors
-        .map((author) => author.value.trim())
-        .filter((name) => name.length > 0);
-
       await mutation.mutateAsync({
         authors,
         direction: value.direction,
-        files: selectedFiles,
+        files: compressedFiles,
         spread: value.spread,
         title,
       });
