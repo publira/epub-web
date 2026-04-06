@@ -43,11 +43,10 @@ export const App = () => {
             <Card className="animate-rise p-fluid">
               <Badge>ePub Web</Badge>
               <h1 className="mt-2 mb-3 text-hero">
-                画像とePubを、速く正確に変換
+                画像をePubに、ePubを画像に変換
               </h1>
               <p className="m-0 leading-7">
-                画像からePubを組み立てる、またはePubから画像を抽出できます。
-                ファイルはサーバーで変換処理され、生成結果はブラウザですぐにダウンロードできます。
+                画像ファイルからePubを作成したり、ePubに含まれる画像をまとめて取り出したりできます。変換はサーバー側で処理され、結果はそのままダウンロードできます。
               </p>
             </Card>
           </header>
