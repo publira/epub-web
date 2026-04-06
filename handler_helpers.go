@@ -31,6 +31,11 @@ type requestError struct {
 	err     error
 }
 
+type imageMetrics struct {
+	pixels   int64
+	longEdge int64
+}
+
 func (e *requestError) Error() string {
 	if e == nil {
 		return ""
@@ -228,7 +233,8 @@ func extractSpineImageRefs(ctx context.Context, file multipart.File, header *mul
 func validateExtractRefs(ctx context.Context, filename string, refs []epub.SpineImageReference) error {
 	maxAssetSize := getMaxAssetSizeBytes()
 	maxImagePixels := getMaxImagePixels()
-	var pixelCache sync.Map
+	maxImageLongEdge := getMaxImageLongEdge()
+	var metricsCache sync.Map
 
 	var eg errgroup.Group
 	eg.SetLimit(getWorkerLimit())
@@ -246,27 +252,30 @@ func validateExtractRefs(ctx context.Context, filename string, refs []epub.Spine
 				return newBadRequestError("asset_size_limit_exceeded", "Asset size limit exceeded.", fmt.Errorf("asset %s exceeded size limit", ref.Href))
 			}
 
-			if maxImagePixels > 0 {
-				if cached, ok := pixelCache.Load(ref.Href); ok {
-					pixels := cached.(int64)
-					if pixels > maxImagePixels {
-						slog.Warn("extract: image pixels limit exceeded", "filename", filename, "href", ref.Href, "pixels", pixels, "maxPixels", maxImagePixels)
-						return newBadRequestError("image_pixels_limit_exceeded", "Image pixel limit exceeded.", fmt.Errorf("asset %s exceeded image pixel limit", ref.Href))
+			if maxImagePixels > 0 || maxImageLongEdge > 0 {
+				var metrics imageMetrics
+
+				if cached, ok := metricsCache.Load(ref.Href); ok {
+					metrics = cached.(imageMetrics)
+				} else {
+					decodedMetrics, pixelErr := getAssetImageMetrics(ref.Asset)
+					if pixelErr != nil {
+						slog.Warn("extract: failed to decode image dimensions", "filename", filename, "href", ref.Href, "error", pixelErr)
+						return newBadRequestError("invalid_image", "Failed to parse image dimensions.", pixelErr)
 					}
-					return nil
+
+					metrics = decodedMetrics
+					metricsCache.Store(ref.Href, metrics)
 				}
 
-				pixels, pixelErr := getAssetImagePixels(ref.Asset)
-				if pixelErr != nil {
-					slog.Warn("extract: failed to decode image dimensions", "filename", filename, "href", ref.Href, "error", pixelErr)
-					return newBadRequestError("invalid_image", "Failed to parse image dimensions.", pixelErr)
-				}
-
-				pixelCache.Store(ref.Href, pixels)
-
-				if pixels > maxImagePixels {
-					slog.Warn("extract: image pixels limit exceeded", "filename", filename, "href", ref.Href, "pixels", pixels, "maxPixels", maxImagePixels)
+				if maxImagePixels > 0 && metrics.pixels > maxImagePixels {
+					slog.Warn("extract: image pixels limit exceeded", "filename", filename, "href", ref.Href, "pixels", metrics.pixels, "maxPixels", maxImagePixels)
 					return newBadRequestError("image_pixels_limit_exceeded", "Image pixel limit exceeded.", fmt.Errorf("asset %s exceeded image pixel limit", ref.Href))
+				}
+
+				if maxImageLongEdge > 0 && metrics.longEdge > maxImageLongEdge {
+					slog.Warn("extract: image long edge limit exceeded", "filename", filename, "href", ref.Href, "longEdge", metrics.longEdge, "maxLongEdge", maxImageLongEdge)
+					return newBadRequestError("image_long_edge_limit_exceeded", "Image long edge limit exceeded.", fmt.Errorf("asset %s exceeded image long edge limit", ref.Href))
 				}
 			}
 
@@ -417,6 +426,7 @@ func normalizeAndValidateBuildOptions(layout string, spread string) (epub.Layout
 func validateBuildFiles(ctx context.Context, files []*multipart.FileHeader) error {
 	maxAssetSize := getMaxAssetSizeBytes()
 	maxImagePixels := getMaxImagePixels()
+	maxImageLongEdge := getMaxImageLongEdge()
 
 	var eg errgroup.Group
 	eg.SetLimit(getWorkerLimit())
@@ -439,16 +449,21 @@ func validateBuildFiles(ctx context.Context, files []*multipart.FileHeader) erro
 			}
 			defer f.Close()
 
-			if maxImagePixels > 0 {
-				pixels, pixelErr := getMultipartFileImagePixels(f)
+			if maxImagePixels > 0 || maxImageLongEdge > 0 {
+				metrics, pixelErr := getMultipartFileImageMetrics(f)
 				if pixelErr != nil {
 					slog.Warn("build: failed to decode image dimensions", "filename", fileHeader.Filename, "error", pixelErr)
 					return newBadRequestError("invalid_image", "Failed to parse image dimensions.", pixelErr)
 				}
 
-				if pixels > maxImagePixels {
-					slog.Warn("build: image pixels limit exceeded", "filename", fileHeader.Filename, "pixels", pixels, "maxPixels", maxImagePixels)
+				if maxImagePixels > 0 && metrics.pixels > maxImagePixels {
+					slog.Warn("build: image pixels limit exceeded", "filename", fileHeader.Filename, "pixels", metrics.pixels, "maxPixels", maxImagePixels)
 					return newBadRequestError("image_pixels_limit_exceeded", "Image pixel limit exceeded.", fmt.Errorf("asset %s exceeded image pixel limit", fileHeader.Filename))
+				}
+
+				if maxImageLongEdge > 0 && metrics.longEdge > maxImageLongEdge {
+					slog.Warn("build: image long edge limit exceeded", "filename", fileHeader.Filename, "longEdge", metrics.longEdge, "maxLongEdge", maxImageLongEdge)
+					return newBadRequestError("image_long_edge_limit_exceeded", "Image long edge limit exceeded.", fmt.Errorf("asset %s exceeded image long edge limit", fileHeader.Filename))
 				}
 			}
 
@@ -542,46 +557,58 @@ func getFileSize(file multipart.File) (int64, error) {
 	return endPos, nil
 }
 
-func getMultipartFileImagePixels(file multipart.File) (int64, error) {
+func getMultipartFileImageMetrics(file multipart.File) (imageMetrics, error) {
 	currentPos, err := file.Seek(0, io.SeekCurrent)
 	if err != nil {
-		return 0, err
+		return imageMetrics{}, err
 	}
 
 	if _, err := file.Seek(0, io.SeekStart); err != nil {
-		return 0, err
+		return imageMetrics{}, err
 	}
 
 	config, _, err := image.DecodeConfig(file)
 	if _, seekErr := file.Seek(currentPos, io.SeekStart); seekErr != nil {
-		return 0, seekErr
+		return imageMetrics{}, seekErr
 	}
 	if err != nil {
-		return 0, err
+		return imageMetrics{}, err
 	}
 
-	return int64(config.Width) * int64(config.Height), nil
+	return toImageMetrics(config), nil
 }
 
-func getAssetImagePixels(asset *epub.Asset) (int64, error) {
+func getAssetImageMetrics(asset *epub.Asset) (imageMetrics, error) {
 	if asset == nil {
-		return 0, fmt.Errorf("asset is nil")
+		return imageMetrics{}, fmt.Errorf("asset is nil")
 	}
 
 	if !strings.HasPrefix(strings.ToLower(strings.TrimSpace(asset.MimeType)), "image/") {
-		return 0, nil
+		return imageMetrics{}, nil
 	}
 
 	rc, err := asset.Open()
 	if err != nil {
-		return 0, err
+		return imageMetrics{}, err
 	}
 	defer rc.Close()
 
 	config, _, err := image.DecodeConfig(rc)
 	if err != nil {
-		return 0, err
+		return imageMetrics{}, err
 	}
 
-	return int64(config.Width) * int64(config.Height), nil
+	return toImageMetrics(config), nil
+}
+
+func toImageMetrics(config image.Config) imageMetrics {
+	longEdge := int64(config.Width)
+	if config.Height > config.Width {
+		longEdge = int64(config.Height)
+	}
+
+	return imageMetrics{
+		pixels:   int64(config.Width) * int64(config.Height),
+		longEdge: longEdge,
+	}
 }

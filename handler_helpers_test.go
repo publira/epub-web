@@ -205,19 +205,19 @@ func TestAddBuildPagesInOrder_PreservesOrder(t *testing.T) {
 		t.Fatalf("expected %d refs, got %d", 2, len(refs))
 	}
 
-	firstPixels, err := getAssetImagePixels(refs[0].Asset)
+	firstMetrics, err := getAssetImageMetrics(refs[0].Asset)
 	if err != nil {
 		t.Fatalf("failed to decode first image dimensions: %v", err)
 	}
-	secondPixels, err := getAssetImagePixels(refs[1].Asset)
+	secondMetrics, err := getAssetImageMetrics(refs[1].Asset)
 	if err != nil {
 		t.Fatalf("failed to decode second image dimensions: %v", err)
 	}
-	if firstPixels != 200 {
-		t.Fatalf("expected first image pixels %d, got %d", 200, firstPixels)
+	if firstMetrics.pixels != 200 {
+		t.Fatalf("expected first image pixels %d, got %d", 200, firstMetrics.pixels)
 	}
-	if secondPixels != 1200 {
-		t.Fatalf("expected second image pixels %d, got %d", 1200, secondPixels)
+	if secondMetrics.pixels != 1200 {
+		t.Fatalf("expected second image pixels %d, got %d", 1200, secondMetrics.pixels)
 	}
 }
 
@@ -318,6 +318,52 @@ func TestValidateExtractRefs_RejectsImagePixelsLimit(t *testing.T) {
 	}
 	if reqErr.code != "image_pixels_limit_exceeded" {
 		t.Fatalf("expected code %q, got %q", "image_pixels_limit_exceeded", reqErr.code)
+	}
+}
+
+func TestValidateBuildFiles_RejectsImageLongEdgeLimit(t *testing.T) {
+	t.Setenv("EPUB_WEB_MAX_IMAGE_LONG_EDGE", "100")
+
+	fileHeaders := createImageFileHeaders(t, [][]byte{testPNGWithSize(t, 101, 10)})
+
+	err := validateBuildFiles(context.Background(), fileHeaders)
+	if err == nil {
+		t.Fatal("expected error for image long edge limit")
+	}
+
+	reqErr, ok := asRequestError(err)
+	if !ok {
+		t.Fatalf("expected requestError, got %T", err)
+	}
+	if reqErr.code != "image_long_edge_limit_exceeded" {
+		t.Fatalf("expected code %q, got %q", "image_long_edge_limit_exceeded", reqErr.code)
+	}
+}
+
+func TestValidateExtractRefs_RejectsImageLongEdgeLimit(t *testing.T) {
+	t.Setenv("EPUB_WEB_MAX_IMAGE_LONG_EDGE", "1")
+
+	imageData := testPNGWithSize(t, 2, 1)
+	asset := &epub.Asset{
+		MimeType: "image/png",
+		Size:     uint64(len(imageData)),
+		Open: func() (io.ReadCloser, error) {
+			return io.NopCloser(bytes.NewReader(imageData)), nil
+		},
+	}
+	refs := []epub.SpineImageReference{{Href: "item/image/p-001.png", Asset: asset}}
+
+	err := validateExtractRefs(context.Background(), "test.epub", refs)
+	if err == nil {
+		t.Fatal("expected error for image long edge limit")
+	}
+
+	reqErr, ok := asRequestError(err)
+	if !ok {
+		t.Fatalf("expected requestError, got %T", err)
+	}
+	if reqErr.code != "image_long_edge_limit_exceeded" {
+		t.Fatalf("expected code %q, got %q", "image_long_edge_limit_exceeded", reqErr.code)
 	}
 }
 

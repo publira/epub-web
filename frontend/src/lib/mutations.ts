@@ -47,6 +47,7 @@ interface ErrorMessageOptions {
   maxUploadMB?: number;
   maxAssetBytes?: number;
   maxImagePixels?: number;
+  maxImageLongEdge?: number;
   requestTimeoutMs?: number;
 }
 
@@ -61,6 +62,10 @@ const apiErrorMessageResolvers: Record<
   build_failed: () => "ePubの生成に失敗しました。",
   extract_failed: () => "画像抽出に失敗しました。",
   extract_images_failed: () => "画像抽出に失敗しました。",
+  image_long_edge_limit_exceeded: (options) =>
+    options.maxImageLongEdge && options.maxImageLongEdge > 0
+      ? `画像の長辺は最大 ${formatInteger(options.maxImageLongEdge)} px です。`
+      : "画像の長辺が上限を超えています。",
   image_pixels_limit_exceeded: (options) =>
     options.maxImagePixels && options.maxImagePixels > 0
       ? `画像の解像度は最大 ${formatInteger(options.maxImagePixels)} px です。`

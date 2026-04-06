@@ -89,6 +89,7 @@ export const ExtractForm = () => {
         getApiErrorMessage(caughtError, {
           defaultMessage: "画像抽出に失敗しました。",
           maxAssetBytes: config.maxAssetBytes,
+          maxImageLongEdge: config.maxImageLongEdge,
           maxImagePixels: config.maxImagePixels,
           maxPages: config.maxPages,
           maxUploadMB: config.maxUploadMB,

@@ -16,8 +16,8 @@
 | `EPUB_WEB_MAX_UPLOAD_SIZE` | `128` | 最大アップロードサイズ (MB)。`0`で無制限 |
 | `EPUB_WEB_MAX_PAGES` | `200` | 最大ページ数。`0`で無制限 |
 | `EPUB_WEB_MAX_ASSET_BYTES` | `33554432` | 1ファイルあたり最大サイズ (bytes)。`0`で無制限 |
-| `EPUB_WEB_MAX_IMAGE_LONG_EDGE` | `2048` | 画像の長辺リサイズ上限 (px)。`0`でリサイズ無効 |
-| `EPUB_WEB_MAX_IMAGE_PIXELS` | `50000000` | 画像の最大ピクセル数 (width × height)。`0`で無制限 |
+| `EPUB_WEB_MAX_IMAGE_LONG_EDGE` | `2048` | 画像の長辺上限 (px)。`0`で無制限 |
+| `EPUB_WEB_MAX_IMAGE_PIXELS` | `4000000` | 画像の最大ピクセル数 (width × height)。`0`で無制限 |
 | `EPUB_WEB_WORKERS` | `4` | 並列処理ワーカー数。`1`以上の整数 |
 | `EPUB_WEB_REQUEST_TIMEOUT` | `60s` | APIタイムアウト (Go duration形式)。`0`で無制限 |
 | `EPUB_WEB_SHUTDOWN_TIMEOUT` | `10s` | グレースフルシャットダウンの待機時間 (Go duration形式)。`0`で無制限 |
@@ -60,7 +60,7 @@ liveness 用に `200 OK` を返します。
   "maxPages": 1000,
   "maxAssetBytes": 33554432,
   "maxImageLongEdge": 2048,
-  "maxImagePixels": 50000000,
+  "maxImagePixels": 4000000,
   "requestTimeoutMs": 60000
 }
 ```
