@@ -15,14 +15,18 @@ import {
   formatMiBFromBytes,
   formatSecondsFromMs,
   formatSizeLabel,
-} from "../lib/format";
-import { useAppConfig, useDrop } from "../lib/hooks";
-import type { ExtractedImage } from "../lib/mutations";
-import { extractMutationFn, getApiErrorMessage } from "../lib/mutations";
-import { triggerDownload } from "../lib/utils";
-import { LimitNotes } from "./limit-notes";
-import { Card, DropOverlay, FilePicker, PrimaryButton } from "./ui/primitives";
-import { Skeleton } from "./ui/skeleton";
+} from "../../lib/format";
+import { useAppConfig, useDrop, useImageDimensions } from "../../lib/hooks";
+import type { ExtractedImage } from "../../lib/mutations";
+import { extractMutationFn, getApiErrorMessage } from "../../lib/mutations";
+import { triggerDownload } from "../../lib/utils";
+import { LimitNotes } from "../limit-notes";
+import { Button } from "../ui/button";
+import { Card } from "../ui/card";
+import { DropOverlay } from "../ui/drop-overlay";
+import { FilePicker } from "../ui/file-picker";
+import { Skeleton } from "../ui/skeleton";
+import { ExtractedImagesGallery } from "./extracted-images-gallery";
 
 export const ExtractFormSkeleton = () => (
   <Card className="min-w-0 p-fluid-sm">
@@ -202,9 +206,6 @@ export const ExtractForm = () => {
   const { isDragOver: isFormDragOver, dragProps } =
     useDrop(handleCardDropFiles);
 
-  const [previewDimensions, setPreviewDimensions] = useState<
-    Record<string, string>
-  >({});
   const extractedPreviewItems = useMemo(
     () =>
       extractedImages.map((image) => ({
@@ -233,34 +234,12 @@ export const ExtractForm = () => {
   useEffect(() => {
     revalidateIfBlocked();
   }, [extractFile]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadDimensions = async () => {
-      const next: Record<string, string> = {};
-
-      for (const item of extractedPreviewItems) {
-        try {
-          const bitmap = await createImageBitmap(item.blob);
-          next[item.key] = `${bitmap.width}x${bitmap.height}`;
-          bitmap.close();
-        } catch {
-          next[item.key] = "-";
-        }
-      }
-
-      if (!cancelled) {
-        setPreviewDimensions(next);
-      }
-    };
-
-    loadDimensions();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [extractedPreviewItems]);
+  const dimensionTargets = useMemo(
+    () =>
+      extractedPreviewItems.map((item) => ({ blob: item.blob, key: item.key })),
+    [extractedPreviewItems]
+  );
+  const previewDimensions = useImageDimensions(dimensionTargets);
 
   const handleDownloadImage = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -317,23 +296,24 @@ export const ExtractForm = () => {
           }}
         >
           {(field) => (
-            <label
-              className="grid gap-1.5 font-semibold"
-              htmlFor="extract-epub"
-            >
-              <span>
+            <div className="grid gap-1.5 font-semibold">
+              <label
+                id="extract-epub-label"
+                className="m-0"
+                htmlFor="extract-epub"
+              >
                 ePubファイル{" "}
                 <span className="text-error" aria-hidden="true">
                   *
                 </span>
                 <span className="sr-only">必須</span>
-              </span>
+              </label>
               <FilePicker
                 id="extract-epub"
                 accept=".epub,application/epub+zip"
                 ctaText="ePubファイルを選択"
                 helperText="クリックまたはドラッグ＆ドロップでePubファイルを指定"
-                aria-label="ePubファイル（必須）"
+                aria-labelledby="extract-epub-label"
                 aria-required="true"
                 disabled={isSubmitting}
                 onFileChange={handleExtractFileChange}
@@ -343,7 +323,7 @@ export const ExtractForm = () => {
                   {field.state.meta.errors[0]}
                 </p>
               )}
-            </label>
+            </div>
           )}
         </form.Field>
 
@@ -351,9 +331,10 @@ export const ExtractForm = () => {
           選択中: {extractFilename ?? "未選択"}
         </p>
 
-        <PrimaryButton
+        <Button
           className="inline-flex items-center justify-center gap-2"
           type="submit"
+          variant="primary"
           disabled={isSubmitting || isClientValidationBlocked}
         >
           {isSubmitting && (
@@ -363,54 +344,17 @@ export const ExtractForm = () => {
             />
           )}
           <span>{isSubmitting ? "抽出中..." : "画像を抽出"}</span>
-        </PrimaryButton>
+        </Button>
       </form>
 
       {extractedImages.length > 0 && (
-        <div className="mt-6 border-t border-current/20 pt-6">
-          <h3 className="mb-3 text-sm font-semibold">
-            抽出された画像 ({extractedImages.length})
-          </h3>
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              className="cursor-pointer rounded-lg border border-primary/28 bg-primary-subtle px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary-subtle-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/75"
-              onClick={handleDownloadAllImages}
-            >
-              全ダウンロード
-            </button>
-          </div>
-          <div className="flex w-full max-w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-2 touch-pan-x">
-            {extractedPreviewItems.map((image) => (
-              <div key={image.key} className="group w-32 shrink-0 snap-start">
-                <div className="mb-2 aspect-square flex items-center justify-center overflow-hidden rounded-lg bg-muted">
-                  <img
-                    src={image.url}
-                    alt={image.name}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <p
-                  className="truncate text-xs text-muted-foreground"
-                  title={image.name}
-                >
-                  {image.name}
-                </p>
-                <p className="mt-1 m-0 text-[11px] text-muted-foreground/90">
-                  {image.sizeLabel} / {previewDimensions[image.key] ?? "..."}
-                </p>
-                <button
-                  type="button"
-                  data-image-key={image.key}
-                  className="mt-2 w-full cursor-pointer rounded-lg border border-primary/28 bg-primary-subtle px-2 py-1 text-[11px] font-semibold text-primary transition hover:bg-primary-subtle-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/75"
-                  onClick={handleDownloadImage}
-                >
-                  ダウンロード
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
+        <ExtractedImagesGallery
+          extractedCount={extractedImages.length}
+          items={extractedPreviewItems}
+          previewDimensions={previewDimensions}
+          onDownloadAllImages={handleDownloadAllImages}
+          onDownloadImage={handleDownloadImage}
+        />
       )}
       {error && <p className="mb-0 font-semibold text-error">{error}</p>}
       {success && <p className="mb-0 font-semibold text-success">{success}</p>}

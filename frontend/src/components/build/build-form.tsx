@@ -1,25 +1,14 @@
 import {
-  DndContext,
-  DragOverlay,
   KeyboardSensor,
   PointerSensor,
-  closestCenter,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
 import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
-import {
-  arrayMove,
-  horizontalListSortingStrategy,
-  sortableKeyboardCoordinates,
-  useSortable,
-  SortableContext,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { useStore } from "@tanstack/react-store";
-import { X } from "lucide-react";
 import {
   useEffectEvent,
   useCallback,
@@ -29,174 +18,33 @@ import {
   useState,
 } from "react";
 
-import { getSafeImageConcurrency, mapConcurrent } from "../lib/async";
+import { getSafeImageConcurrency, mapConcurrent } from "../../lib/async";
+import {
+  buildFileKey,
+  getFileImagePixels,
+  validateSelectedBuildFiles,
+} from "../../lib/build";
 import {
   formatInteger,
   formatMiBFromBytes,
   formatSecondsFromMs,
-  formatSizeLabel,
-} from "../lib/format";
-import { useAppConfig, useDrop } from "../lib/hooks";
-import { compressImageFile } from "../lib/image";
-import { buildMutationFn, getApiErrorMessage } from "../lib/mutations";
-import { triggerDownload } from "../lib/utils";
-import { LimitNotes } from "./limit-notes";
-import { AddableSortableTextFields } from "./ui/addable-sortable-text-fields";
-import type { SortableTextFieldItem } from "./ui/addable-sortable-text-fields";
-import {
-  Card,
-  DropOverlay,
-  FilePicker,
-  PrimaryButton,
-  SelectInput,
-  TextInput,
-} from "./ui/primitives";
-import { Skeleton } from "./ui/skeleton";
-
-const getFileImagePixels = async (file: File): Promise<number> => {
-  const bitmap = await createImageBitmap(file);
-  const pixels = bitmap.width * bitmap.height;
-  bitmap.close();
-  return pixels;
-};
-
-const buildFileKey = (file: File) =>
-  `${file.name}:${file.size}:${file.lastModified}`;
-
-const validateSelectedBuildFiles = (
-  files: File[],
-  options: {
-    maxPages: number;
-    maxUploadMB: number;
-    maxAssetBytes: number;
-  }
-): string | null => {
-  if (options.maxPages > 0 && files.length > options.maxPages) {
-    return `ページ数は最大 ${formatInteger(options.maxPages)} ページです。`;
-  }
-
-  if (options.maxUploadMB > 0) {
-    const maxUploadBytes = options.maxUploadMB * 1024 * 1024;
-    const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
-    if (totalBytes > maxUploadBytes) {
-      return `1リクエストあたり最大 ${options.maxUploadMB} MiB です。`;
-    }
-  }
-
-  if (options.maxAssetBytes > 0) {
-    const oversized = files.find((file) => file.size > options.maxAssetBytes);
-    if (oversized) {
-      return `画像1枚あたり最大 ${formatMiBFromBytes(options.maxAssetBytes)} です。`;
-    }
-  }
-
-  return null;
-};
-
-interface ImagePreview {
-  id: string;
-  index: number;
-  name: string;
-  sizeLabel: string;
-  url: string;
-}
-
-interface SortableImagePreviewCardProps {
-  preview: ImagePreview;
-  dimensionsLabel: string;
-  disabled?: boolean;
-  onRemove: React.MouseEventHandler<HTMLButtonElement>;
-}
-
-const ImagePreviewCard = ({
-  preview,
-  dimensionsLabel,
-}: {
-  preview: ImagePreview;
-  dimensionsLabel: string;
-}) => (
-  <div className="w-32 shrink-0">
-    <div className="mb-2 aspect-square flex cursor-grabbing items-center justify-center overflow-hidden rounded-lg bg-muted shadow-lg ring-2 ring-primary/30">
-      <img
-        src={preview.url}
-        alt={preview.name}
-        className="h-full w-full object-cover"
-      />
-    </div>
-    <p className="truncate text-xs text-muted-foreground" title={preview.name}>
-      {preview.name}
-    </p>
-    <p className="mt-1 m-0 text-[11px] text-muted-foreground/90">
-      {preview.sizeLabel} / {dimensionsLabel}
-    </p>
-  </div>
-);
-
-const SortableImagePreviewCard = ({
-  preview,
-  dimensionsLabel,
-  disabled,
-  onRemove,
-}: SortableImagePreviewCardProps) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ disabled, id: preview.id });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="group w-32 shrink-0 snap-start"
-    >
-      <div
-        className="relative mb-2 aspect-square flex cursor-grab items-center justify-center overflow-hidden rounded-lg bg-muted active:cursor-grabbing"
-        style={{ opacity: isDragging ? 0.3 : 1 }}
-        {...attributes}
-        {...listeners}
-      >
-        <img
-          src={preview.url}
-          alt={preview.name}
-          className="h-full w-full object-cover"
-        />
-        {disabled && (
-          <div
-            className="pointer-events-auto absolute inset-0 z-10 rounded-lg bg-background/50 backdrop-blur-xs"
-            aria-hidden="true"
-          />
-        )}
-        <button
-          type="button"
-          data-index={preview.index}
-          className="absolute top-1.5 right-1.5 inline-flex size-7 cursor-pointer touch-none items-center justify-center rounded-full border border-slate-900/20 bg-slate-50/90 text-slate-700 shadow-sm transition hover:scale-105 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/75 disabled:cursor-not-allowed disabled:opacity-50"
-          disabled={disabled}
-          onClick={onRemove}
-          aria-label={`${preview.name} を選択から削除`}
-        >
-          <X aria-hidden="true" size={14} strokeWidth={2.25} />
-        </button>
-      </div>
-      <p
-        className="truncate text-xs text-muted-foreground"
-        title={preview.name}
-      >
-        {preview.name}
-      </p>
-      <p className="mt-1 m-0 text-[11px] text-muted-foreground/90">
-        {preview.sizeLabel} / {dimensionsLabel}
-      </p>
-    </div>
-  );
-};
+} from "../../lib/format";
+import { useAppConfig, useDrop, useImageDimensions } from "../../lib/hooks";
+import { compressImageFile } from "../../lib/image";
+import { buildMutationFn, getApiErrorMessage } from "../../lib/mutations";
+import { triggerDownload } from "../../lib/utils";
+import { LimitNotes } from "../limit-notes";
+import { AddableSortableTextFields } from "../ui/addable-sortable-text-fields";
+import type { SortableTextFieldItem } from "../ui/addable-sortable-text-fields";
+import { Button } from "../ui/button";
+import { Card } from "../ui/card";
+import { DropOverlay } from "../ui/drop-overlay";
+import { FilePicker } from "../ui/file-picker";
+import { SelectInput } from "../ui/select-input";
+import { Skeleton } from "../ui/skeleton";
+import { TextInput } from "../ui/text-input";
+import { SortableImagePreviewList } from "./sortable-image-preview-list";
+import { useBuildImagePreviews } from "./use-build-image-previews";
 
 export const BuildFormSkeleton = () => (
   <Card className="min-w-0 p-fluid-sm">
@@ -381,45 +229,9 @@ export const BuildForm = () => {
   const buildFiles = useStore(form.store, (s) => s.values.buildFiles);
   const isSubmitting = useStore(form.store, (s) => s.isSubmitting);
 
-  const objectUrlCacheRef = useRef<Map<string, string>>(new Map());
+  const imagePreviews = useBuildImagePreviews(buildFiles);
   const [activeId, setActiveId] = useState<string | null>(null);
 
-  const imagePreviews = useMemo(() => {
-    const cache = objectUrlCacheRef.current;
-    const activeKeys = new Set<string>();
-
-    const previews = buildFiles.map((file, index) => {
-      const key = buildFileKey(file);
-      activeKeys.add(key);
-
-      let url = cache.get(key);
-      if (!url) {
-        url = URL.createObjectURL(file);
-        cache.set(key, url);
-      }
-
-      return {
-        id: `${key}:${index}`,
-        index,
-        name: file.name,
-        sizeLabel: formatSizeLabel(file.size),
-        url,
-      };
-    });
-
-    for (const [key, url] of cache) {
-      if (!activeKeys.has(key)) {
-        URL.revokeObjectURL(url);
-        cache.delete(key);
-      }
-    }
-
-    return previews;
-  }, [buildFiles]);
-  const sortablePreviewIds = useMemo(
-    () => imagePreviews.map((preview) => preview.id),
-    [imagePreviews]
-  );
   const activePreview = useMemo(() => {
     if (activeId === null) {
       return null;
@@ -427,47 +239,11 @@ export const BuildForm = () => {
 
     return imagePreviews.find((preview) => preview.id === activeId) ?? null;
   }, [activeId, imagePreviews]);
-  const [previewDimensions, setPreviewDimensions] = useState<
-    Record<string, string>
-  >({});
-
-  useEffect(() => {
-    const cache = objectUrlCacheRef.current;
-    return () => {
-      for (const url of cache.values()) {
-        URL.revokeObjectURL(url);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadDimensions = async () => {
-      const next: Record<string, string> = {};
-
-      for (const file of buildFiles) {
-        const key = buildFileKey(file);
-        try {
-          const bitmap = await createImageBitmap(file);
-          next[key] = `${bitmap.width}x${bitmap.height}`;
-          bitmap.close();
-        } catch {
-          next[key] = "-";
-        }
-      }
-
-      if (!cancelled) {
-        setPreviewDimensions(next);
-      }
-    };
-
-    loadDimensions();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [buildFiles]);
+  const dimensionTargets = useMemo(
+    () => buildFiles.map((file) => ({ blob: file, key: buildFileKey(file) })),
+    [buildFiles]
+  );
+  const previewDimensions = useImageDimensions(dimensionTargets);
 
   const handleSubmit = useCallback<React.SubmitEventHandler<HTMLFormElement>>(
     (e) => {
@@ -853,24 +629,25 @@ export const BuildForm = () => {
           }}
         >
           {(field) => (
-            <label
-              className="grid gap-1.5 font-semibold"
-              htmlFor="build-images"
-            >
-              <span>
+            <div className="grid gap-1.5 font-semibold">
+              <label
+                id="build-images-label"
+                className="m-0"
+                htmlFor="build-images"
+              >
                 画像ファイル{" "}
                 <span className="text-error" aria-hidden="true">
                   *
                 </span>
                 <span className="sr-only">必須</span>
-              </span>
+              </label>
               <FilePicker
                 id="build-images"
                 accept="image/*"
                 multiple
                 ctaText="画像を選択"
                 helperText="クリックまたはドラッグ＆ドロップで画像を追加（複数選択可）"
-                aria-label="画像ファイル（必須）"
+                aria-labelledby="build-images-label"
                 aria-required="true"
                 disabled={isSubmitting}
                 onFilesChange={handleAddBuildFiles}
@@ -880,7 +657,7 @@ export const BuildForm = () => {
                   {field.state.meta.errors[0]}
                 </p>
               )}
-            </label>
+            </div>
           )}
         </form.Field>
 
@@ -904,51 +681,24 @@ export const BuildForm = () => {
               </p>
             </div>
 
-            <DndContext
+            <SortableImagePreviewList
               sensors={sensors}
-              collisionDetection={closestCenter}
+              imagePreviews={imagePreviews}
+              activePreview={activePreview}
+              buildFiles={buildFiles}
+              previewDimensions={previewDimensions}
+              isSubmitting={isSubmitting}
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={sortablePreviewIds}
-                strategy={horizontalListSortingStrategy}
-              >
-                <div className="flex w-full max-w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-2 touch-pan-x">
-                  {imagePreviews.map((preview) => (
-                    <SortableImagePreviewCard
-                      key={preview.id}
-                      preview={preview}
-                      dimensionsLabel={
-                        previewDimensions[
-                          buildFileKey(buildFiles[preview.index])
-                        ] ?? "..."
-                      }
-                      disabled={isSubmitting}
-                      onRemove={handleRemoveImage}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-              <DragOverlay>
-                {activePreview !== null && (
-                  <ImagePreviewCard
-                    preview={activePreview}
-                    dimensionsLabel={
-                      previewDimensions[
-                        buildFileKey(buildFiles[activePreview.index])
-                      ] ?? "..."
-                    }
-                  />
-                )}
-              </DragOverlay>
-            </DndContext>
+              onRemoveImage={handleRemoveImage}
+            />
           </div>
         )}
 
-        <PrimaryButton
+        <Button
           className="inline-flex items-center justify-center gap-2"
           type="submit"
+          variant="primary"
           disabled={isSubmitting || isClientValidationBlocked}
         >
           {isSubmitting && (
@@ -960,7 +710,7 @@ export const BuildForm = () => {
           <span>
             {isSubmitting ? "生成中..." : "ePubを生成してダウンロード"}
           </span>
-        </PrimaryButton>
+        </Button>
       </form>
 
       {error && <p className="mb-0 font-semibold text-error">{error}</p>}

@@ -18,7 +18,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, X } from "lucide-react";
 import { useCallback, useMemo } from "react";
 
-import { TextInput } from "./primitives";
+import { TextInput } from "./text-input";
 
 export interface SortableTextFieldItem {
   id: string;
@@ -29,6 +29,9 @@ interface SortableTextFieldRowProps {
   item: SortableTextFieldItem;
   index: number;
   inputId: string;
+  inputAriaLabelledBy: string;
+  rowLabelId: string;
+  rowLabelText: string;
   disabled?: boolean;
   canRemove?: boolean;
   placeholder?: string;
@@ -40,6 +43,9 @@ const SortableTextFieldRow = ({
   item,
   index,
   inputId,
+  inputAriaLabelledBy,
+  rowLabelId,
+  rowLabelText,
   disabled,
   canRemove,
   placeholder,
@@ -83,11 +89,15 @@ const SortableTextFieldRow = ({
         className="pl-2 pr-3"
         type="text"
         value={item.value}
+        aria-labelledby={inputAriaLabelledBy}
         onValueChange={handleValueChange}
         placeholder={placeholder}
         maxLength={120}
         disabled={disabled}
       />
+      <span id={rowLabelId} className="sr-only">
+        {rowLabelText}
+      </span>
       <button
         type="button"
         className="ml-1 inline-flex h-12 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-error/35 bg-error/10 text-error transition hover:-translate-y-px hover:bg-error/15 disabled:cursor-not-allowed disabled:opacity-50"
@@ -159,17 +169,20 @@ export const AddableSortableTextFields = ({
     [items, onReorder, sortableIds]
   );
 
+  const groupLabelId = `${inputIdPrefix}-group-label`;
   const lastInputId =
     items.length > 0 ? `${inputIdPrefix}-${items.length - 1}` : undefined;
 
   return (
     <div className="grid gap-1.5 font-semibold">
       {lastInputId ? (
-        <label className="m-0" htmlFor={lastInputId}>
+        <label id={groupLabelId} className="m-0" htmlFor={lastInputId}>
           {label}
         </label>
       ) : (
-        <p className="m-0">{label}</p>
+        <p id={groupLabelId} className="m-0">
+          {label}
+        </p>
       )}
       {items.length > 0 && (
         <DndContext
@@ -182,19 +195,27 @@ export const AddableSortableTextFields = ({
             strategy={verticalListSortingStrategy}
           >
             <div className="mt-1 grid gap-2">
-              {items.map((item, index) => (
-                <SortableTextFieldRow
-                  key={item.id}
-                  item={item}
-                  index={index}
-                  inputId={`${inputIdPrefix}-${index}`}
-                  disabled={disabled}
-                  canRemove={items.length > 1}
-                  placeholder={placeholder}
-                  onChange={onChange}
-                  onRemove={onRemove}
-                />
-              ))}
+              {items.map((item, index) => {
+                const rowLabelId = `${inputIdPrefix}-${index}-label`;
+                const rowLabelText = `${label} ${index + 1}`;
+
+                return (
+                  <SortableTextFieldRow
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    inputId={`${inputIdPrefix}-${index}`}
+                    inputAriaLabelledBy={`${groupLabelId} ${rowLabelId}`}
+                    rowLabelId={rowLabelId}
+                    rowLabelText={rowLabelText}
+                    disabled={disabled}
+                    canRemove={items.length > 1}
+                    placeholder={placeholder}
+                    onChange={onChange}
+                    onRemove={onRemove}
+                  />
+                );
+              })}
             </div>
           </SortableContext>
         </DndContext>

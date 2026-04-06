@@ -1,12 +1,12 @@
 import { twMerge } from "tailwind-merge";
 
-export const Skeleton = ({
+export const Card = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={twMerge(
-      "animate-pulse rounded-xl border border-primary/8 bg-primary/12",
+      "rounded-3xl border border-primary/18 bg-card-surface shadow-card",
       className
     )}
     {...props}

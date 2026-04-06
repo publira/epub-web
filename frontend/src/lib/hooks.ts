@@ -6,6 +6,22 @@ import { configSchema } from "./mutations";
 
 export type AppConfig = z.infer<typeof configSchema>;
 
+let scrollLockCount = 0;
+
+const syncBodyScroll = () => {
+  document.body.style.overflow = scrollLockCount > 0 ? "hidden" : "";
+};
+
+const lockScroll = () => {
+  scrollLockCount += 1;
+  syncBodyScroll();
+};
+
+const unlockScroll = () => {
+  scrollLockCount = Math.max(0, scrollLockCount - 1);
+  syncBodyScroll();
+};
+
 export const toConfigFetchError = (cause: unknown): Error => {
   if (cause instanceof Error && cause.message.length > 0) {
     return cause;
@@ -185,4 +201,89 @@ export const useDrop = (
     },
     isDragOver,
   };
+};
+
+interface ImageDimensionTarget {
+  key: string;
+  blob: Blob;
+}
+
+export const useImageDimensions = (
+  targets: readonly ImageDimensionTarget[]
+): Record<string, string> => {
+  const [dimensions, setDimensions] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadDimensions = async () => {
+      const next: Record<string, string> = {};
+
+      for (const target of targets) {
+        try {
+          const bitmap = await createImageBitmap(target.blob);
+          next[target.key] = `${bitmap.width}x${bitmap.height}`;
+          bitmap.close();
+        } catch {
+          next[target.key] = "-";
+        }
+      }
+
+      if (!cancelled) {
+        setDimensions(next);
+      }
+    };
+
+    loadDimensions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [targets]);
+
+  return dimensions;
+};
+
+export const useDialogScrollLock = (
+  dialogRef: React.RefObject<HTMLDialogElement | null>
+) => {
+  useEffect(() => {
+    const dialog = dialogRef.current;
+
+    if (dialog === null) {
+      return;
+    }
+
+    let isLocked = false;
+
+    const syncDialogLock = () => {
+      if (dialog.open === isLocked) {
+        return;
+      }
+
+      if (dialog.open) {
+        lockScroll();
+      } else {
+        unlockScroll();
+      }
+
+      isLocked = dialog.open;
+    };
+
+    const observer = new MutationObserver(syncDialogLock);
+    observer.observe(dialog, {
+      attributeFilter: ["open"],
+      attributes: true,
+    });
+
+    syncDialogLock();
+
+    return () => {
+      observer.disconnect();
+
+      if (isLocked) {
+        unlockScroll();
+      }
+    };
+  }, [dialogRef]);
 };
