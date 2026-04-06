@@ -1,21 +1,16 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  Activity,
-  Suspense,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { Activity, Suspense, useCallback, useRef, useState } from "react";
 import * as z from "zod";
 
 import { useSearchParamsState } from "../lib/hooks";
-import { BuildForm, BuildFormSkeleton } from "./build-form";
+import { BuildForm, BuildFormSkeleton } from "./build/build-form";
 import { ConfigQueryBoundary } from "./config-query-boundary";
-import { ExtractForm, ExtractFormSkeleton } from "./extract-form";
+import { ExtractForm, ExtractFormSkeleton } from "./extract/extract-form";
 import { PrivacyDialog } from "./privacy-dialog";
 import { TermsDialog } from "./terms-dialog";
-import { Badge, Card, TabButton } from "./ui/primitives";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
+import { Card } from "./ui/card";
 
 const modeSchema = z.enum(["build", "extract"]);
 
@@ -25,46 +20,20 @@ export const App = () => {
   const termsDialogRef = useRef<HTMLDialogElement>(null);
   const privacyDialogRef = useRef<HTMLDialogElement>(null);
 
-  const lockBodyScroll = useCallback(() => {
-    document.body.style.overflow = "hidden";
-  }, []);
-  const unlockBodyScroll = useCallback(() => {
-    const isAnyDialogOpen =
-      termsDialogRef.current?.open || privacyDialogRef.current?.open;
-    if (!isAnyDialogOpen) {
-      document.body.style.overflow = "";
-    }
-  }, []);
-
   const handleBuildMode = useCallback(() => setMode("build"), [setMode]);
   const handleExtractMode = useCallback(() => setMode("extract"), [setMode]);
   const handleOpenTerms = useCallback(() => {
     const dialog = termsDialogRef.current;
     if (dialog && !dialog.open) {
-      lockBodyScroll();
       dialog.showModal();
     }
-  }, [lockBodyScroll]);
+  }, []);
   const handleOpenPrivacy = useCallback(() => {
     const dialog = privacyDialogRef.current;
     if (dialog && !dialog.open) {
-      lockBodyScroll();
       dialog.showModal();
     }
-  }, [lockBodyScroll]);
-  const handleTermsClose = useCallback(() => {
-    unlockBodyScroll();
-  }, [unlockBodyScroll]);
-  const handlePrivacyClose = useCallback(() => {
-    unlockBodyScroll();
-  }, [unlockBodyScroll]);
-
-  useEffect(
-    () => () => {
-      document.body.style.overflow = "";
-    },
-    []
-  );
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -88,49 +57,68 @@ export const App = () => {
             role="tablist"
             aria-label="変換モード"
           >
-            <TabButton
+            <Button
+              id="tab-build"
               type="button"
+              variant="tab"
               active={mode === "build"}
               onClick={handleBuildMode}
               role="tab"
               aria-selected={mode === "build"}
               aria-controls="panel-build"
+              tabIndex={mode === "build" ? 0 : -1}
             >
               画像からePub
-            </TabButton>
-            <TabButton
+            </Button>
+            <Button
+              id="tab-extract"
               type="button"
+              variant="tab"
               active={mode === "extract"}
               onClick={handleExtractMode}
               role="tab"
               aria-selected={mode === "extract"}
               aria-controls="panel-extract"
+              tabIndex={mode === "extract" ? 0 : -1}
             >
               ePubから画像
-            </TabButton>
+            </Button>
           </div>
 
-          <Activity mode={mode === "build" ? "visible" : "hidden"}>
-            <ConfigQueryBoundary>
-              <Suspense fallback={<BuildFormSkeleton />}>
-                <BuildForm />
-              </Suspense>
-            </ConfigQueryBoundary>
-          </Activity>
+          <div
+            id="panel-build"
+            role="tabpanel"
+            aria-labelledby="tab-build"
+            hidden={mode !== "build"}
+            tabIndex={0}
+          >
+            <Activity mode={mode === "build" ? "visible" : "hidden"}>
+              <ConfigQueryBoundary>
+                <Suspense fallback={<BuildFormSkeleton />}>
+                  <BuildForm />
+                </Suspense>
+              </ConfigQueryBoundary>
+            </Activity>
+          </div>
 
-          <Activity mode={mode === "extract" ? "visible" : "hidden"}>
-            <ConfigQueryBoundary>
-              <Suspense fallback={<ExtractFormSkeleton />}>
-                <ExtractForm />
-              </Suspense>
-            </ConfigQueryBoundary>
-          </Activity>
+          <div
+            id="panel-extract"
+            role="tabpanel"
+            aria-labelledby="tab-extract"
+            hidden={mode !== "extract"}
+            tabIndex={0}
+          >
+            <Activity mode={mode === "extract" ? "visible" : "hidden"}>
+              <ConfigQueryBoundary>
+                <Suspense fallback={<ExtractFormSkeleton />}>
+                  <ExtractForm />
+                </Suspense>
+              </ConfigQueryBoundary>
+            </Activity>
+          </div>
 
-          <TermsDialog dialogRef={termsDialogRef} onClose={handleTermsClose} />
-          <PrivacyDialog
-            dialogRef={privacyDialogRef}
-            onClose={handlePrivacyClose}
-          />
+          <TermsDialog dialogRef={termsDialogRef} />
+          <PrivacyDialog dialogRef={privacyDialogRef} />
         </main>
 
         <footer className="pb-4">

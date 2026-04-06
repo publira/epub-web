@@ -4,7 +4,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import type { FallbackProps } from "react-error-boundary";
 
 import { toConfigFetchError } from "../lib/hooks";
-import { Card } from "./ui/primitives";
+import { Card } from "./ui/card";
 
 const ConfigErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => {
   const normalizedError = toConfigFetchError(error);
