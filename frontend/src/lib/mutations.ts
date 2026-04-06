@@ -222,6 +222,7 @@ export const extractMutationFn = async (
 
 export const configSchema = z.object({
   maxAssetBytes: z.number(),
+  maxImageLongEdge: z.number(),
   maxImagePixels: z.number(),
   maxPages: z.number(),
   maxUploadMB: z.number(),

@@ -13,6 +13,7 @@ type ConfigResponse struct {
 	MaxPages         int   `json:"maxPages"`
 	MaxAssetBytes    int64 `json:"maxAssetBytes"`
 	MaxImagePixels   int64 `json:"maxImagePixels"`
+	MaxImageLongEdge int64 `json:"maxImageLongEdge"`
 	RequestTimeoutMs int64 `json:"requestTimeoutMs"`
 }
 
@@ -48,6 +49,7 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
 	maxAssetBytes := getMaxAssetSizeBytes()
 	maxImagePixels := getMaxImagePixels()
 	requestTimeoutMs := getRequestTimeout().Milliseconds()
+	maxImageLongEdge := getMaxImageLongEdge()
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(ConfigResponse{
@@ -55,6 +57,7 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
 		MaxPages:         maxPages,
 		MaxAssetBytes:    maxAssetBytes,
 		MaxImagePixels:   maxImagePixels,
+		MaxImageLongEdge: maxImageLongEdge,
 		RequestTimeoutMs: requestTimeoutMs,
 	})
 }
