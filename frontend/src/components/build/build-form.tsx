@@ -149,6 +149,7 @@ export const BuildForm = () => {
         getApiErrorMessage(caughtError, {
           defaultMessage: "ePubの生成に失敗しました。",
           maxAssetBytes: config.maxAssetBytes,
+          maxImageLongEdge: config.maxImageLongEdge,
           maxImagePixels: config.maxImagePixels,
           maxPages: config.maxPages,
           maxUploadMB: config.maxUploadMB,

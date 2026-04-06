@@ -234,6 +234,40 @@ func TestHandleBuild_RejectsImagePixelsLimit(t *testing.T) {
 	}
 }
 
+func TestHandleBuild_RejectsImageLongEdgeLimit(t *testing.T) {
+	t.Setenv("EPUB_WEB_MAX_IMAGE_LONG_EDGE", "1")
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	if err := writer.WriteField("title", "test"); err != nil {
+		t.Fatalf("failed to write title field: %v", err)
+	}
+	part, err := writer.CreateFormFile("images", "page.png")
+	if err != nil {
+		t.Fatalf("failed to create image part: %v", err)
+	}
+	if _, err := part.Write(testPNGWithSize(t, 2, 1)); err != nil {
+		t.Fatalf("failed to write image part: %v", err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatalf("failed to close multipart writer: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/api/build", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	rec := httptest.NewRecorder()
+
+	withLimit(handleBuild).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+	payload := decodeErrorResponse(t, rec)
+	if payload.Code != "image_long_edge_limit_exceeded" {
+		t.Fatalf("expected code %q, got %q", "image_long_edge_limit_exceeded", payload.Code)
+	}
+}
+
 func TestHandleBuild_PreservesPageOrder(t *testing.T) {
 	firstImage := testPNGWithSize(t, 10, 20)
 	secondImage := testPNGWithSize(t, 30, 40)
@@ -277,19 +311,19 @@ func TestHandleBuild_PreservesPageOrder(t *testing.T) {
 	if len(refs) != 2 {
 		t.Fatalf("expected %d extracted refs, got %d", 2, len(refs))
 	}
-	firstPixels, err := getAssetImagePixels(refs[0].Asset)
+	firstMetrics, err := getAssetImageMetrics(refs[0].Asset)
 	if err != nil {
 		t.Fatalf("failed to decode first image dimensions: %v", err)
 	}
-	secondPixels, err := getAssetImagePixels(refs[1].Asset)
+	secondMetrics, err := getAssetImageMetrics(refs[1].Asset)
 	if err != nil {
 		t.Fatalf("failed to decode second image dimensions: %v", err)
 	}
-	if firstPixels != 200 {
-		t.Fatalf("expected first image pixels %d, got %d", 200, firstPixels)
+	if firstMetrics.pixels != 200 {
+		t.Fatalf("expected first image pixels %d, got %d", 200, firstMetrics.pixels)
 	}
-	if secondPixels != 1200 {
-		t.Fatalf("expected second image pixels %d, got %d", 1200, secondPixels)
+	if secondMetrics.pixels != 1200 {
+		t.Fatalf("expected second image pixels %d, got %d", 1200, secondMetrics.pixels)
 	}
 }
 
@@ -366,6 +400,25 @@ func TestHandleExtract_RejectsImagePixelsLimit(t *testing.T) {
 	payload := decodeErrorResponse(t, rec)
 	if payload.Code != "image_pixels_limit_exceeded" {
 		t.Fatalf("expected code %q, got %q", "image_pixels_limit_exceeded", payload.Code)
+	}
+}
+
+func TestHandleExtract_RejectsImageLongEdgeLimit(t *testing.T) {
+	t.Setenv("EPUB_WEB_MAX_IMAGE_LONG_EDGE", "1")
+
+	imageData := testPNGWithSize(t, 2, 1)
+	epubBytes := buildTestEPUBWithImage(t, imageData, 1)
+	req := newMultipartRequest(t, "/api/extract", "epub", "test.epub", epubBytes)
+	rec := httptest.NewRecorder()
+
+	withLimit(handleExtract).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+	payload := decodeErrorResponse(t, rec)
+	if payload.Code != "image_long_edge_limit_exceeded" {
+		t.Fatalf("expected code %q, got %q", "image_long_edge_limit_exceeded", payload.Code)
 	}
 }
 

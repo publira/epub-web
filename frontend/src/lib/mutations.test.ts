@@ -136,6 +136,19 @@ describe("mutations", () => {
         defaultMessage: "ePubの生成に失敗しました。",
       })
     ).toBe("見開き指定が不正です。");
+
+    expect(
+      getApiErrorMessage(
+        new ApiError(
+          "image_long_edge_limit_exceeded",
+          "Image long edge limit exceeded."
+        ),
+        {
+          defaultMessage: "ePubの生成に失敗しました。",
+          maxImageLongEdge: 2048,
+        }
+      )
+    ).toBe("画像の長辺は最大 2,048 px です。");
   }, 1000);
 
   it("getApiErrorMessage preserves server message for unknown api codes", () => {

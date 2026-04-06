@@ -10,15 +10,15 @@ import (
 const defaultPort = "8080"
 
 const (
-	defaultMaxUploadSizeMB = int64(128)
-	defaultMaxPages        = 200
-	defaultMaxAssetBytes   = int64(32 * 1024 * 1024)
-	defaultMaxImagePixels  = int64(50_000_000)
-	defaultWorkers         = 4
-	defaultRequestTimeout  = 60 * time.Second
-	defaultShutdownTimeout = 10 * time.Second
+	defaultMaxUploadSizeMB  = int64(128)
+	defaultMaxPages         = 200
+	defaultMaxAssetBytes    = int64(32 * 1024 * 1024)
+	defaultMaxImagePixels   = int64(4_000_000)
+	defaultMaxImageLongEdge = int64(2048)
+	defaultWorkers          = 4
+	defaultRequestTimeout   = 60 * time.Second
+	defaultShutdownTimeout  = 10 * time.Second
 )
-const defaultMaxImageLongEdge = int64(2048)
 
 func getListenAddress() string {
 	host := os.Getenv("HOST")
