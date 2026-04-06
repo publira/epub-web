@@ -62,6 +62,7 @@ func TestHandleConfig_ReturnsLimits(t *testing.T) {
 	t.Setenv("EPUB_WEB_MAX_ASSET_BYTES", "5242880")
 	t.Setenv("EPUB_WEB_MAX_IMAGE_PIXELS", "12000000")
 	t.Setenv("EPUB_WEB_REQUEST_TIMEOUT", "45s")
+	t.Setenv("EPUB_WEB_MAX_IMAGE_LONG_EDGE", "1280")
 
 	req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
 	rec := httptest.NewRecorder()
@@ -91,6 +92,9 @@ func TestHandleConfig_ReturnsLimits(t *testing.T) {
 	}
 	if payload.RequestTimeoutMs != 45000 {
 		t.Fatalf("expected requestTimeoutMs %d, got %d", 45000, payload.RequestTimeoutMs)
+	}
+	if payload.MaxImageLongEdge != 1280 {
+		t.Fatalf("expected maxImageLongEdge %d, got %d", 1280, payload.MaxImageLongEdge)
 	}
 }
 

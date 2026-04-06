@@ -199,6 +199,38 @@ func TestGetWorkerLimit_ZeroReturnsDefault(t *testing.T) {
 	}
 }
 
+func TestGetMaxImageLongEdge(t *testing.T) {
+	t.Setenv("EPUB_WEB_MAX_IMAGE_LONG_EDGE", "1280")
+
+	if got := getMaxImageLongEdge(); got != 1280 {
+		t.Fatalf("expected %d, got %d", 1280, got)
+	}
+}
+
+func TestGetMaxImageLongEdge_DefaultWhenUnset(t *testing.T) {
+	t.Setenv("EPUB_WEB_MAX_IMAGE_LONG_EDGE", "")
+
+	if got := getMaxImageLongEdge(); got != defaultMaxImageLongEdge {
+		t.Fatalf("expected %d, got %d", defaultMaxImageLongEdge, got)
+	}
+}
+
+func TestGetMaxImageLongEdge_ZeroMeansNoResize(t *testing.T) {
+	t.Setenv("EPUB_WEB_MAX_IMAGE_LONG_EDGE", "0")
+
+	if got := getMaxImageLongEdge(); got != 0 {
+		t.Fatalf("expected %d, got %d", 0, got)
+	}
+}
+
+func TestGetMaxImageLongEdge_InvalidReturnsDefault(t *testing.T) {
+	t.Setenv("EPUB_WEB_MAX_IMAGE_LONG_EDGE", "invalid")
+
+	if got := getMaxImageLongEdge(); got != defaultMaxImageLongEdge {
+		t.Fatalf("expected %d, got %d", defaultMaxImageLongEdge, got)
+	}
+}
+
 func TestGetShutdownTimeout(t *testing.T) {
 	t.Setenv("EPUB_WEB_SHUTDOWN_TIMEOUT", "5s")
 

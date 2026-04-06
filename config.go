@@ -18,6 +18,7 @@ const (
 	defaultRequestTimeout  = 60 * time.Second
 	defaultShutdownTimeout = 10 * time.Second
 )
+const defaultMaxImageLongEdge = int64(2048)
 
 func getListenAddress() string {
 	host := os.Getenv("HOST")
@@ -95,6 +96,23 @@ func getMaxImagePixels() int64 {
 	}
 
 	return pixels
+}
+
+func getMaxImageLongEdge() int64 {
+	value := os.Getenv("EPUB_WEB_MAX_IMAGE_LONG_EDGE")
+	if value == "" {
+		return defaultMaxImageLongEdge
+	}
+
+	px, err := strconv.ParseInt(value, 10, 64)
+	if err != nil || px < 0 {
+		return defaultMaxImageLongEdge
+	}
+	if px == 0 {
+		return 0
+	}
+
+	return px
 }
 
 func getRequestTimeout() time.Duration {
