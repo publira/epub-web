@@ -186,12 +186,12 @@ export const BuildForm = () => {
 
       let compressedFiles: File[] = [];
       try {
-          compressedFiles =
-            config.maxImageLongEdge > 0
-              ? await mapConcurrent(value.buildFiles, concurrency, (file) =>
-                  compressImageFile(file, config.maxImageLongEdge)
-                )
-              : [...value.buildFiles];
+        compressedFiles =
+          config.maxImageLongEdge > 0
+            ? await mapConcurrent(value.buildFiles, concurrency, (file) =>
+                compressImageFile(file, config.maxImageLongEdge)
+              )
+            : [...value.buildFiles];
       } catch {
         setError("画像の圧縮処理中にエラーが発生しました。");
         return;
