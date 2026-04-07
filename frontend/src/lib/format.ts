@@ -1,13 +1,15 @@
-const jaIntegerFormatter = new Intl.NumberFormat("ja-JP");
-const jaFixed1Formatter = new Intl.NumberFormat("ja-JP", {
+const locale = "ja-JP";
+
+const jaIntegerFormatter = new Intl.NumberFormat(locale);
+const jaFixed1Formatter = new Intl.NumberFormat(locale, {
   maximumFractionDigits: 1,
   minimumFractionDigits: 1,
 });
-const jaFixed2Formatter = new Intl.NumberFormat("ja-JP", {
+const jaFixed2Formatter = new Intl.NumberFormat(locale, {
   maximumFractionDigits: 2,
   minimumFractionDigits: 2,
 });
-const jaSecondsVariableFormatter = new Intl.NumberFormat("ja-JP", {
+const jaSecondsVariableFormatter = new Intl.NumberFormat(locale, {
   maximumFractionDigits: 1,
 });
 
@@ -25,7 +27,18 @@ export const formatSizeLabel = (bytes: number): string =>
 export const formatSecondsFromMs = (ms: number): string =>
   jaSecondsVariableFormatter.format(ms / 1000);
 
-const jaLanguageNames = new Intl.DisplayNames("ja", { type: "language" });
+const jaLanguageNames = new Intl.DisplayNames(locale, { type: "language" });
 
 export const formatLanguageName = (code: string): string =>
   jaLanguageNames.of(code) ?? code;
+
+const jaDateTimeFormatter = new Intl.DateTimeFormat(locale, {
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
+
+export const formatLastModified = (lastModified: number): string =>
+  jaDateTimeFormatter.format(new Date(lastModified));

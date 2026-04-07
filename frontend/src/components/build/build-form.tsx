@@ -21,6 +21,8 @@ import {
 import { getSafeImageConcurrency, mapConcurrent } from "../../lib/async";
 import {
   buildFileKey,
+  compareFilesByLastModified,
+  compareFilesByName,
   getFileImagePixels,
   validateSelectedBuildFiles,
 } from "../../lib/build";
@@ -326,7 +328,8 @@ export const BuildForm = () => {
         return;
       }
 
-      const nextFiles = [...buildFiles, ...imageFiles];
+      const sortedImageFiles = imageFiles.toSorted(compareFilesByName);
+      const nextFiles = [...buildFiles, ...sortedImageFiles];
       if (config.maxPages > 0 && nextFiles.length > config.maxPages) {
         setClientValidationError(
           `ページ数は最大 ${formatInteger(config.maxPages)} ページです。`
@@ -365,7 +368,8 @@ export const BuildForm = () => {
         return;
       }
 
-      const nextFiles = [...buildFiles, ...droppedImages];
+      const sortedDroppedImages = droppedImages.toSorted(compareFilesByName);
+      const nextFiles = [...buildFiles, ...sortedDroppedImages];
 
       if (config.maxPages > 0 && nextFiles.length > config.maxPages) {
         setClientValidationError(
@@ -421,6 +425,24 @@ export const BuildForm = () => {
     setSuccess(null);
     form.setFieldValue("buildFiles", []);
   }, [form, isSubmitting]);
+
+  const handleSortByName = useCallback(() => {
+    if (isSubmitting || buildFiles.length === 0) {
+      return;
+    }
+
+    const sorted = buildFiles.toSorted(compareFilesByName);
+    form.setFieldValue("buildFiles", sorted);
+  }, [buildFiles, form, isSubmitting]);
+
+  const handleSortByDate = useCallback(() => {
+    if (isSubmitting || buildFiles.length === 0) {
+      return;
+    }
+
+    const sorted = buildFiles.toSorted(compareFilesByLastModified);
+    form.setFieldValue("buildFiles", sorted);
+  }, [buildFiles, form, isSubmitting]);
 
   const handleCoverChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -724,6 +746,23 @@ export const BuildForm = () => {
                 onClick={handleRemoveAllImages}
               >
                 全削除
+              </button>
+              <div className="h-4 w-px bg-primary/20" />
+              <button
+                type="button"
+                className="cursor-pointer rounded-lg border border-primary/25 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={isSubmitting}
+                onClick={handleSortByName}
+              >
+                名前順
+              </button>
+              <button
+                type="button"
+                className="cursor-pointer rounded-lg border border-primary/25 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={isSubmitting}
+                onClick={handleSortByDate}
+              >
+                更新日順
               </button>
               <p className="m-0 text-xs text-muted-foreground">
                 画像をドラッグして順番を変更できます。
