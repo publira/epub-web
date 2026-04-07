@@ -98,7 +98,7 @@ func handleExtract(w http.ResponseWriter, r *http.Request) {
 	slog.Info("extract: checks done", "filename", header.Filename, "images", len(refs))
 
 	w.Header().Set("Content-Type", "application/zip")
-	w.Header().Set("Content-Disposition", `attachment; filename="extracted.zip"`)
+	w.Header().Set("Content-Disposition", buildExtractContentDisposition(header.Filename))
 
 	if err := writeExtractArchive(r.Context(), w, header.Filename, refs); err != nil {
 		return

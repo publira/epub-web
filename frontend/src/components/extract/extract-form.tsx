@@ -17,7 +17,7 @@ import {
   formatSizeLabel,
 } from "../../lib/format";
 import { useAppConfig, useDrop, useImageDimensions } from "../../lib/hooks";
-import type { ExtractedImage } from "../../lib/mutations";
+import type { ExtractedImage, ExtractResult } from "../../lib/mutations";
 import { extractMutationFn, getApiErrorMessage } from "../../lib/mutations";
 import { triggerDownload } from "../../lib/utils";
 import { LimitNotes } from "../limit-notes";
@@ -37,6 +37,9 @@ export const ExtractFormSkeleton = () => (
 
 export const ExtractForm = () => {
   const [extractedImages, setExtractedImages] = useState<ExtractedImage[]>([]);
+  const [extractResult, setExtractResult] = useState<ExtractResult | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
   const [isClientValidationBlocked, setIsClientValidationBlocked] =
     useState(false);
@@ -72,6 +75,7 @@ export const ExtractForm = () => {
     setError(message);
     setSuccess(null);
     setExtractedImages([]);
+    setExtractResult(null);
     setIsClientValidationBlocked(true);
   }, []);
 
@@ -98,11 +102,13 @@ export const ExtractForm = () => {
       );
       setSuccess(null);
       setExtractedImages([]);
+      setExtractResult(null);
     },
-    onSuccess: (images) => {
+    onSuccess: (result) => {
       clearClientValidationBlock();
-      setExtractedImages(images);
-      setSuccess(`${images.length} 個の画像を抽出しました。`);
+      setExtractedImages(result.images);
+      setExtractResult(result);
+      setSuccess(`${result.images.length} 個の画像を抽出しました。`);
       resetFormRef.current?.();
     },
   });
@@ -130,6 +136,7 @@ export const ExtractForm = () => {
       setError(null);
       setSuccess(null);
       setExtractedImages([]);
+      setExtractResult(null);
       await mutation.mutateAsync({ file: selectedFile });
     },
   });
@@ -165,6 +172,7 @@ export const ExtractForm = () => {
       setError(null);
       setSuccess(null);
       setExtractedImages([]);
+      setExtractResult(null);
     },
     [
       clearClientValidationBlock,
@@ -194,6 +202,7 @@ export const ExtractForm = () => {
       setError(null);
       setSuccess(null);
       setExtractedImages([]);
+      setExtractResult(null);
       form.setFieldValue("extractFile", droppedEpub);
     },
     [
@@ -254,10 +263,10 @@ export const ExtractForm = () => {
   );
 
   const handleDownloadAllImages = useCallback(() => {
-    for (const image of extractedImages) {
-      triggerDownload(image.blob, image.name);
+    if (extractResult) {
+      triggerDownload(extractResult.zipBlob, extractResult.zipFilename);
     }
-  }, [extractedImages]);
+  }, [extractResult]);
 
   const limitItems: string[] = [];
   if (config.maxUploadMB > 0) {

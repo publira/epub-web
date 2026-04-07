@@ -174,9 +174,15 @@ export const buildMutationFn = async (
   return { blob, filename };
 };
 
+export interface ExtractResult {
+  images: ExtractedImage[];
+  zipBlob: Blob;
+  zipFilename: string;
+}
+
 export const extractMutationFn = async (
   params: ExtractMutationParams
-): Promise<ExtractedImage[]> => {
+): Promise<ExtractResult> => {
   const formData = new FormData();
   formData.set("epub", params.file);
 
@@ -198,6 +204,10 @@ export const extractMutationFn = async (
   }
 
   const zipBlob = await res.blob();
+  const zipFilename = parseFilename(
+    res.headers.get("Content-Disposition"),
+    "extracted.zip"
+  );
   const arrayBuffer = await zipBlob.arrayBuffer();
   const uint8Array = new Uint8Array(arrayBuffer);
 
@@ -228,7 +238,7 @@ export const extractMutationFn = async (
     throw new Error("画像ファイルが見つかりません。");
   }
 
-  return images;
+  return { images, zipBlob, zipFilename };
 };
 
 export const configSchema = z.object({
