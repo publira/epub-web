@@ -216,6 +216,11 @@ export const useImageDimensions = (
   useEffect(() => {
     let cancelled = false;
 
+    if (targets.length === 0) {
+      setDimensions({});
+      return;
+    }
+
     const loadDimensions = async () => {
       const next: Record<string, string> = {};
 

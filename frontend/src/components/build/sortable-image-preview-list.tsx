@@ -11,7 +11,6 @@ import {
 } from "@dnd-kit/sortable";
 import { useMemo } from "react";
 
-import { buildFileKey } from "../../lib/build";
 import {
   ImagePreviewCard,
   SortableImagePreviewCard,
@@ -22,8 +21,6 @@ interface SortableImagePreviewListProps {
   sensors: SensorDescriptor<SensorOptions>[];
   imagePreviews: ImagePreview[];
   activePreview: ImagePreview | null;
-  buildFiles: File[];
-  previewDimensions: Record<string, string>;
   isSubmitting: boolean;
   onDragStart: (event: DragStartEvent) => void;
   onDragEnd: (event: DragEndEvent) => void;
@@ -34,8 +31,6 @@ export const SortableImagePreviewList = ({
   sensors,
   imagePreviews,
   activePreview,
-  buildFiles,
-  previewDimensions,
   isSubmitting,
   onDragStart,
   onDragEnd,
@@ -45,14 +40,6 @@ export const SortableImagePreviewList = ({
     () => imagePreviews.map((preview) => preview.id),
     [imagePreviews]
   );
-
-  const getDimensionsLabel = (index: number): string => {
-    const file = buildFiles[index];
-    if (!file) {
-      return "...";
-    }
-    return previewDimensions[buildFileKey(file)] ?? "...";
-  };
 
   return (
     <DndContext
@@ -70,7 +57,6 @@ export const SortableImagePreviewList = ({
             <SortableImagePreviewCard
               key={preview.id}
               preview={preview}
-              dimensionsLabel={getDimensionsLabel(preview.index)}
               disabled={isSubmitting}
               onRemove={onRemoveImage}
             />
@@ -78,12 +64,7 @@ export const SortableImagePreviewList = ({
         </div>
       </SortableContext>
       <DragOverlay>
-        {activePreview !== null && (
-          <ImagePreviewCard
-            preview={activePreview}
-            dimensionsLabel={getDimensionsLabel(activePreview.index)}
-          />
-        )}
+        {activePreview !== null && <ImagePreviewCard preview={activePreview} />}
       </DragOverlay>
     </DndContext>
   );

@@ -318,6 +318,94 @@ func TestAddBuildPagesInOrder_AssignsSpreadCenter(t *testing.T) {
 	assertPageSpreads(t, doc, []string{"center", "center", "center"})
 }
 
+func TestAddBuildPagesInOrder_LandscapeAutoDetect(t *testing.T) {
+	fileHeaders := createImageFileHeaders(t, [][]byte{
+		testPNGWithSize(t, 10, 10),
+		testPNGWithSize(t, 20, 20),
+		testPNGWithSize(t, 60, 30), // landscape
+		testPNGWithSize(t, 40, 40),
+		testPNGWithSize(t, 50, 50),
+	})
+	doc := &epub.Document{Metadata: epub.Metadata{Title: "landscape-auto"}, Direction: "rtl"}
+
+	// index 0: portrait (10x10) → logicalPage=0 → center, logicalPage becomes 1
+	// index 1: portrait (20x20) → logicalPage=1 → right, logicalPage becomes 2
+	// index 2: landscape (60x30) → center, logicalPage becomes 4
+	// index 3: portrait (40x40) → logicalPage=4 → left (even), logicalPage becomes 5
+	// index 4: portrait (50x50) → logicalPage=5 → right (odd), logicalPage becomes 6
+	if err := addBuildPagesInOrder(context.Background(), doc, fileHeaders, "right", false); err != nil {
+		t.Fatalf("addBuildPagesInOrder failed: %v", err)
+	}
+
+	assertPageSpreads(t, doc, []string{"center", "right", "center", "left", "right"})
+}
+
+func TestAddBuildPagesInOrder_LandscapeAtStart(t *testing.T) {
+	fileHeaders := createImageFileHeaders(t, [][]byte{
+		testPNGWithSize(t, 40, 20), // landscape
+		testPNGWithSize(t, 20, 20),
+		testPNGWithSize(t, 30, 30),
+	})
+	doc := &epub.Document{Metadata: epub.Metadata{Title: "landscape-start"}, Direction: "rtl"}
+
+	// index 0: landscape → center, logicalPage becomes 2
+	// index 1: portrait → logicalPage=2 → left (even), logicalPage becomes 3
+	// index 2: portrait → logicalPage=3 → right (odd), logicalPage becomes 4
+	if err := addBuildPagesInOrder(context.Background(), doc, fileHeaders, "right", false); err != nil {
+		t.Fatalf("addBuildPagesInOrder failed: %v", err)
+	}
+
+	assertPageSpreads(t, doc, []string{"center", "left", "right"})
+}
+
+func TestAddBuildPagesInOrder_MultipleLandscape(t *testing.T) {
+	fileHeaders := createImageFileHeaders(t, [][]byte{
+		testPNGWithSize(t, 10, 10),
+		testPNGWithSize(t, 40, 20), // landscape
+		testPNGWithSize(t, 30, 30),
+		testPNGWithSize(t, 60, 30), // landscape
+		testPNGWithSize(t, 50, 50),
+	})
+	doc := &epub.Document{Metadata: epub.Metadata{Title: "multi-landscape"}, Direction: "rtl"}
+
+	// index 0: portrait (10x10) → logicalPage=0 → center, logicalPage becomes 1
+	// index 1: landscape (40x20) → center, logicalPage becomes 3
+	// index 2: portrait (30x30) → logicalPage=3 → right (odd), logicalPage becomes 4
+	// index 3: landscape (60x30) → center, logicalPage becomes 6
+	// index 4: portrait (50x50) → logicalPage=6 → left (even), logicalPage becomes 7
+	if err := addBuildPagesInOrder(context.Background(), doc, fileHeaders, "right", false); err != nil {
+		t.Fatalf("addBuildPagesInOrder failed: %v", err)
+	}
+
+	assertPageSpreads(t, doc, []string{"center", "center", "right", "center", "left"})
+}
+
+func TestAddBuildPagesInOrder_LandscapeWithCover(t *testing.T) {
+	fileHeaders := createImageFileHeaders(t, [][]byte{
+		testPNGWithSize(t, 10, 10),
+		testPNGWithSize(t, 20, 20),
+		testPNGWithSize(t, 60, 30), // landscape
+		testPNGWithSize(t, 40, 40),
+	})
+	doc := &epub.Document{Metadata: epub.Metadata{Title: "landscape-cover"}, Direction: "rtl"}
+
+	// index 0: cover (skipped)
+	// index 1: portrait (20x20) → logicalPage=0 → center, logicalPage becomes 1
+	// index 2: landscape (60x30) → center, logicalPage becomes 3
+	// index 3: portrait (40x40) → logicalPage=3 → right (odd), logicalPage becomes 4
+	if err := addBuildPagesInOrder(context.Background(), doc, fileHeaders, "right", true); err != nil {
+		t.Fatalf("addBuildPagesInOrder failed: %v", err)
+	}
+
+	if len(doc.Pages) != 4 {
+		t.Fatalf("expected 4 pages, got %d", len(doc.Pages))
+	}
+	if doc.Pages[0].Type != epub.PageTypeCover {
+		t.Fatalf("expected first page type %q, got %q", epub.PageTypeCover, doc.Pages[0].Type)
+	}
+	assertPageSpreads(t, doc, []string{"center", "center", "center", "right"})
+}
+
 func TestCalculatePageSpread(t *testing.T) {
 	tests := []struct {
 		name   string
