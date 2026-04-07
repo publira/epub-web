@@ -86,6 +86,7 @@ export const App = () => {
 
           <div
             id="panel-build"
+            className="min-w-0"
             role="tabpanel"
             aria-labelledby="tab-build"
             hidden={mode !== "build"}
@@ -102,6 +103,7 @@ export const App = () => {
 
           <div
             id="panel-extract"
+            className="min-w-0"
             role="tabpanel"
             aria-labelledby="tab-extract"
             hidden={mode !== "extract"}

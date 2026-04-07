@@ -11,6 +11,7 @@ import {
 } from "@dnd-kit/sortable";
 import { useMemo } from "react";
 
+import { ScrollRow } from "../ui/scroll-row";
 import {
   ImagePreviewCard,
   SortableImagePreviewCard,
@@ -52,7 +53,7 @@ export const SortableImagePreviewList = ({
         items={sortablePreviewIds}
         strategy={horizontalListSortingStrategy}
       >
-        <div className="flex w-full max-w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-2 touch-pan-x">
+        <ScrollRow>
           {imagePreviews.map((preview) => (
             <SortableImagePreviewCard
               key={preview.id}
@@ -61,7 +62,7 @@ export const SortableImagePreviewList = ({
               onRemove={onRemoveImage}
             />
           ))}
-        </div>
+        </ScrollRow>
       </SortableContext>
       <DragOverlay>
         {activePreview !== null && <ImagePreviewCard preview={activePreview} />}
