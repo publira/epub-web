@@ -21,6 +21,7 @@
 | `EPUB_WEB_WORKERS` | `4` | 並列処理ワーカー数。`1`以上の整数 |
 | `EPUB_WEB_REQUEST_TIMEOUT` | `60s` | APIタイムアウト (Go duration形式)。`0`で無制限 |
 | `EPUB_WEB_SHUTDOWN_TIMEOUT` | `10s` | グレースフルシャットダウンの待機時間 (Go duration形式)。`0`で無制限 |
+| `EPUB_WEB_SUPPORTED_LANGUAGES` | `ja,en` | 対応言語のカンマ区切りリスト。先頭がデフォルト言語 |
 
 ### 起動例
 
@@ -35,6 +36,7 @@ docker run --rm -p 8080:8080 \
   -e EPUB_WEB_WORKERS=8 \
   -e EPUB_WEB_REQUEST_TIMEOUT=90s \
   -e EPUB_WEB_SHUTDOWN_TIMEOUT=15s \
+  -e EPUB_WEB_SUPPORTED_LANGUAGES=ja,en \
   ghcr.io/publira/epub-web:latest
 ```
 
@@ -61,7 +63,8 @@ liveness 用に `200 OK` を返します。
   "maxAssetBytes": 33554432,
   "maxImageLongEdge": 2048,
   "maxImagePixels": 4000000,
-  "requestTimeoutMs": 60000
+  "requestTimeoutMs": 60000,
+  "supportedLanguages": ["ja", "en"]
 }
 ```
 
@@ -74,6 +77,8 @@ multipart/form-data:
 - `direction`: `rtl` / `ltr` (任意)
 - `layout`: `pre-paginated` など (任意)
 - `spread`: `left` / `right` など (任意)
+- `language`: 言語コード。`EPUB_WEB_SUPPORTED_LANGUAGES` の先頭値がデフォルト (任意)
+- `cover`: `true` で1枚目を表紙に設定 (任意)
 
 ### `POST /api/extract`
 

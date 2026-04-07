@@ -9,12 +9,13 @@ import (
 )
 
 type ConfigResponse struct {
-	MaxUploadMB      int64 `json:"maxUploadMB"`
-	MaxPages         int   `json:"maxPages"`
-	MaxAssetBytes    int64 `json:"maxAssetBytes"`
-	MaxImagePixels   int64 `json:"maxImagePixels"`
-	MaxImageLongEdge int64 `json:"maxImageLongEdge"`
-	RequestTimeoutMs int64 `json:"requestTimeoutMs"`
+	MaxUploadMB        int64    `json:"maxUploadMB"`
+	MaxPages           int      `json:"maxPages"`
+	MaxAssetBytes      int64    `json:"maxAssetBytes"`
+	MaxImagePixels     int64    `json:"maxImagePixels"`
+	MaxImageLongEdge   int64    `json:"maxImageLongEdge"`
+	RequestTimeoutMs   int64    `json:"requestTimeoutMs"`
+	SupportedLanguages []string `json:"supportedLanguages"`
 }
 
 type ErrorResponse struct {
@@ -28,6 +29,8 @@ type BuildRequest struct {
 	Direction string
 	Layout    string
 	Spread    string
+	Language  string
+	Cover     bool
 }
 
 func handleLivez(w http.ResponseWriter, _ *http.Request) {
@@ -50,15 +53,17 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
 	maxImagePixels := getMaxImagePixels()
 	requestTimeoutMs := getRequestTimeout().Milliseconds()
 	maxImageLongEdge := getMaxImageLongEdge()
+	supportedLanguages := getSupportedLanguages()
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(ConfigResponse{
-		MaxUploadMB:      maxSizeMB,
-		MaxPages:         maxPages,
-		MaxAssetBytes:    maxAssetBytes,
-		MaxImagePixels:   maxImagePixels,
-		MaxImageLongEdge: maxImageLongEdge,
-		RequestTimeoutMs: requestTimeoutMs,
+		MaxUploadMB:        maxSizeMB,
+		MaxPages:           maxPages,
+		MaxAssetBytes:      maxAssetBytes,
+		MaxImagePixels:     maxImagePixels,
+		MaxImageLongEdge:   maxImageLongEdge,
+		RequestTimeoutMs:   requestTimeoutMs,
+		SupportedLanguages: supportedLanguages,
 	}); err != nil {
 		slog.Error("config: failed to encode response", "error", err)
 	}
@@ -107,7 +112,7 @@ func handleBuild(w http.ResponseWriter, r *http.Request) {
 
 	files := r.MultipartForm.File["images"]
 
-	slog.Info("build: start", "title", req.Title, "images", len(files), "direction", req.Direction, "spread", req.Spread)
+	slog.Info("build: start", "title", req.Title, "images", len(files), "direction", req.Direction, "spread", req.Spread, "language", req.Language, "cover", req.Cover)
 
 	doc, err := buildDocument(r.Context(), req, files)
 	if err != nil {

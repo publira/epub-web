@@ -199,6 +199,42 @@ func TestGetWorkerLimit_ZeroReturnsDefault(t *testing.T) {
 	}
 }
 
+func TestGetSupportedLanguages_Default(t *testing.T) {
+	t.Setenv("EPUB_WEB_SUPPORTED_LANGUAGES", "")
+
+	got := getSupportedLanguages()
+	if len(got) != 2 || got[0] != "ja" || got[1] != "en" {
+		t.Fatalf("expected [ja en], got %v", got)
+	}
+}
+
+func TestGetSupportedLanguages_Custom(t *testing.T) {
+	t.Setenv("EPUB_WEB_SUPPORTED_LANGUAGES", "en,ja,zh-Hans")
+
+	got := getSupportedLanguages()
+	if len(got) != 3 || got[0] != "en" || got[1] != "ja" || got[2] != "zh-Hans" {
+		t.Fatalf("expected [en ja zh-Hans], got %v", got)
+	}
+}
+
+func TestGetSupportedLanguages_TrimsWhitespace(t *testing.T) {
+	t.Setenv("EPUB_WEB_SUPPORTED_LANGUAGES", " ja , en ")
+
+	got := getSupportedLanguages()
+	if len(got) != 2 || got[0] != "ja" || got[1] != "en" {
+		t.Fatalf("expected [ja en], got %v", got)
+	}
+}
+
+func TestGetSupportedLanguages_AllEmptyFallsBackToDefault(t *testing.T) {
+	t.Setenv("EPUB_WEB_SUPPORTED_LANGUAGES", ",,")
+
+	got := getSupportedLanguages()
+	if len(got) != 2 || got[0] != "ja" || got[1] != "en" {
+		t.Fatalf("expected [ja en], got %v", got)
+	}
+}
+
 func TestGetMaxImageLongEdge(t *testing.T) {
 	t.Setenv("EPUB_WEB_MAX_IMAGE_LONG_EDGE", "1280")
 
