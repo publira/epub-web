@@ -168,16 +168,27 @@ func closeMultipartFiles(files []multipart.File) {
 	}
 }
 
+func buildExtractContentDisposition(epubFilename string) string {
+	base := strings.TrimSpace(epubFilename)
+	base = strings.TrimSuffix(base, ".epub")
+	base = strings.TrimSuffix(base, ".EPUB")
+	if base == "" {
+		base = "extracted"
+	}
+	return formatContentDisposition(base + ".zip")
+}
+
 func buildEPUBContentDisposition(title string) string {
 	filename := strings.TrimSpace(title)
 	if filename == "" {
 		filename = "Untitled"
 	}
-	filename += ".epub"
+	return formatContentDisposition(filename + ".epub")
+}
 
+func formatContentDisposition(filename string) string {
 	fallback := toASCIIFilename(filename)
 	encoded := url.PathEscape(filename)
-
 	return fmt.Sprintf(`attachment; filename="%s"; filename*=UTF-8''%s`, fallback, encoded)
 }
 

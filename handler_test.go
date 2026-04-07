@@ -442,6 +442,10 @@ func TestHandleExtract_ReturnsZipArchive(t *testing.T) {
 	if got := rec.Header().Get("Content-Type"); !strings.Contains(got, "application/zip") {
 		t.Fatalf("expected zip content type, got %q", got)
 	}
+	contentDisposition := rec.Header().Get("Content-Disposition")
+	if !strings.Contains(contentDisposition, `filename*=UTF-8''`+url.PathEscape("test.zip")) {
+		t.Fatalf("expected UTF-8 filename* derived from epub name, got %q", contentDisposition)
+	}
 
 	zr, err := zip.NewReader(bytes.NewReader(rec.Body.Bytes()), int64(rec.Body.Len()))
 	if err != nil {

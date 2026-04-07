@@ -76,15 +76,22 @@ describe("mutations", () => {
       "notes/readme.txt": new Uint8Array([5, 6, 7]),
     });
     fetchMock.mockResolvedValueOnce(
-      new Response(new Blob([new Uint8Array(zipped)]), { status: 200 })
+      new Response(new Blob([new Uint8Array(zipped)]), {
+        headers: {
+          "Content-Disposition": 'attachment; filename="extracted.zip"',
+        },
+        status: 200,
+      })
     );
 
     const result = await extractMutationFn({
       file: new File(["dummy"], "test.epub", { type: "application/epub+zip" }),
     });
 
-    expect(result).toHaveLength(1);
-    expect(result[0]?.name).toBe("1.jpg");
+    expect(result.images).toHaveLength(1);
+    expect(result.images[0]?.name).toBe("1.jpg");
+    expect(result.zipBlob).toBeInstanceOf(Blob);
+    expect(result.zipFilename).toBe("extracted.zip");
     expect(createObjectURL).toHaveBeenCalledOnce();
   }, 1000);
 
