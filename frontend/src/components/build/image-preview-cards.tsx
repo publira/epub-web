@@ -6,6 +6,7 @@ import type { MouseEventHandler } from "react";
 export interface ImagePreview {
   id: string;
   index: number;
+  lastModifiedLabel: string;
   name: string;
   sizeLabel: string;
   url: string;
@@ -38,6 +39,9 @@ export const ImagePreviewCard = ({
     </p>
     <p className="mt-1 m-0 text-[11px] text-muted-foreground/90">
       {preview.sizeLabel} / {dimensionsLabel}
+    </p>
+    <p className="mt-0.5 m-0 text-[11px] text-muted-foreground/70">
+      {preview.lastModifiedLabel}
     </p>
   </div>
 );
@@ -103,6 +107,9 @@ export const SortableImagePreviewCard = ({
       </p>
       <p className="mt-1 m-0 text-[11px] text-muted-foreground/90">
         {preview.sizeLabel} / {dimensionsLabel}
+      </p>
+      <p className="mt-0.5 m-0 text-[11px] text-muted-foreground/70">
+        {preview.lastModifiedLabel}
       </p>
     </div>
   );

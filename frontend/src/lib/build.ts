@@ -1,5 +1,14 @@
 import { formatInteger, formatMiBFromBytes } from "./format";
 
+export const compareFilesByName = (a: File, b: File): number =>
+  a.name.localeCompare(b.name, undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
+
+export const compareFilesByLastModified = (a: File, b: File): number =>
+  a.lastModified - b.lastModified;
+
 export const getFileImagePixels = async (file: File): Promise<number> => {
   const bitmap = await createImageBitmap(file);
   const pixels = bitmap.width * bitmap.height;
