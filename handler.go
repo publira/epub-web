@@ -52,14 +52,16 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
 	maxImageLongEdge := getMaxImageLongEdge()
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(ConfigResponse{
+	if err := json.NewEncoder(w).Encode(ConfigResponse{
 		MaxUploadMB:      maxSizeMB,
 		MaxPages:         maxPages,
 		MaxAssetBytes:    maxAssetBytes,
 		MaxImagePixels:   maxImagePixels,
 		MaxImageLongEdge: maxImageLongEdge,
 		RequestTimeoutMs: requestTimeoutMs,
-	})
+	}); err != nil {
+		slog.Error("config: failed to encode response", "error", err)
+	}
 }
 
 func handleExtract(w http.ResponseWriter, r *http.Request) {
@@ -69,7 +71,7 @@ func handleExtract(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusBadRequest, "missing_epub_file", "Failed to get EPUB file.")
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	slog.Info("extract: start", "filename", header.Filename, "size", header.Size)
 

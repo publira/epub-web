@@ -36,7 +36,7 @@ func TestHandleExtract_RejectsOverPageLimit(t *testing.T) {
 	t.Setenv("EPUB_WEB_MAX_PAGES", "1")
 
 	epubBytes := buildTestEPUB(t, 2)
-	req := newMultipartRequest(t, "/api/extract", "epub", "test.epub", epubBytes)
+	req := newMultipartRequest(t, epubBytes)
 	rec := httptest.NewRecorder()
 
 	withLimit(handleExtract).ServeHTTP(rec, req)
@@ -370,7 +370,7 @@ func TestHandleExtract_RejectsAssetSizeLimit(t *testing.T) {
 
 	imageData := testPNGWithSize(t, 10, 10)
 	epubBytes := buildTestEPUBWithImage(t, imageData, 1)
-	req := newMultipartRequest(t, "/api/extract", "epub", "test.epub", epubBytes)
+	req := newMultipartRequest(t, epubBytes)
 	rec := httptest.NewRecorder()
 
 	withLimit(handleExtract).ServeHTTP(rec, req)
@@ -389,7 +389,7 @@ func TestHandleExtract_RejectsImagePixelsLimit(t *testing.T) {
 
 	imageData := testPNGWithSize(t, 2, 2)
 	epubBytes := buildTestEPUBWithImage(t, imageData, 1)
-	req := newMultipartRequest(t, "/api/extract", "epub", "test.epub", epubBytes)
+	req := newMultipartRequest(t, epubBytes)
 	rec := httptest.NewRecorder()
 
 	withLimit(handleExtract).ServeHTTP(rec, req)
@@ -408,7 +408,7 @@ func TestHandleExtract_RejectsImageLongEdgeLimit(t *testing.T) {
 
 	imageData := testPNGWithSize(t, 2, 1)
 	epubBytes := buildTestEPUBWithImage(t, imageData, 1)
-	req := newMultipartRequest(t, "/api/extract", "epub", "test.epub", epubBytes)
+	req := newMultipartRequest(t, epubBytes)
 	rec := httptest.NewRecorder()
 
 	withLimit(handleExtract).ServeHTTP(rec, req)
@@ -427,7 +427,7 @@ func TestHandleExtract_ReturnsZipArchive(t *testing.T) {
 		testPNGWithSize(t, 10, 20),
 		testPNGWithSize(t, 30, 40),
 	})
-	req := newMultipartRequest(t, "/api/extract", "epub", "test.epub", epubBytes)
+	req := newMultipartRequest(t, epubBytes)
 	rec := httptest.NewRecorder()
 
 	withLimit(handleExtract).ServeHTTP(rec, req)
@@ -506,12 +506,12 @@ func buildTestEPUBWithImage(t *testing.T, imageData []byte, pageCount int) []byt
 	return encoded.Bytes()
 }
 
-func newMultipartRequest(t *testing.T, path string, fieldName string, filename string, content []byte) *http.Request {
+func newMultipartRequest(t *testing.T, content []byte) *http.Request {
 	t.Helper()
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile(fieldName, filename)
+	part, err := writer.CreateFormFile("epub", "test.epub")
 	if err != nil {
 		t.Fatalf("failed to create multipart file: %v", err)
 	}
@@ -522,7 +522,7 @@ func newMultipartRequest(t *testing.T, path string, fieldName string, filename s
 		t.Fatalf("failed to close multipart writer: %v", err)
 	}
 
-	req := httptest.NewRequest(http.MethodPost, path, body)
+	req := httptest.NewRequest(http.MethodPost, "/api/extract", body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	return req
 }
