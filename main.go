@@ -21,6 +21,10 @@ func init() {
 }
 
 func main() {
+	os.Exit(run())
+}
+
+func run() int {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /livez", handleLivez)
@@ -53,7 +57,7 @@ func main() {
 	case err := <-errCh:
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			slog.Error("server stopped", "error", err)
-			os.Exit(1)
+			return 1
 		}
 	case sig := <-sigCh:
 		slog.Info("shutdown signal received", "signal", sig.String())
@@ -72,14 +76,16 @@ func main() {
 			if closeErr := server.Close(); closeErr != nil {
 				slog.Error("force close failed", "error", closeErr)
 			}
-			os.Exit(1)
+			return 1
 		}
 
 		if err := <-errCh; err != nil && !errors.Is(err, http.ErrServerClosed) {
 			slog.Error("server stopped", "error", err)
-			os.Exit(1)
+			return 1
 		}
 
 		slog.Info("server stopped")
 	}
+
+	return 0
 }

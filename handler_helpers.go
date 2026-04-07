@@ -106,10 +106,12 @@ func parseBuildRequest(r *http.Request) BuildRequest {
 func writeJSONError(w http.ResponseWriter, status int, code string, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(ErrorResponse{
+	if err := json.NewEncoder(w).Encode(ErrorResponse{
 		Code:    code,
 		Message: message,
-	})
+	}); err != nil {
+		slog.Error("failed to encode error response", "error", err)
+	}
 }
 
 func newRequestTimeoutError(err error) error {
@@ -153,7 +155,7 @@ func closeMultipartFiles(files []multipart.File) {
 		if file == nil {
 			continue
 		}
-		file.Close()
+		_ = file.Close()
 	}
 }
 
@@ -240,7 +242,6 @@ func validateExtractRefs(ctx context.Context, filename string, refs []epub.Spine
 	eg.SetLimit(getWorkerLimit())
 
 	for _, ref := range refs {
-		ref := ref
 		eg.Go(func() error {
 			if err := ctx.Err(); err != nil {
 				return newRequestTimeoutError(err)
@@ -325,7 +326,7 @@ func writeExtractArchive(ctx context.Context, w io.Writer, filename string, refs
 		}
 
 		if _, err := io.Copy(zf, rc); err != nil {
-			rc.Close()
+			_ = rc.Close()
 			if ctxErr := ctx.Err(); ctxErr != nil {
 				slog.Warn("extract: request canceled while streaming zip", "filename", filename, "href", ref.Href, "error", ctxErr)
 				return ctxErr
@@ -432,7 +433,6 @@ func validateBuildFiles(ctx context.Context, files []*multipart.FileHeader) erro
 	eg.SetLimit(getWorkerLimit())
 
 	for _, fileHeader := range files {
-		fileHeader := fileHeader
 		eg.Go(func() error {
 			if err := ctx.Err(); err != nil {
 				return newRequestTimeoutError(err)
@@ -447,7 +447,7 @@ func validateBuildFiles(ctx context.Context, files []*multipart.FileHeader) erro
 			if err != nil {
 				return newBadRequestError("open_image_failed", "Failed to open image.", err)
 			}
-			defer f.Close()
+			defer func() { _ = f.Close() }()
 
 			if maxImagePixels > 0 || maxImageLongEdge > 0 {
 				metrics, pixelErr := getMultipartFileImageMetrics(f)
@@ -591,7 +591,7 @@ func getAssetImageMetrics(asset *epub.Asset) (imageMetrics, error) {
 	if err != nil {
 		return imageMetrics{}, err
 	}
-	defer rc.Close()
+	defer func() { _ = rc.Close() }()
 
 	config, _, err := image.DecodeConfig(rc)
 	if err != nil {
