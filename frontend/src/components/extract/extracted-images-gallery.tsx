@@ -1,3 +1,5 @@
+import { ScrollRow } from "../ui/scroll-row";
+
 interface ExtractedPreviewItem {
   key: string;
   name: string;
@@ -20,7 +22,7 @@ export const ExtractedImagesGallery = ({
   onDownloadAllImages,
   onDownloadImage,
 }: ExtractedImagesGalleryProps) => (
-  <div className="mt-6 border-t border-current/20 pt-6">
+  <div className="mt-6 min-w-0 border-t border-current/20 pt-6">
     <h3 className="mb-3 text-sm font-semibold">
       抽出された画像 ({extractedCount})
     </h3>
@@ -33,7 +35,7 @@ export const ExtractedImagesGallery = ({
         全ダウンロード
       </button>
     </div>
-    <div className="flex w-full max-w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-2 touch-pan-x">
+    <ScrollRow>
       {items.map((image) => (
         <div key={image.key} className="group w-32 shrink-0 snap-start">
           <div className="mb-2 aspect-square flex items-center justify-center overflow-hidden rounded-lg bg-muted">
@@ -62,6 +64,6 @@ export const ExtractedImagesGallery = ({
           </button>
         </div>
       ))}
-    </div>
+    </ScrollRow>
   </div>
 );
