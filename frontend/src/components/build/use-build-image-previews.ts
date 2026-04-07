@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 
 import { buildFileKey } from "../../lib/build";
-import { formatLastModified, formatSizeLabel } from "../../lib/format";
+import { formatLastModified } from "../../lib/format";
 import type { ImagePreview } from "./image-preview-cards";
 
 export const useBuildImagePreviews = (buildFiles: File[]): ImagePreview[] => {
@@ -26,7 +26,6 @@ export const useBuildImagePreviews = (buildFiles: File[]): ImagePreview[] => {
         index,
         lastModifiedLabel: formatLastModified(file.lastModified),
         name: file.name,
-        sizeLabel: formatSizeLabel(file.size),
         url,
       };
     });

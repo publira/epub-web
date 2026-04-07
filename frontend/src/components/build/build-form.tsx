@@ -20,7 +20,6 @@ import {
 
 import { getSafeImageConcurrency, mapConcurrent } from "../../lib/async";
 import {
-  buildFileKey,
   compareFilesByLastModified,
   compareFilesByName,
   getFileImagePixels,
@@ -32,7 +31,7 @@ import {
   formatMiBFromBytes,
   formatSecondsFromMs,
 } from "../../lib/format";
-import { useAppConfig, useDrop, useImageDimensions } from "../../lib/hooks";
+import { useAppConfig, useDrop } from "../../lib/hooks";
 import { compressImageFile } from "../../lib/image";
 import { buildMutationFn, getApiErrorMessage } from "../../lib/mutations";
 import { triggerDownload } from "../../lib/utils";
@@ -257,11 +256,6 @@ export const BuildForm = () => {
 
     return imagePreviews.find((preview) => preview.id === activeId) ?? null;
   }, [activeId, imagePreviews]);
-  const dimensionTargets = useMemo(
-    () => buildFiles.map((file) => ({ blob: file, key: buildFileKey(file) })),
-    [buildFiles]
-  );
-  const previewDimensions = useImageDimensions(dimensionTargets);
 
   const handleSubmit = useCallback<React.SubmitEventHandler<HTMLFormElement>>(
     (e) => {
@@ -773,8 +767,6 @@ export const BuildForm = () => {
               sensors={sensors}
               imagePreviews={imagePreviews}
               activePreview={activePreview}
-              buildFiles={buildFiles}
-              previewDimensions={previewDimensions}
               isSubmitting={isSubmitting}
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}

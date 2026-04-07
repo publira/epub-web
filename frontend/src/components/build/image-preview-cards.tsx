@@ -8,24 +8,16 @@ export interface ImagePreview {
   index: number;
   lastModifiedLabel: string;
   name: string;
-  sizeLabel: string;
   url: string;
 }
 
 interface SortableImagePreviewCardProps {
   preview: ImagePreview;
-  dimensionsLabel: string;
   disabled?: boolean;
   onRemove: MouseEventHandler<HTMLButtonElement>;
 }
 
-export const ImagePreviewCard = ({
-  preview,
-  dimensionsLabel,
-}: {
-  preview: ImagePreview;
-  dimensionsLabel: string;
-}) => (
+export const ImagePreviewCard = ({ preview }: { preview: ImagePreview }) => (
   <div className="w-32 shrink-0">
     <div className="mb-2 aspect-square flex cursor-grabbing items-center justify-center overflow-hidden rounded-lg bg-muted shadow-lg ring-2 ring-primary/30">
       <img
@@ -37,10 +29,7 @@ export const ImagePreviewCard = ({
     <p className="truncate text-xs text-muted-foreground" title={preview.name}>
       {preview.name}
     </p>
-    <p className="mt-1 m-0 text-[11px] text-muted-foreground/90">
-      {preview.sizeLabel} / {dimensionsLabel}
-    </p>
-    <p className="mt-0.5 m-0 text-[11px] text-muted-foreground/70">
+    <p className="mt-1 m-0 text-[11px] text-muted-foreground/70">
       {preview.lastModifiedLabel}
     </p>
   </div>
@@ -48,7 +37,6 @@ export const ImagePreviewCard = ({
 
 export const SortableImagePreviewCard = ({
   preview,
-  dimensionsLabel,
   disabled,
   onRemove,
 }: SortableImagePreviewCardProps) => {
@@ -105,10 +93,7 @@ export const SortableImagePreviewCard = ({
       >
         {preview.name}
       </p>
-      <p className="mt-1 m-0 text-[11px] text-muted-foreground/90">
-        {preview.sizeLabel} / {dimensionsLabel}
-      </p>
-      <p className="mt-0.5 m-0 text-[11px] text-muted-foreground/70">
+      <p className="mt-1 m-0 text-[11px] text-muted-foreground/70">
         {preview.lastModifiedLabel}
       </p>
     </div>

@@ -500,11 +500,28 @@ func validateBuildFiles(ctx context.Context, files []*multipart.FileHeader) erro
 	return nil
 }
 
+func isLandscapeFile(f multipart.File) bool {
+	currentPos, err := f.Seek(0, io.SeekCurrent)
+	if err != nil {
+		return false
+	}
+
+	config, _, decodeErr := image.DecodeConfig(f)
+	if _, seekErr := f.Seek(currentPos, io.SeekStart); seekErr != nil {
+		return false
+	}
+	if decodeErr != nil {
+		return false
+	}
+
+	return config.Width > config.Height
+}
+
 func addBuildPagesInOrder(ctx context.Context, doc *epub.Document, files []*multipart.FileHeader, spread string, cover bool) error {
 	openFiles := make([]multipart.File, 0, len(files))
 	defer closeMultipartFiles(openFiles)
 
-	pageIndex := 0
+	logicalPageIndex := 0
 
 	for i, fileHeader := range files {
 		if err := ctx.Err(); err != nil {
@@ -526,8 +543,17 @@ func addBuildPagesInOrder(ctx context.Context, doc *epub.Document, files []*mult
 			continue
 		}
 
-		pageSpread := calculatePageSpread(pageIndex, spread)
-		pageIndex++
+		if isLandscapeFile(f) {
+			if _, _, err := doc.AddPageWithAsset(f, fileHeader.Size, "center"); err != nil {
+				slog.Warn("build: failed to add image", "filename", fileHeader.Filename, "error", err)
+				return newBadRequestError("invalid_image", "Failed to add image.", err)
+			}
+			logicalPageIndex += 2
+			continue
+		}
+
+		pageSpread := calculatePageSpread(logicalPageIndex, spread)
+		logicalPageIndex++
 
 		if _, _, err := doc.AddPageWithAsset(f, fileHeader.Size, pageSpread); err != nil {
 			slog.Warn("build: failed to add image", "filename", fileHeader.Filename, "error", err)
