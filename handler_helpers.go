@@ -79,12 +79,17 @@ func parseBuildRequest(r *http.Request) BuildRequest {
 		authors = append(authors, trimmed)
 	}
 
+	language := strings.TrimSpace(r.FormValue("language"))
+	coverStr := strings.TrimSpace(r.FormValue("cover"))
+
 	req := BuildRequest{
 		Title:     title,
 		Authors:   authors,
 		Direction: direction,
 		Layout:    layout,
 		Spread:    spread,
+		Language:  language,
+		Cover:     coverStr == "true" || coverStr == "1",
 	}
 
 	if req.Title == "" {
@@ -98,6 +103,10 @@ func parseBuildRequest(r *http.Request) BuildRequest {
 	}
 	if req.Spread == "" {
 		req.Spread = "right"
+	}
+	if req.Language == "" {
+		langs := getSupportedLanguages()
+		req.Language = langs[0]
 	}
 
 	return req
@@ -372,7 +381,7 @@ func buildDocument(ctx context.Context, req BuildRequest, files []*multipart.Fil
 	}
 
 	doc := &epub.Document{
-		Metadata:  epub.Metadata{Title: req.Title, Creators: creators},
+		Metadata:  epub.Metadata{Title: req.Title, Language: req.Language, Creators: creators},
 		Direction: req.Direction,
 		Layout:    layoutType,
 	}
@@ -381,7 +390,7 @@ func buildDocument(ctx context.Context, req BuildRequest, files []*multipart.Fil
 		return nil, err
 	}
 
-	if err := addBuildPagesInOrder(ctx, doc, files, spread); err != nil {
+	if err := addBuildPagesInOrder(ctx, doc, files, spread, req.Cover); err != nil {
 		return nil, err
 	}
 
@@ -491,9 +500,11 @@ func validateBuildFiles(ctx context.Context, files []*multipart.FileHeader) erro
 	return nil
 }
 
-func addBuildPagesInOrder(ctx context.Context, doc *epub.Document, files []*multipart.FileHeader, spread string) error {
+func addBuildPagesInOrder(ctx context.Context, doc *epub.Document, files []*multipart.FileHeader, spread string, cover bool) error {
 	openFiles := make([]multipart.File, 0, len(files))
 	defer closeMultipartFiles(openFiles)
+
+	pageIndex := 0
 
 	for i, fileHeader := range files {
 		if err := ctx.Err(); err != nil {
@@ -507,7 +518,16 @@ func addBuildPagesInOrder(ctx context.Context, doc *epub.Document, files []*mult
 
 		openFiles = append(openFiles, f)
 
-		pageSpread := calculatePageSpread(i, spread)
+		if cover && i == 0 {
+			if _, _, err := doc.SetCover(f, fileHeader.Size); err != nil {
+				slog.Warn("build: failed to set cover", "filename", fileHeader.Filename, "error", err)
+				return newBadRequestError("invalid_image", "Failed to add image.", err)
+			}
+			continue
+		}
+
+		pageSpread := calculatePageSpread(pageIndex, spread)
+		pageIndex++
 
 		if _, _, err := doc.AddPageWithAsset(f, fileHeader.Size, pageSpread); err != nil {
 			slog.Warn("build: failed to add image", "filename", fileHeader.Filename, "error", err)

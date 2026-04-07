@@ -37,8 +37,10 @@ describe("mutations", () => {
 
     const result = await buildMutationFn({
       authors: [],
+      cover: false,
       direction: "rtl",
       files: [new File(["x"], "a.png", { type: "image/png" })],
+      language: "ja",
       spread: "right",
       title: "book",
     });
@@ -54,8 +56,10 @@ describe("mutations", () => {
 
     await buildMutationFn({
       authors: ["Alice", "Bob"],
+      cover: false,
       direction: "rtl",
       files: [new File(["x"], "a.png", { type: "image/png" })],
+      language: "ja",
       spread: "right",
       title: "book",
     });
@@ -100,8 +104,10 @@ describe("mutations", () => {
     await expect(
       buildMutationFn({
         authors: [],
+        cover: false,
         direction: "rtl",
         files: [new File(["x"], "a.png", { type: "image/png" })],
+        language: "ja",
         spread: "right",
         title: "book",
       })
@@ -168,8 +174,10 @@ describe("mutations", () => {
     await expect(
       buildMutationFn({
         authors: [],
+        cover: false,
         direction: "rtl",
         files: [new File(["x"], "a.png", { type: "image/png" })],
+        language: "ja",
         spread: "right",
         title: "book",
       })

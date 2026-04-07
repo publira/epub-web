@@ -63,6 +63,7 @@ func TestHandleConfig_ReturnsLimits(t *testing.T) {
 	t.Setenv("EPUB_WEB_MAX_IMAGE_PIXELS", "12000000")
 	t.Setenv("EPUB_WEB_REQUEST_TIMEOUT", "45s")
 	t.Setenv("EPUB_WEB_MAX_IMAGE_LONG_EDGE", "1280")
+	t.Setenv("EPUB_WEB_SUPPORTED_LANGUAGES", "en,ja")
 
 	req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
 	rec := httptest.NewRecorder()
@@ -95,6 +96,9 @@ func TestHandleConfig_ReturnsLimits(t *testing.T) {
 	}
 	if payload.MaxImageLongEdge != 1280 {
 		t.Fatalf("expected maxImageLongEdge %d, got %d", 1280, payload.MaxImageLongEdge)
+	}
+	if len(payload.SupportedLanguages) != 2 || payload.SupportedLanguages[0] != "en" || payload.SupportedLanguages[1] != "ja" {
+		t.Fatalf("expected supportedLanguages [en ja], got %v", payload.SupportedLanguages)
 	}
 }
 

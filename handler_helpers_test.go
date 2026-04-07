@@ -34,6 +34,12 @@ func TestParseBuildRequest_Defaults(t *testing.T) {
 	if parsed.Spread != "right" {
 		t.Fatalf("expected default spread %q, got %q", "right", parsed.Spread)
 	}
+	if parsed.Language != "ja" {
+		t.Fatalf("expected default language %q, got %q", "ja", parsed.Language)
+	}
+	if parsed.Cover {
+		t.Fatalf("expected default cover %v, got %v", false, parsed.Cover)
+	}
 }
 
 func TestParseBuildRequest_AuthorsAreTrimmed(t *testing.T) {
@@ -47,6 +53,50 @@ func TestParseBuildRequest_AuthorsAreTrimmed(t *testing.T) {
 	}
 	if parsed.Authors[0] != "Alice" || parsed.Authors[1] != "Bob" {
 		t.Fatalf("expected authors %q and %q, got %q", "Alice", "Bob", parsed.Authors)
+	}
+}
+
+func TestParseBuildRequest_LanguageAndCover(t *testing.T) {
+	body := strings.NewReader("title=Book&language=en&cover=true")
+	req := httptest.NewRequest(http.MethodPost, "/api/build", body)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	parsed := parseBuildRequest(req)
+	if parsed.Language != "en" {
+		t.Fatalf("expected language %q, got %q", "en", parsed.Language)
+	}
+	if !parsed.Cover {
+		t.Fatalf("expected cover %v, got %v", true, parsed.Cover)
+	}
+}
+
+func TestBuildDocument_SetsLanguage(t *testing.T) {
+	fileHeaders := createImageFileHeaders(t, [][]byte{testPNG(t)})
+	doc, err := buildDocument(context.Background(), BuildRequest{Title: "book", Direction: "rtl", Spread: "right", Language: "ja"}, fileHeaders)
+	if err != nil {
+		t.Fatalf("buildDocument failed: %v", err)
+	}
+
+	if doc.Metadata.Language != "ja" {
+		t.Fatalf("expected language %q, got %q", "ja", doc.Metadata.Language)
+	}
+}
+
+func TestBuildDocument_SetsCover(t *testing.T) {
+	fileHeaders := createImageFileHeaders(t, [][]byte{testPNG(t), testPNGWithSize(t, 20, 20)})
+	doc, err := buildDocument(context.Background(), BuildRequest{Title: "book", Direction: "rtl", Spread: "right", Language: "ja", Cover: true}, fileHeaders)
+	if err != nil {
+		t.Fatalf("buildDocument failed: %v", err)
+	}
+
+	if doc.Metadata.CoverAssetID == "" {
+		t.Fatal("expected CoverAssetID to be set")
+	}
+	if len(doc.Pages) != 2 {
+		t.Fatalf("expected 2 pages, got %d", len(doc.Pages))
+	}
+	if doc.Pages[0].Type != epub.PageTypeCover {
+		t.Fatalf("expected first page type %q, got %q", epub.PageTypeCover, doc.Pages[0].Type)
 	}
 }
 
@@ -193,7 +243,7 @@ func TestAddBuildPagesInOrder_PreservesOrder(t *testing.T) {
 	fileHeaders := createImageFileHeaders(t, [][]byte{testPNGWithSize(t, 10, 20), testPNGWithSize(t, 30, 40)})
 	doc := &epub.Document{Metadata: epub.Metadata{Title: "ordered"}, Direction: "rtl"}
 
-	if err := addBuildPagesInOrder(context.Background(), doc, fileHeaders, "right"); err != nil {
+	if err := addBuildPagesInOrder(context.Background(), doc, fileHeaders, "right", false); err != nil {
 		t.Fatalf("addBuildPagesInOrder failed: %v", err)
 	}
 
@@ -230,7 +280,7 @@ func TestAddBuildPagesInOrder_AssignsSpreadFromRight(t *testing.T) {
 	})
 	doc := &epub.Document{Metadata: epub.Metadata{Title: "spread-right"}, Direction: "rtl"}
 
-	if err := addBuildPagesInOrder(context.Background(), doc, fileHeaders, "right"); err != nil {
+	if err := addBuildPagesInOrder(context.Background(), doc, fileHeaders, "right", false); err != nil {
 		t.Fatalf("addBuildPagesInOrder failed: %v", err)
 	}
 
@@ -246,7 +296,7 @@ func TestAddBuildPagesInOrder_AssignsSpreadFromLeft(t *testing.T) {
 	})
 	doc := &epub.Document{Metadata: epub.Metadata{Title: "spread-left"}, Direction: "rtl"}
 
-	if err := addBuildPagesInOrder(context.Background(), doc, fileHeaders, "left"); err != nil {
+	if err := addBuildPagesInOrder(context.Background(), doc, fileHeaders, "left", false); err != nil {
 		t.Fatalf("addBuildPagesInOrder failed: %v", err)
 	}
 
@@ -261,7 +311,7 @@ func TestAddBuildPagesInOrder_AssignsSpreadCenter(t *testing.T) {
 	})
 	doc := &epub.Document{Metadata: epub.Metadata{Title: "spread-center"}, Direction: "rtl"}
 
-	if err := addBuildPagesInOrder(context.Background(), doc, fileHeaders, "center"); err != nil {
+	if err := addBuildPagesInOrder(context.Background(), doc, fileHeaders, "center", false); err != nil {
 		t.Fatalf("addBuildPagesInOrder failed: %v", err)
 	}
 

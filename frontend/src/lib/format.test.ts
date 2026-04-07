@@ -1,5 +1,6 @@
 import {
   formatInteger,
+  formatLanguageName,
   formatMiBFromBytes,
   formatSecondsFromMs,
   formatSizeLabel,
@@ -22,5 +23,14 @@ describe("format helpers", () => {
   it("formats milliseconds to seconds", () => {
     expect(formatSecondsFromMs(2000)).toBe("2");
     expect(formatSecondsFromMs(2500)).toBe("2.5");
+  }, 1000);
+
+  it("formats language code to display name", () => {
+    expect(formatLanguageName("ja")).toBe("日本語");
+    expect(formatLanguageName("en")).toBe("英語");
+  }, 1000);
+
+  it("returns code as-is for unknown language", () => {
+    expect(formatLanguageName("zzz")).toBe("zzz");
   }, 1000);
 });

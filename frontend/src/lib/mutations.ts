@@ -38,6 +38,8 @@ interface BuildMutationParams {
   authors: string[];
   direction: string;
   spread: string;
+  language: string;
+  cover: boolean;
   files: File[];
 }
 
@@ -134,6 +136,10 @@ export const buildMutationFn = async (
   data.set("title", params.title);
   data.set("direction", params.direction);
   data.set("spread", params.spread);
+  data.set("language", params.language);
+  if (params.cover) {
+    data.set("cover", "true");
+  }
   for (const author of params.authors) {
     data.append("authors", author);
   }
@@ -232,4 +238,5 @@ export const configSchema = z.object({
   maxPages: z.number(),
   maxUploadMB: z.number(),
   requestTimeoutMs: z.number(),
+  supportedLanguages: z.array(z.string()).min(1),
 });

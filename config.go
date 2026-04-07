@@ -4,6 +4,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -19,6 +20,8 @@ const (
 	defaultRequestTimeout   = 60 * time.Second
 	defaultShutdownTimeout  = 10 * time.Second
 )
+
+var defaultSupportedLanguages = []string{"ja", "en"}
 
 func getListenAddress() string {
 	host := os.Getenv("HOST")
@@ -161,4 +164,24 @@ func getShutdownTimeout() time.Duration {
 	}
 
 	return timeout
+}
+
+func getSupportedLanguages() []string {
+	value := os.Getenv("EPUB_WEB_SUPPORTED_LANGUAGES")
+	if value == "" {
+		return defaultSupportedLanguages
+	}
+
+	var langs []string
+	for s := range strings.SplitSeq(value, ",") {
+		trimmed := strings.TrimSpace(s)
+		if trimmed != "" {
+			langs = append(langs, trimmed)
+		}
+	}
+	if len(langs) == 0 {
+		return defaultSupportedLanguages
+	}
+
+	return langs
 }

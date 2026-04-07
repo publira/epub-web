@@ -24,3 +24,8 @@ export const formatSizeLabel = (bytes: number): string =>
 
 export const formatSecondsFromMs = (ms: number): string =>
   jaSecondsVariableFormatter.format(ms / 1000);
+
+const jaLanguageNames = new Intl.DisplayNames("ja", { type: "language" });
+
+export const formatLanguageName = (code: string): string =>
+  jaLanguageNames.of(code) ?? code;

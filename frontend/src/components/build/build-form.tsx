@@ -26,6 +26,7 @@ import {
 } from "../../lib/build";
 import {
   formatInteger,
+  formatLanguageName,
   formatMiBFromBytes,
   formatSecondsFromMs,
 } from "../../lib/format";
@@ -180,11 +181,15 @@ export const BuildForm = () => {
     },
   });
 
+  const [defaultLanguage] = config.supportedLanguages;
+
   const form = useForm({
     defaultValues: {
       authors: defaultAuthorFields,
       buildFiles: [] as File[],
+      cover: true,
       direction: "rtl",
+      language: defaultLanguage,
       spread: "right",
       title: "",
     },
@@ -221,8 +226,10 @@ export const BuildForm = () => {
 
       await mutation.mutateAsync({
         authors,
+        cover: value.cover,
         direction: value.direction,
         files: compressedFiles,
+        language: value.language,
         spread: value.spread,
         title,
       });
@@ -415,6 +422,13 @@ export const BuildForm = () => {
     form.setFieldValue("buildFiles", []);
   }, [form, isSubmitting]);
 
+  const handleCoverChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      form.setFieldValue("cover", e.target.checked);
+    },
+    [form]
+  );
+
   const revalidateIfBlocked = useEffectEvent(
     async (nextBuildFiles: File[], signal: AbortSignal) => {
       if (!isClientValidationBlocked) {
@@ -550,8 +564,10 @@ export const BuildForm = () => {
       <form className="grid gap-4" onSubmit={handleSubmit}>
         <form.Field name="title">
           {(field) => (
-            <label className="grid gap-1.5 font-semibold" htmlFor="build-title">
-              タイトル
+            <div className="grid gap-1.5">
+              <label className="font-semibold" htmlFor="build-title">
+                タイトル
+              </label>
               <TextInput
                 id="build-title"
                 type="text"
@@ -561,7 +577,7 @@ export const BuildForm = () => {
                 maxLength={120}
                 disabled={isSubmitting}
               />
-            </label>
+            </div>
           )}
         </form.Field>
 
@@ -585,14 +601,13 @@ export const BuildForm = () => {
           )}
         </form.Field>
 
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-3">
           <form.Field name="direction">
             {(field) => (
-              <label
-                className="grid gap-1.5 font-semibold"
-                htmlFor="build-direction"
-              >
-                綴じ方向
+              <div className="grid gap-1.5">
+                <label className="font-semibold" htmlFor="build-direction">
+                  綴じ方向
+                </label>
                 <SelectInput
                   id="build-direction"
                   value={field.state.value}
@@ -602,17 +617,16 @@ export const BuildForm = () => {
                   <option value="rtl">右綴じ (RTL)</option>
                   <option value="ltr">左綴じ (LTR)</option>
                 </SelectInput>
-              </label>
+              </div>
             )}
           </form.Field>
 
           <form.Field name="spread">
             {(field) => (
-              <label
-                className="grid gap-1.5 font-semibold"
-                htmlFor="build-spread"
-              >
-                見開き開始
+              <div className="grid gap-1.5">
+                <label className="font-semibold" htmlFor="build-spread">
+                  見開き開始
+                </label>
                 <SelectInput
                   id="build-spread"
                   value={field.state.value}
@@ -623,7 +637,29 @@ export const BuildForm = () => {
                   <option value="left">左ページ</option>
                   <option value="center">中央</option>
                 </SelectInput>
-              </label>
+              </div>
+            )}
+          </form.Field>
+
+          <form.Field name="language">
+            {(field) => (
+              <div className="grid gap-1.5">
+                <label className="font-semibold" htmlFor="build-language">
+                  言語
+                </label>
+                <SelectInput
+                  id="build-language"
+                  value={field.state.value}
+                  onValueChange={field.handleChange}
+                  disabled={isSubmitting}
+                >
+                  {config.supportedLanguages.map((code) => (
+                    <option key={code} value={code}>
+                      {formatLanguageName(code)}
+                    </option>
+                  ))}
+                </SelectInput>
+              </div>
             )}
           </form.Field>
         </div>
@@ -707,6 +743,25 @@ export const BuildForm = () => {
             />
           </div>
         )}
+
+        <form.Field name="cover">
+          {(field) => (
+            <label
+              className="inline-flex items-center gap-2 font-semibold select-none"
+              htmlFor="build-cover"
+            >
+              <input
+                id="build-cover"
+                type="checkbox"
+                checked={field.state.value}
+                onChange={handleCoverChange}
+                disabled={isSubmitting}
+                className="size-4 rounded border-border accent-primary"
+              />
+              1枚目を表紙にする
+            </label>
+          )}
+        </form.Field>
 
         <Button
           className="inline-flex items-center justify-center gap-2"
