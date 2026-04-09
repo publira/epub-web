@@ -1,11 +1,11 @@
-# ePub Web
+# EPUB Web
 
-画像ファイル群からのePub生成、およびePubからの画像抽出機能を備えたWebアプリケーションです。
+画像ファイル群からのEPUB生成、およびEPUBからの画像抽出機能を備えたWebアプリケーションです。
 
 ## 主な機能
 
-- **Build**: 複数の画像ファイルから、固定レイアウトのePubを生成します。
-- **Extract**: 既存のePubファイルから画像を抽出し、ZIPファイルとしてダウンロードします。
+- **Build**: 複数の画像ファイルから、固定レイアウトのEPUBを生成します。
+- **Extract**: 既存のEPUBファイルから画像を抽出し、ZIPファイルとしてダウンロードします。
 
 ## 起動方法 (Docker)
 
@@ -57,14 +57,14 @@ docker run --rm -p 8080:8080 \
 
 - **`GET /api/config`**: クライアント側のバリデーション用に、現在の制限設定を返します。
 
-### ePub 生成・画像抽出
+### EPUB 生成・画像抽出
 
 リクエストは `multipart/form-data` で送信し、エラー時はJSON (`{"code": "...", "message": "..."}`) が返されます。
 
-#### `POST /api/build` (ePub 生成)
+#### `POST /api/build` (EPUB 生成)
 
 - `images`: **[必須]** 画像ファイル群
-- `title`: ePubのタイトル
+- `title`: EPUBのタイトル
 - `direction`: 綴じ方向 (`rtl` / `ltr`)
 - `layout`: レイアウト (`pre-paginated` 等)
 - `spread`: 見開き設定 (`left` / `right` / `center`)
@@ -73,7 +73,7 @@ docker run --rm -p 8080:8080 \
 
 #### `POST /api/extract` (画像抽出)
 
-- `epub`: **[必須]** 抽出対象のePubファイル
+- `epub`: **[必須]** 抽出対象のEPUBファイル
 
 ## 開発に参加する
 

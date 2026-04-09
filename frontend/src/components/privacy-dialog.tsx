@@ -32,7 +32,7 @@ export const PrivacyDialog = ({ dialogRef }: PrivacyDialogProps) => {
           1. 基本方針
         </h3>
         <p className="mt-4 mb-0 leading-7">
-          本サービスは、画像とePubの変換処理に必要な範囲でファイルデータをサーバー上で取り扱います。恒久保存を目的とはしておらず、処理後のデータは運用上必要な期間を超えて保持しない方針です。
+          本サービスは、画像とEPUBの変換処理に必要な範囲でファイルデータをサーバー上で取り扱います。恒久保存を目的とはしておらず、処理後のデータは運用上必要な期間を超えて保持しない方針です。
         </p>
         <h3 className="mt-5 mb-0 text-sm font-semibold text-primary/90">
           2. 収集する情報と利用目的
