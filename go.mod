@@ -5,7 +5,7 @@ go 1.26.1
 require (
 	github.com/publira/epub v0.6.0
 	golang.org/x/image v0.39.0
-	golang.org/x/net v0.52.0
+	golang.org/x/net v0.53.0
 	golang.org/x/sync v0.20.0
 )
 
