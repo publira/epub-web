@@ -1,106 +1,84 @@
-# epub-web
+# ePub Web
 
-画像からePubを生成し、ePubから画像を抽出できるWebアプリです。
+画像ファイル群からのePub生成、およびePubからの画像抽出機能を備えたWebアプリケーションです。
 
 ## 主な機能
 
-- 画像ファイル群からePubを生成
-- ePubから画像を抽出してZIPをダウンロード
+- **Build**: 複数の画像ファイルから、固定レイアウトのePubを生成します。
+- **Extract**: 既存のePubファイルから画像を抽出し、ZIPファイルとしてダウンロードします。
 
-## 環境変数
+## 起動方法 (Docker)
 
-| 変数名 | 既定値 | 説明 |
-|---|---:|---|
-| `HOST` | 空文字 | バインドするホスト |
-| `PORT` | `8080` | リッスンポート |
-| `EPUB_WEB_MAX_UPLOAD_SIZE` | `128` | 最大アップロードサイズ (MB)。`0`で無制限 |
-| `EPUB_WEB_MAX_PAGES` | `200` | 最大ページ数。`0`で無制限 |
-| `EPUB_WEB_MAX_ASSET_BYTES` | `33554432` | 1ファイルあたり最大サイズ (bytes)。`0`で無制限 |
-| `EPUB_WEB_MAX_IMAGE_LONG_EDGE` | `2048` | 画像の長辺上限 (px)。`0`で無制限 |
-| `EPUB_WEB_MAX_IMAGE_PIXELS` | `4000000` | 画像の最大ピクセル数 (width × height)。`0`で無制限 |
-| `EPUB_WEB_WORKERS` | `4` | 並列処理ワーカー数。`1`以上の整数 |
-| `EPUB_WEB_REQUEST_TIMEOUT` | `60s` | APIタイムアウト (Go duration形式)。`0`で無制限 |
-| `EPUB_WEB_SHUTDOWN_TIMEOUT` | `10s` | グレースフルシャットダウンの待機時間 (Go duration形式)。`0`で無制限 |
-| `EPUB_WEB_SUPPORTED_LANGUAGES` | `ja,en` | 対応言語のカンマ区切りリスト。先頭がデフォルト言語 |
-
-### 起動例
+環境変数を使用して、リソース制限やタイムアウトなどを設定できます。
 
 ```bash
 docker run --rm -p 8080:8080 \
-  -e PORT=8080 \
-  -e EPUB_WEB_MAX_UPLOAD_SIZE=256 \
-  -e EPUB_WEB_MAX_PAGES=2000 \
-  -e EPUB_WEB_MAX_ASSET_BYTES=67108864 \
-  -e EPUB_WEB_MAX_IMAGE_LONG_EDGE=2048 \
-  -e EPUB_WEB_MAX_IMAGE_PIXELS=100000000 \
-  -e EPUB_WEB_WORKERS=8 \
-  -e EPUB_WEB_REQUEST_TIMEOUT=90s \
-  -e EPUB_WEB_SHUTDOWN_TIMEOUT=15s \
-  -e EPUB_WEB_SUPPORTED_LANGUAGES=ja,en \
+  -e EPUB_WEB_MAX_UPLOAD_SIZE=64 \
+  -e EPUB_WEB_MAX_PAGES=100 \
+  -e EPUB_WEB_WORKERS=2 \
   ghcr.io/publira/epub-web:latest
 ```
 
-## API
+### メモリサイズ別の推奨設定
 
-### `GET /livez`
+ホスト環境のメモリサイズ (例: Cloud Run のメモリ割り当て) に応じた、環境変数の推奨設定値です。画像処理時のメモリ枯渇 (OOM) を防ぐために調整してください。
 
-liveness 用に `200 OK` を返します。
+| 設定項目                           | 512MiB (デフォルト) | 1GiB       | 2GiB       |
+| :--------------------------------- | :------------------ | :--------- | :--------- |
+| `EPUB_WEB_MAX_UPLOAD_SIZE` (MB)    | `64`                | `128`      | `256`      |
+| `EPUB_WEB_MAX_PAGES`               | `100`               | `200`      | `400`      |
+| `EPUB_WEB_MAX_ASSET_BYTES` (bytes) | `16777216`          | `33554432` | `67108864` |
+| `EPUB_WEB_WORKERS`                 | `2`                 | `4`        | `8`        |
 
-### `GET /readyz`
+### 環境変数リファレンス
 
-通常時は `200 OK`、シャットダウン開始後は `503 Service Unavailable` を返します。
+| 変数名                         |     既定値 | 説明                                           |
+| ------------------------------ | ---------: | ---------------------------------------------- |
+| `HOST`                         |       `""` | バインドするホスト                             |
+| `PORT`                         |     `8080` | リッスンポート                                 |
+| `EPUB_WEB_MAX_UPLOAD_SIZE`     |       `64` | 最大アップロードサイズ (MB)。`0`で無制限       |
+| `EPUB_WEB_MAX_PAGES`           |      `100` | 最大ページ数。`0`で無制限                      |
+| `EPUB_WEB_MAX_ASSET_BYTES`     | `16777216` | 1ファイルあたり最大サイズ (bytes)。`0`で無制限 |
+| `EPUB_WEB_MAX_IMAGE_LONG_EDGE` |     `2048` | 画像の長辺上限 (px)。`0`で無制限               |
+| `EPUB_WEB_MAX_IMAGE_PIXELS`    |  `4000000` | 画像の最大ピクセル数 (W × H)。`0`で無制限      |
+| `EPUB_WEB_WORKERS`             |        `2` | 画像処理の並列ワーカー数。`1`以上              |
+| `EPUB_WEB_REQUEST_TIMEOUT`     |      `60s` | APIリクエストのタイムアウト。`0`で無制限       |
+| `EPUB_WEB_SHUTDOWN_TIMEOUT`    |      `10s` | 終了時のグレースフルシャットダウン待機時間     |
+| `EPUB_WEB_SUPPORTED_LANGUAGES` |    `ja,en` | 対応言語 (カンマ区切り)。先頭がデフォルト      |
 
-### `GET /api/config`
+## API エンドポイント
 
-制限値を返します。
+### 状態確認
 
-レスポンス例:
+- **`GET /livez`**: アプリケーションが起動していれば `200 OK` を返します。
+- **`GET /readyz`**: リクエスト受付可能なら `200 OK`、シャットダウン処理中などは `503 Service Unavailable` を返します。
 
-```json
-{
-  "maxUploadMB": 128,
-  "maxPages": 1000,
-  "maxAssetBytes": 33554432,
-  "maxImageLongEdge": 2048,
-  "maxImagePixels": 4000000,
-  "requestTimeoutMs": 60000,
-  "supportedLanguages": ["ja", "en"]
-}
-```
+### 設定の取得
 
-### `POST /api/build`
+- **`GET /api/config`**: クライアント側のバリデーション用に、現在の制限設定を返します。
 
-multipart/form-data:
+### ePub 生成・画像抽出
 
-- `images`: 画像ファイル (複数)
-- `title`: 生成するePubタイトル (任意)
-- `direction`: `rtl` / `ltr` (任意)
-- `layout`: `pre-paginated` など (任意)
-- `spread`: `left` / `right` など (任意)
-- `language`: 言語コード。`EPUB_WEB_SUPPORTED_LANGUAGES` の先頭値がデフォルト (任意)
-- `cover`: `true` で1枚目を表紙に設定 (任意)
+リクエストは `multipart/form-data` で送信し、エラー時はJSON (`{"code": "...", "message": "..."}`) が返されます。
 
-### `POST /api/extract`
+#### `POST /api/build` (ePub 生成)
 
-multipart/form-data:
+- `images`: **[必須]** 画像ファイル群
+- `title`: ePubのタイトル
+- `direction`: 綴じ方向 (`rtl` / `ltr`)
+- `layout`: レイアウト (`pre-paginated` 等)
+- `spread`: 見開き設定 (`left` / `right` / `center`)
+- `language`: 言語コード (例: `ja`)
+- `cover`: `true` を指定すると、1枚目の画像をカバーに設定します
 
-- `epub`: 入力ePubファイル
+#### `POST /api/extract` (画像抽出)
 
-### エラー形式
+- `epub`: **[必須]** 抽出対象のePubファイル
 
-エラー時はJSONを返します。
+## 開発に参加する
 
-```json
-{
-  "code": "page_limit_exceeded",
-  "message": "Page limit exceeded."
-}
-```
-
-## Contributing
-
-[CONTRIBUTING.md](CONTRIBUTING.md)を参照してください。
+[CONTRIBUTING.md](CONTRIBUTING.md) を参照してください。
 
 ## ライセンス
 
-[LICENSE](LICENSE)を参照してください。
+[Apache License 2.0](LICENSE) に基づいて公開されています。
