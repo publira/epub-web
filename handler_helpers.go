@@ -2,11 +2,14 @@ package main
 
 import (
 	"archive/zip"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"image"
+	"image/jpeg"
+	"image/png"
 	"io"
 	"log/slog"
 	"mime/multipart"
@@ -16,8 +19,6 @@ import (
 	"sync"
 
 	_ "image/gif"
-	_ "image/jpeg"
-	_ "image/png"
 
 	"github.com/publira/epub"
 	_ "golang.org/x/image/webp"
@@ -528,6 +529,59 @@ func isLandscapeFile(f multipart.File) bool {
 	return config.Width > config.Height
 }
 
+func splitLandscapeImage(f multipart.File) (leftHalf, rightHalf []byte, err error) {
+	if _, err := f.Seek(0, io.SeekStart); err != nil {
+		return nil, nil, err
+	}
+
+	img, format, err := image.Decode(f)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	bounds := img.Bounds()
+	midX := (bounds.Min.X + bounds.Max.X) / 2
+
+	type subImager interface {
+		SubImage(r image.Rectangle) image.Image
+	}
+
+	si, ok := img.(subImager)
+	if !ok {
+		return nil, nil, fmt.Errorf("image type %T does not support SubImage", img)
+	}
+
+	leftImg := si.SubImage(image.Rect(bounds.Min.X, bounds.Min.Y, midX, bounds.Max.Y))
+	rightImg := si.SubImage(image.Rect(midX, bounds.Min.Y, bounds.Max.X, bounds.Max.Y))
+
+	leftHalf, err = encodeImage(leftImg, format)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	rightHalf, err = encodeImage(rightImg, format)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return leftHalf, rightHalf, nil
+}
+
+func encodeImage(img image.Image, format string) ([]byte, error) {
+	var buf bytes.Buffer
+	switch format {
+	case "jpeg":
+		if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: 95}); err != nil {
+			return nil, err
+		}
+	default:
+		if err := png.Encode(&buf, img); err != nil {
+			return nil, err
+		}
+	}
+	return buf.Bytes(), nil
+}
+
 func addBuildPagesInOrder(ctx context.Context, doc *epub.Document, files []*multipart.FileHeader, spread string, cover bool) error {
 	openFiles := make([]multipart.File, 0, len(files))
 	defer closeMultipartFiles(openFiles)
@@ -555,10 +609,34 @@ func addBuildPagesInOrder(ctx context.Context, doc *epub.Document, files []*mult
 		}
 
 		if isLandscapeFile(f) {
-			if _, _, err := doc.AddPageWithAsset(f, fileHeader.Size, "center"); err != nil {
-				slog.Warn("build: failed to add image", "filename", fileHeader.Filename, "error", err)
+			leftBytes, rightBytes, splitErr := splitLandscapeImage(f)
+			if splitErr != nil {
+				slog.Warn("build: failed to split landscape image", "filename", fileHeader.Filename, "error", splitErr)
+				return newBadRequestError("invalid_image", "Failed to add image.", splitErr)
+			}
+
+			var firstBytes, secondBytes []byte
+			var firstSpread, secondSpread string
+			if doc.Direction == "ltr" {
+				firstBytes, secondBytes = leftBytes, rightBytes
+				firstSpread, secondSpread = "left", "right"
+			} else {
+				firstBytes, secondBytes = rightBytes, leftBytes
+				firstSpread, secondSpread = "right", "left"
+			}
+
+			firstReader := bytes.NewReader(firstBytes)
+			if _, _, err := doc.AddPageWithAsset(firstReader, int64(len(firstBytes)), firstSpread); err != nil {
+				slog.Warn("build: failed to add split image", "filename", fileHeader.Filename, "error", err)
 				return newBadRequestError("invalid_image", "Failed to add image.", err)
 			}
+
+			secondReader := bytes.NewReader(secondBytes)
+			if _, _, err := doc.AddPageWithAsset(secondReader, int64(len(secondBytes)), secondSpread); err != nil {
+				slog.Warn("build: failed to add split image", "filename", fileHeader.Filename, "error", err)
+				return newBadRequestError("invalid_image", "Failed to add image.", err)
+			}
+
 			logicalPageIndex += 2
 			continue
 		}
