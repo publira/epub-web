@@ -163,7 +163,7 @@ export const BuildForm = () => {
       clearClientValidationBlock();
       setError(
         getApiErrorMessage(caughtError, {
-          defaultMessage: "ePubの生成に失敗しました。",
+          defaultMessage: "EPUBの生成に失敗しました。",
           maxAssetBytes: config.maxAssetBytes,
           maxImageLongEdge: config.maxImageLongEdge,
           maxImagePixels: config.maxImagePixels,
@@ -177,7 +177,7 @@ export const BuildForm = () => {
     onSuccess: ({ blob, filename }) => {
       clearClientValidationBlock();
       triggerDownload(blob, filename);
-      setSuccess("ePubを生成してダウンロードしました。");
+      setSuccess("EPUBを生成してダウンロードしました。");
       resetFormRef.current?.();
     },
   });
@@ -550,7 +550,7 @@ export const BuildForm = () => {
     limitItems.push(`1リクエストあたり最大 ${config.maxUploadMB} MiB`);
   }
   if (config.maxPages > 0) {
-    limitItems.push(`ePubは最大 ${formatInteger(config.maxPages)} ページ`);
+    limitItems.push(`EPUBは最大 ${formatInteger(config.maxPages)} ページ`);
   }
   if (config.maxAssetBytes > 0) {
     limitItems.push(
@@ -807,7 +807,7 @@ export const BuildForm = () => {
             />
           )}
           <span>
-            {isSubmitting ? "生成中..." : "ePubを生成してダウンロード"}
+            {isSubmitting ? "生成中..." : "EPUBを生成してダウンロード"}
           </span>
         </Button>
       </form>

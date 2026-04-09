@@ -140,13 +140,13 @@ describe("mutations", () => {
   it("getApiErrorMessage maps build option validation codes", () => {
     expect(
       getApiErrorMessage(new ApiError("invalid_layout", "Invalid layout."), {
-        defaultMessage: "ePubの生成に失敗しました。",
+        defaultMessage: "EPUBの生成に失敗しました。",
       })
     ).toBe("レイアウト指定が不正です。");
 
     expect(
       getApiErrorMessage(new ApiError("invalid_spread", "Invalid spread."), {
-        defaultMessage: "ePubの生成に失敗しました。",
+        defaultMessage: "EPUBの生成に失敗しました。",
       })
     ).toBe("見開き指定が不正です。");
 
@@ -157,7 +157,7 @@ describe("mutations", () => {
           "Image long edge limit exceeded."
         ),
         {
-          defaultMessage: "ePubの生成に失敗しました。",
+          defaultMessage: "EPUBの生成に失敗しました。",
           maxImageLongEdge: 2048,
         }
       )
@@ -168,7 +168,7 @@ describe("mutations", () => {
     const message = getApiErrorMessage(
       new ApiError("unexpected_code", "Server supplied message."),
       {
-        defaultMessage: "ePubの生成に失敗しました。",
+        defaultMessage: "EPUBの生成に失敗しました。",
       }
     );
 

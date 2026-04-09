@@ -32,7 +32,7 @@ export const TermsDialog = ({ dialogRef }: TermsDialogProps) => {
           1. 本規約の適用
         </h3>
         <p className="mt-4 mb-0 leading-7">
-          本サービスは、画像とePubの相互変換機能を試用できるデモとして提供します。利用者は本サービスを利用した時点で、本規約に同意したものとみなします。
+          本サービスは、画像とEPUBの相互変換機能を試用できるデモとして提供します。利用者は本サービスを利用した時点で、本規約に同意したものとみなします。
         </p>
         <h3 className="mt-5 mb-0 text-sm font-semibold text-primary/90">
           2. データの取扱い

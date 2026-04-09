@@ -50,13 +50,13 @@ export const ExtractForm = () => {
   const getExtractClientValidationError = useCallback(
     (file: File | null): string | null => {
       if (!file) {
-        return "抽出するePubファイルを選択してください。";
+        return "抽出するEPUBファイルを選択してください。";
       }
 
       const isEpub =
         file.type === "application/epub+zip" || /\.epub$/i.test(file.name);
       if (!isEpub) {
-        return "ePubファイルを選択してください。";
+        return "EPUBファイルを選択してください。";
       }
 
       if (config.maxUploadMB > 0) {
@@ -128,7 +128,7 @@ export const ExtractForm = () => {
 
       const selectedFile = value.extractFile;
       if (!selectedFile) {
-        setClientValidationError("抽出するePubファイルを選択してください。");
+        setClientValidationError("抽出するEPUBファイルを選択してください。");
         return;
       }
 
@@ -188,7 +188,7 @@ export const ExtractForm = () => {
         /\.epub$/i.test(file.name)
       );
       if (!droppedEpub) {
-        setClientValidationError("ePubファイルをドロップしてください。");
+        setClientValidationError("EPUBファイルをドロップしてください。");
         return;
       }
 
@@ -293,7 +293,7 @@ export const ExtractForm = () => {
       className="relative min-w-0 space-y-2 animate-rise p-fluid-sm"
       {...dragProps}
     >
-      {isFormDragOver && <DropOverlay message="ここにePubファイルをドロップ" />}
+      {isFormDragOver && <DropOverlay message="ここにEPUBファイルをドロップ" />}
 
       <LimitNotes title="抽出時の制限" items={limitItems} />
 
@@ -302,7 +302,7 @@ export const ExtractForm = () => {
           name="extractFile"
           validators={{
             onSubmit: ({ value }) =>
-              value ? undefined : "抽出するePubファイルを選択してください。",
+              value ? undefined : "抽出するEPUBファイルを選択してください。",
           }}
         >
           {(field) => (
@@ -312,7 +312,7 @@ export const ExtractForm = () => {
                 className="m-0"
                 htmlFor="extract-epub"
               >
-                ePubファイル{" "}
+                EPUBファイル{" "}
                 <span className="text-error" aria-hidden="true">
                   *
                 </span>
@@ -321,8 +321,8 @@ export const ExtractForm = () => {
               <FilePicker
                 id="extract-epub"
                 accept=".epub,application/epub+zip"
-                ctaText="ePubファイルを選択"
-                helperText="クリックまたはドラッグ＆ドロップでePubファイルを指定"
+                ctaText="EPUBファイルを選択"
+                helperText="クリックまたはドラッグ＆ドロップでEPUBファイルを指定"
                 aria-labelledby="extract-epub-label"
                 aria-required="true"
                 disabled={isSubmitting}

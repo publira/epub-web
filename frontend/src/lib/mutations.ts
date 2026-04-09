@@ -61,7 +61,7 @@ const apiErrorMessageResolvers: Record<
     options.maxAssetBytes && options.maxAssetBytes > 0
       ? `画像1枚あたり最大 ${formatMiBFromBytes(options.maxAssetBytes)} です。`
       : "画像ファイルのサイズ上限を超えています。",
-  build_failed: () => "ePubの生成に失敗しました。",
+  build_failed: () => "EPUBの生成に失敗しました。",
   extract_failed: () => "画像抽出に失敗しました。",
   extract_images_failed: () => "画像抽出に失敗しました。",
   image_long_edge_limit_exceeded: (options) =>
@@ -72,11 +72,11 @@ const apiErrorMessageResolvers: Record<
     options.maxImagePixels && options.maxImagePixels > 0
       ? `画像の解像度は最大 ${formatInteger(options.maxImagePixels)} px です。`
       : "画像の解像度が上限を超えています。",
-  invalid_epub: () => "ePubの解析に失敗しました。",
+  invalid_epub: () => "EPUBの解析に失敗しました。",
   invalid_image: () => "画像の解析に失敗しました。",
   invalid_layout: () => "レイアウト指定が不正です。",
   invalid_spread: () => "見開き指定が不正です。",
-  missing_epub_file: () => "ePubファイルを選択してください。",
+  missing_epub_file: () => "EPUBファイルを選択してください。",
   network_error: () =>
     "サーバーに接続できませんでした。ネットワーク状態を確認して再試行してください。",
   no_images_provided: () => "画像を1枚以上選択してください。",
@@ -85,7 +85,7 @@ const apiErrorMessageResolvers: Record<
     options.maxPages && options.maxPages > 0
       ? `ページ数は最大 ${formatInteger(options.maxPages)} ページです。`
       : "ページ数の上限を超えています。",
-  read_epub_size_failed: () => "ePubファイルの読み取りに失敗しました。",
+  read_epub_size_failed: () => "EPUBファイルの読み取りに失敗しました。",
   request_timeout: (options) =>
     options.requestTimeoutMs && options.requestTimeoutMs > 0
       ? `処理が ${formatSecondsFromMs(options.requestTimeoutMs)} 秒でタイムアウトしました。しばらくしてから再試行してください。`

@@ -41,12 +41,12 @@ export const App = () => {
         <main className="mx-auto my-10 grid w-content flex-1 content-start gap-5 max-md:my-4 max-md:w-content-sm">
           <header>
             <Card className="animate-rise p-fluid">
-              <Badge>ePub Web</Badge>
+              <Badge>EPUB Web</Badge>
               <h1 className="mt-2 mb-3 text-hero">
-                画像をePubに、ePubを画像に変換
+                画像をEPUBに、EPUBを画像に変換
               </h1>
               <p className="m-0 leading-7">
-                画像ファイルからePubを作成したり、ePubに含まれる画像をまとめて取り出したりできます。変換はサーバー側で処理され、結果はそのままダウンロードできます。
+                画像ファイルからEPUBを作成したり、EPUBに含まれる画像をまとめて取り出したりできます。変換はサーバー側で処理され、結果はそのままダウンロードできます。
               </p>
             </Card>
           </header>
@@ -67,7 +67,7 @@ export const App = () => {
               aria-controls="panel-build"
               tabIndex={mode === "build" ? 0 : -1}
             >
-              画像からePub
+              画像からEPUB
             </Button>
             <Button
               id="tab-extract"
@@ -80,7 +80,7 @@ export const App = () => {
               aria-controls="panel-extract"
               tabIndex={mode === "extract" ? 0 : -1}
             >
-              ePubから画像
+              EPUBから画像
             </Button>
           </div>
 
