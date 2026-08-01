@@ -1,3 +1,5 @@
+import { expect, describe, it } from "vitest";
+
 import { parseFilename } from "./utils";
 
 describe("parseFilename()", () => {

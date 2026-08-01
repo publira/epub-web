@@ -89,6 +89,8 @@ export const FilePicker = ({
   );
 
   return (
+    // Drag-and-drop target is intentionally a label wrapping the file input.
+    // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <label
       className={twMerge(
         twJoin(

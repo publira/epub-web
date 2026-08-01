@@ -57,7 +57,7 @@ export const compressImageFile = async (
 
   // 拡張子を新しいMIMEタイプに合わせる
   const ext = outType === "image/png" ? ".png" : ".jpg";
-  const newName = file.name.replace(/\.[^/.]+$/, "") + ext;
+  const newName = file.name.replace(/\.[^/.]+$/u, "") + ext;
 
   return new File([blob], newName, {
     lastModified: Date.now(),

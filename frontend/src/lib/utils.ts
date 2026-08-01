@@ -6,13 +6,15 @@ export const parseFilename = (
     return fallback;
   }
 
-  const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
-  if (utf8Match?.[1]) {
-    return decodeURIComponent(utf8Match[1]);
+  const utf8Match = contentDisposition.match(
+    /filename\*=UTF-8''(?<name>[^;]+)/iu
+  );
+  if (utf8Match?.groups?.name) {
+    return decodeURIComponent(utf8Match.groups.name);
   }
 
-  const match = contentDisposition.match(/filename="?([^";]+)"?/i);
-  return match?.[1] ?? fallback;
+  const match = contentDisposition.match(/filename="?(?<name>[^";]+)"?/iu);
+  return match?.groups?.name ?? fallback;
 };
 
 export const triggerDownload = (blob: Blob, filename: string): void => {

@@ -1,3 +1,5 @@
+import { vi, describe, expect, it } from "vitest";
+
 import {
   buildFileKey,
   getFileImagePixels,

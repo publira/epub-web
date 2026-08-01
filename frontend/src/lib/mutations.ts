@@ -220,7 +220,7 @@ export const extractMutationFn = async (
 
   const images: ExtractedImage[] = [];
   for (const [path, content] of Object.entries(unzippedFiles)) {
-    const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(path);
+    const isImage = /\.(?<ext>jpg|jpeg|png|gif|webp)$/iu.test(path);
     if (isImage) {
       const blob = new Blob([new Uint8Array(content)], {
         type: "application/octet-stream",

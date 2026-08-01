@@ -1,3 +1,5 @@
+import { vi, afterEach, describe, expect, it } from "vitest";
+
 import { compressImageFile } from "./image";
 
 // @vitest-environment jsdom

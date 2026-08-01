@@ -9,7 +9,7 @@ export const mapConcurrent = async <T, R>(
   const worker = async () => {
     while (currentIndex < items.length) {
       const index = currentIndex;
-      results[index] = await fn(items[index]);
+      results[index] = await fn(items[index]); // oxlint-disable-line eslint/no-await-in-loop -- sequential work-stealing worker
       currentIndex += 1;
     }
   };
@@ -28,7 +28,7 @@ export const getSafeImageConcurrency = (): number => {
     return 1;
   }
 
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const isMobile = /iPhone|iPad|iPod|Android/iu.test(navigator.userAgent);
   if (isMobile) {
     return 1;
   }
