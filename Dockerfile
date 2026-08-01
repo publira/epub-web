@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM node:24.14.1-alpine3.23@sha256:8510330d3eb72c804231a834b1a8ebb55cb3796c3e4431297a24d246b8add4d5 AS frontend-builder
+FROM --platform=$BUILDPLATFORM node:24.18.1-alpine3.23@sha256:c2cc26d8f991c2db236ad51a61efee843c482372d6d22570787309d511694110 AS frontend-builder
 
 WORKDIR /app/frontend
 
