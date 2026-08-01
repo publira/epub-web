@@ -1,7 +1,7 @@
-// @vitest-environment jsdom
-
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+// @vitest-environment jsdom
 import { createElement, useEffect, useRef } from "react";
+import { beforeEach, vi, expect, describe, it } from "vitest";
 import * as z from "zod";
 
 import {
@@ -236,19 +236,10 @@ describe("hooks", () => {
     fireEvent.click(screen.getByText("set-build"));
     expect(screen.getByTestId("mode").textContent).toBe("build");
     expect(new URL(window.location.href).searchParams.get("mode")).toBeNull();
-    expect(replaceStateSpy).toHaveBeenCalledTimes(2);
-    expect(replaceStateSpy).toHaveBeenNthCalledWith(
-      1,
-      null,
-      "",
-      "http://localhost:3000/?mode=extract"
-    );
-    expect(replaceStateSpy).toHaveBeenNthCalledWith(
-      2,
-      null,
-      "",
-      "http://localhost:3000/"
-    );
+    expect(replaceStateSpy.mock.calls).toStrictEqual([
+      [null, "", "http://localhost:3000/?mode=extract"],
+      [null, "", "http://localhost:3000/"],
+    ]);
   }, 1000);
 
   it("useDrop() toggles drag state and passes dropped files", () => {

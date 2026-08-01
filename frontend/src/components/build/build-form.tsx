@@ -314,7 +314,7 @@ export const BuildForm = () => {
       const imageFiles = files.filter(
         (file) =>
           file.type.startsWith("image/") ||
-          /\.(png|jpe?g|gif|webp|avif|bmp|svg)$/i.test(file.name)
+          /\.(?<ext>png|jpe?g|gif|webp|avif|bmp|svg)$/iu.test(file.name)
       );
       if (imageFiles.length === 0) {
         setError("画像ファイルを選択してください。");
@@ -355,7 +355,7 @@ export const BuildForm = () => {
       const droppedImages = droppedFiles.filter(
         (file) =>
           file.type.startsWith("image/") ||
-          /\.(png|jpe?g|gif|webp|avif|bmp|svg)$/i.test(file.name)
+          /\.(?<ext>png|jpe?g|gif|webp|avif|bmp|svg)$/iu.test(file.name)
       );
       if (droppedImages.length === 0) {
         setClientValidationError("画像ファイルをドロップしてください。");
@@ -399,7 +399,7 @@ export const BuildForm = () => {
       }
 
       const { index } = (e.currentTarget as HTMLButtonElement).dataset;
-      const indexNum = Number.parseInt(index || "0", 10);
+      const indexNum = Math.trunc(Number(index || "0"));
       setError(null);
       setSuccess(null);
       form.setFieldValue(

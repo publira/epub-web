@@ -1,4 +1,5 @@
 import { zipSync } from "fflate";
+import { describe, expect, it } from "vitest";
 
 import { unzipAsync, zipAsync } from "./zip";
 

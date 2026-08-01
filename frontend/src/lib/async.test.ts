@@ -1,5 +1,7 @@
 import { setTimeout as delay } from "node:timers/promises";
 
+import { vi, describe, expect, it } from "vitest";
+
 import { mapConcurrent, getSafeImageConcurrency } from "./async";
 
 describe("mapConcurrent()", () => {

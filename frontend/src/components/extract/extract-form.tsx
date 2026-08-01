@@ -54,7 +54,7 @@ export const ExtractForm = () => {
       }
 
       const isEpub =
-        file.type === "application/epub+zip" || /\.epub$/i.test(file.name);
+        file.type === "application/epub+zip" || /\.epub$/iu.test(file.name);
       if (!isEpub) {
         return "EPUBファイルを選択してください。";
       }
@@ -185,7 +185,7 @@ export const ExtractForm = () => {
   const handleCardDropFiles = useCallback(
     (droppedFiles: readonly File[]) => {
       const droppedEpub = droppedFiles.find((file) =>
-        /\.epub$/i.test(file.name)
+        /\.epub$/iu.test(file.name)
       );
       if (!droppedEpub) {
         setClientValidationError("EPUBファイルをドロップしてください。");

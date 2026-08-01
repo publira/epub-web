@@ -15,7 +15,8 @@ import { Card } from "./ui/card";
 const modeSchema = z.enum(["build", "extract"]);
 
 export const App = () => {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient, setQueryClient] = useState(() => new QueryClient());
+  void setQueryClient;
   const [mode, setMode] = useSearchParamsState("mode", modeSchema, "build");
   const termsDialogRef = useRef<HTMLDialogElement>(null);
   const privacyDialogRef = useRef<HTMLDialogElement>(null);
