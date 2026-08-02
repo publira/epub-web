@@ -9,9 +9,6 @@ import (
 	"os/signal"
 	"sync/atomic"
 	"syscall"
-
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 )
 
 var isReady atomic.Bool
@@ -35,12 +32,15 @@ func run() int {
 
 	mux.Handle("/", withCache(http.FileServer(GetFrontendFS())))
 
-	handler := h2c.NewHandler(withLog(withSecurityHeaders(mux)), &http2.Server{})
 	addr := getListenAddress()
 	server := &http.Server{
 		Addr:    addr,
-		Handler: handler,
+		Handler: withLog(withSecurityHeaders(mux)),
 	}
+
+	server.Protocols = new(http.Protocols)
+	server.Protocols.SetHTTP1(true)
+	server.Protocols.SetUnencryptedHTTP2(true)
 
 	errCh := make(chan error, 1)
 
