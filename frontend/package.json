@@ -37,7 +37,7 @@
     "tailwind-merge": "3.6.0",
     "tailwindcss": "4.3.3",
     "typescript": "7.0.2",
-    "ultracite": "7.10.0",
+    "ultracite": "7.10.1",
     "vite": "8.2.0",
     "vitest": "4.1.10",
     "zod": "4.4.3"
