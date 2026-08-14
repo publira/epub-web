@@ -1,7 +1,7 @@
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/publira/epub v0.6.0 h1:BkuQaLs09buR28fDr48EJXaa/89RRjBVMDgT3+tSn6s=
-github.com/publira/epub v0.6.0/go.mod h1:bH/S48lkgOnz+RCUep4ahQBlIOlRdHQ4XKZJJCAtFBE=
+github.com/publira/epub v0.7.0 h1:w0AMbtnFrtuCXiu05luBWRbRMoD8VEviUIeT6HlzEKo=
+github.com/publira/epub v0.7.0/go.mod h1:t6Swj2N4d1DsdPyF1YEg1XkZZX8lh62fMg58djI3Q9o=
 golang.org/x/image v0.45.0 h1:FMb1nTbH5H9vF55SriQHgFw5GnNL9Jg6L25BwXKzhB0=
 golang.org/x/image v0.45.0/go.mod h1:n62x/7RqlwXDvGsSU4u6IUTUf6KghUZ9Bt7cG/T9Fx4=
 golang.org/x/sync v0.22.0 h1:SZjpbeLmrCk4xhRSZFNZW5gFUeCeFgjekvI/+gfScek=
