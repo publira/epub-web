@@ -116,11 +116,11 @@ export const FilePicker = ({
         onChange={handleChange}
         {...props}
       />
-      <span className="text-primary block text-sm font-semibold">
+      <span className="block text-sm font-semibold text-primary">
         {ctaText}
       </span>
       {helperText ? (
-        <span className="text-muted-foreground mt-1 block text-xs">
+        <span className="mt-1 block text-xs text-muted-foreground">
           {helperText}
         </span>
       ) : null}

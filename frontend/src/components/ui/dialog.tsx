@@ -58,7 +58,7 @@ export const DialogClose = ({ className, ...props }: DialogCloseProps) => (
     method="dialog"
   >
     <button
-      className="text-primary hover:bg-primary/10 focus-visible:ring-primary/35 active:bg-primary/10 grid size-9 place-items-center transition hover:rounded-full focus-visible:rounded-full focus-visible:ring-2 focus-visible:outline-none active:rounded-full"
+      className="grid size-9 place-items-center text-primary transition hover:rounded-full hover:bg-primary/10 focus-visible:rounded-full focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:outline-none active:rounded-full active:bg-primary/10"
       type="submit"
       {...props}
     >
