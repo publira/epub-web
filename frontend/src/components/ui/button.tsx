@@ -5,7 +5,7 @@ const buttonStyles = cva("", {
   compoundVariants: [
     {
       active: true,
-      className: "border-primary/45 from-primary-tint bg-linear-120 to-white",
+      className: "border-primary/45 bg-linear-120 from-primary-tint to-white",
       variant: "tab",
     },
   ],
@@ -20,8 +20,8 @@ const buttonStyles = cva("", {
     },
     variant: {
       primary:
-        "border-primary/22 from-primary to-primary-dark cursor-pointer rounded-xl border bg-linear-120 px-4 py-3 font-bold text-slate-50 transition hover:-translate-y-px hover:saturate-110 disabled:cursor-wait disabled:opacity-70",
-      tab: "border-primary/20 bg-tab cursor-pointer rounded-xl border px-4 py-3 font-bold transition hover:-translate-y-px hover:saturate-110",
+        "cursor-pointer rounded-xl border border-primary/22 bg-linear-120 from-primary to-primary-dark px-4 py-3 font-bold text-slate-50 transition hover:-translate-y-px hover:saturate-110 disabled:cursor-wait disabled:opacity-70",
+      tab: "cursor-pointer rounded-xl border border-primary/20 bg-tab px-4 py-3 font-bold transition hover:-translate-y-px hover:saturate-110",
     },
   },
 });

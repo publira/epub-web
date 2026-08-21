@@ -29,7 +29,7 @@ import { Skeleton } from "../ui/skeleton";
 import { ExtractedImagesGallery } from "./extracted-images-gallery";
 
 export const ExtractFormSkeleton = () => (
-  <Card className="p-fluid-sm min-w-0">
+  <Card className="min-w-0 p-fluid-sm">
     <Skeleton className="mb-4 h-28" />
     <Skeleton className="h-12" />
   </Card>
@@ -290,7 +290,7 @@ export const ExtractForm = () => {
 
   return (
     <Card
-      className="animate-rise p-fluid-sm relative min-w-0 space-y-2"
+      className="relative min-w-0 animate-rise space-y-2 p-fluid-sm"
       {...dragProps}
     >
       {isFormDragOver && <DropOverlay message="ここにEPUBファイルをドロップ" />}
@@ -329,7 +329,7 @@ export const ExtractForm = () => {
                 onFileChange={handleExtractFileChange}
               />
               {field.state.meta.errors.length > 0 && (
-                <p className="text-error m-0 text-sm font-semibold">
+                <p className="m-0 text-sm font-semibold text-error">
                   {field.state.meta.errors[0]}
                 </p>
               )}
@@ -337,7 +337,7 @@ export const ExtractForm = () => {
           )}
         </form.Field>
 
-        <p className="text-muted-foreground m-0">
+        <p className="m-0 text-muted-foreground">
           選択中: {extractFilename ?? "未選択"}
         </p>
 
@@ -366,8 +366,8 @@ export const ExtractForm = () => {
           onDownloadImage={handleDownloadImage}
         />
       )}
-      {error && <p className="text-error mb-0 font-semibold">{error}</p>}
-      {success && <p className="text-success mb-0 font-semibold">{success}</p>}
+      {error && <p className="mb-0 font-semibold text-error">{error}</p>}
+      {success && <p className="mb-0 font-semibold text-success">{success}</p>}
     </Card>
   );
 };
