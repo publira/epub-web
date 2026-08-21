@@ -31,7 +31,7 @@ export const Dialog = ({
   return (
     <dialog
       className={twMerge(
-        "fixed top-1/2 left-1/2 m-0 max-h-[80dvh] w-[min(680px,calc(100%-2rem))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-primary/20 bg-card-surface p-0 text-foreground shadow-card backdrop:bg-slate-900/40",
+        "border-primary/20 bg-card-surface text-foreground shadow-card fixed top-1/2 left-1/2 m-0 max-h-[80dvh] w-[min(680px,calc(100%-2rem))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border p-0 backdrop:bg-slate-900/40",
         className
       )}
       ref={dialogRef}
@@ -58,7 +58,7 @@ export const DialogClose = ({ className, ...props }: DialogCloseProps) => (
     method="dialog"
   >
     <button
-      className="grid size-9 place-items-center text-primary transition hover:rounded-full hover:bg-primary/10 focus-visible:rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 active:rounded-full active:bg-primary/10"
+      className="text-primary hover:bg-primary/10 focus-visible:ring-primary/35 active:bg-primary/10 grid size-9 place-items-center transition hover:rounded-full focus-visible:rounded-full focus-visible:ring-2 focus-visible:outline-none active:rounded-full"
       type="submit"
       {...props}
     >

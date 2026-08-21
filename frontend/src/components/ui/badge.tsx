@@ -6,7 +6,7 @@ export const Badge = ({
 }: React.HTMLAttributes<HTMLSpanElement>) => (
   <span
     className={twMerge(
-      "inline-block rounded-full bg-primary-tint px-3 py-1.5 text-sm font-bold uppercase tracking-wide text-primary font-heading",
+      "bg-primary-tint text-primary font-heading inline-block rounded-full px-3 py-1.5 text-sm font-bold tracking-wide uppercase",
       className
     )}
     {...props}

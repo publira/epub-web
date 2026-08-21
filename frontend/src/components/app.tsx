@@ -39,11 +39,11 @@ export const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="flex min-h-dvh flex-col">
-        <main className="mx-auto my-10 grid w-content flex-1 content-start gap-5 max-md:my-4 max-md:w-content-sm">
+        <main className="w-content max-md:w-content-sm mx-auto my-10 grid flex-1 content-start gap-5 max-md:my-4">
           <header>
             <Card className="animate-rise p-fluid">
               <Badge>EPUB Web</Badge>
-              <h1 className="mt-2 mb-3 text-hero">
+              <h1 className="text-hero mt-2 mb-3">
                 画像をEPUBに、EPUBを画像に変換
               </h1>
               <p className="m-0 leading-7">
@@ -124,11 +124,11 @@ export const App = () => {
         </main>
 
         <footer className="pb-4">
-          <div className="mx-auto w-content rounded-2xl border border-primary/15 bg-card-surface px-4 py-4 text-sm text-muted-foreground max-md:w-content-sm">
+          <div className="w-content border-primary/15 bg-card-surface text-muted-foreground max-md:w-content-sm mx-auto rounded-2xl border px-4 py-4 text-sm">
             <p className="m-0 leading-6">
               このアプリは
               <a
-                className="font-semibold text-primary underline underline-offset-4"
+                className="text-primary font-semibold underline underline-offset-4"
                 href="https://pkg.go.dev/github.com/publira/epub"
                 rel="noopener noreferrer"
                 target="_blank"
@@ -142,7 +142,7 @@ export const App = () => {
             </p>
             <div className="mt-3 flex flex-wrap justify-end gap-3">
               <a
-                className="cursor-pointer text-sm font-semibold text-primary underline underline-offset-4"
+                className="text-primary cursor-pointer text-sm font-semibold underline underline-offset-4"
                 href="https://github.com/publira/epub-web"
                 rel="noopener noreferrer"
                 target="_blank"
@@ -150,14 +150,14 @@ export const App = () => {
                 ソースコード
               </a>
               <button
-                className="cursor-pointer text-sm font-semibold text-primary underline underline-offset-4"
+                className="text-primary cursor-pointer text-sm font-semibold underline underline-offset-4"
                 onClick={handleOpenTerms}
                 type="button"
               >
                 利用規約
               </button>
               <button
-                className="cursor-pointer text-sm font-semibold text-primary underline underline-offset-4"
+                className="text-primary cursor-pointer text-sm font-semibold underline underline-offset-4"
                 onClick={handleOpenPrivacy}
                 type="button"
               >

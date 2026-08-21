@@ -6,7 +6,7 @@ export const Card = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={twMerge(
-      "rounded-3xl border border-primary/18 bg-card-surface shadow-card",
+      "border-primary/18 bg-card-surface shadow-card rounded-3xl border",
       className
     )}
     {...props}

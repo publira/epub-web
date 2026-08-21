@@ -76,7 +76,7 @@ const SortableTextFieldRow = ({
     <div ref={setNodeRef} style={style} className="flex items-center gap-1">
       <button
         type="button"
-        className="inline-flex h-12 w-8 shrink-0 touch-none cursor-grab items-center justify-center rounded-lg text-muted-foreground transition hover:text-primary active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50"
+        className="text-muted-foreground hover:text-primary inline-flex h-12 w-8 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg transition active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50"
         disabled={dragDisabled}
         aria-label={`${item.value || `項目${index + 1}`} の並び順を変更`}
         {...attributes}
@@ -86,7 +86,7 @@ const SortableTextFieldRow = ({
       </button>
       <TextInput
         id={inputId}
-        className="pl-2 pr-3"
+        className="pr-3 pl-2"
         type="text"
         value={item.value}
         aria-labelledby={inputAriaLabelledBy}
@@ -100,7 +100,7 @@ const SortableTextFieldRow = ({
       </span>
       <button
         type="button"
-        className="ml-1 inline-flex h-12 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-error/35 bg-error/10 text-error transition hover:-translate-y-px hover:bg-error/15 disabled:cursor-not-allowed disabled:opacity-50"
+        className="border-error/35 bg-error/10 text-error hover:bg-error/15 ml-1 inline-flex h-12 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border transition hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-50"
         onClick={handleRemoveClick}
         disabled={disabled || !canRemove}
         aria-label={`${item.value || `項目${index + 1}`} を削除`}
@@ -224,7 +224,7 @@ export const AddableSortableTextFields = ({
         <div className="h-12 w-8 shrink-0" aria-hidden="true" />
         <button
           type="button"
-          className="h-12 shrink-0 cursor-pointer rounded-xl border border-primary/22 bg-primary-subtle px-4 text-sm font-bold text-primary transition hover:-translate-y-px hover:saturate-110 disabled:cursor-not-allowed disabled:opacity-60"
+          className="border-primary/22 bg-primary-subtle text-primary h-12 shrink-0 cursor-pointer rounded-xl border px-4 text-sm font-bold transition hover:-translate-y-px hover:saturate-110 disabled:cursor-not-allowed disabled:opacity-60"
           onClick={onAdd}
           disabled={disabled || addDisabled}
         >

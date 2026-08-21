@@ -94,12 +94,12 @@ export const FilePicker = ({
     <label
       className={twMerge(
         twJoin(
-          "block w-full rounded-xl border border-dashed border-primary/30 bg-primary-subtle px-4 py-4 transition",
-          !disabled && "cursor-pointer hover:bg-primary-subtle-hover",
+          "border-primary/30 bg-primary-subtle block w-full rounded-xl border border-dashed px-4 py-4 transition",
+          !disabled && "hover:bg-primary-subtle-hover cursor-pointer",
           disabled && "cursor-not-allowed opacity-50",
           isDragOver &&
             !disabled &&
-            "border-primary/55 bg-primary-subtle-hover ring-2 ring-secondary/50"
+            "border-primary/55 bg-primary-subtle-hover ring-secondary/50 ring-2"
         ),
         className
       )}
@@ -116,11 +116,11 @@ export const FilePicker = ({
         onChange={handleChange}
         {...props}
       />
-      <span className="block text-sm font-semibold text-primary">
+      <span className="text-primary block text-sm font-semibold">
         {ctaText}
       </span>
       {helperText ? (
-        <span className="mt-1 block text-xs text-muted-foreground">
+        <span className="text-muted-foreground mt-1 block text-xs">
           {helperText}
         </span>
       ) : null}

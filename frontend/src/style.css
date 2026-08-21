@@ -61,7 +61,7 @@
 
 @layer base {
   body {
-    @apply m-0 min-h-dvh bg-app-canvas bg-background font-sans text-foreground;
+    @apply bg-app-canvas bg-background text-foreground m-0 min-h-dvh font-sans;
   }
 
   #root {
