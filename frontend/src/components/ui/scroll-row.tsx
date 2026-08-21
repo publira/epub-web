@@ -6,7 +6,7 @@ export const ScrollRow = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={twMerge(
-      "flex min-w-0 snap-x snap-mandatory gap-3 overflow-x-auto pb-2 touch-pan-x",
+      "flex min-w-0 touch-pan-x snap-x snap-mandatory gap-3 overflow-x-auto pb-2",
       className
     )}
     {...props}

@@ -6,7 +6,7 @@ export const Skeleton = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={twMerge(
-      "animate-pulse rounded-xl border border-primary/8 bg-primary/12",
+      "border-primary/8 bg-primary/12 animate-pulse rounded-xl border",
       className
     )}
     {...props}
