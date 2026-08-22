@@ -12,6 +12,9 @@ export default defineConfig({
     // Existing app patterns that need larger refactors (object-URL cache via ref,
     // form.reset binding, drag-state reset, image dimension probing). Tracked
     // separately from the oxc/ultracite toolchain upgrade.
-    "react/react-compiler": "off",
+    "react/exhaustive-effect-dependencies": "off",
+    "react/memo-dependencies": "off",
+    "react/refs": "off",
+    "react/set-state-in-effect": "off",
   },
 });
