@@ -5,6 +5,7 @@ import type { MouseEventHandler } from "react";
 
 export interface ImagePreview {
   id: string;
+  mimeType: string;
   index: number;
   lastModifiedLabel: string;
   name: string;

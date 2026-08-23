@@ -364,6 +364,9 @@ export const ExtractForm = () => {
           previewDimensions={previewDimensions}
           onDownloadAllImages={handleDownloadAllImages}
           onDownloadImage={handleDownloadImage}
+          readingDirection={extractResult?.readingDirection ?? "rtl"}
+          spreadStartIndex={extractResult?.spreadStartIndex ?? 0}
+          viewerTitle={extractResult?.title ?? "Untitled"}
         />
       )}
       {error && <p className="mb-0 font-semibold text-error">{error}</p>}

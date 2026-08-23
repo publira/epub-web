@@ -81,6 +81,9 @@ describe("mutations", () => {
       new Response(new Blob([new Uint8Array(zipped)]), {
         headers: {
           "Content-Disposition": 'attachment; filename="extracted.zip"',
+          "X-EPUB-Reading-Direction": "ltr",
+          "X-EPUB-Spread-Start": "1",
+          "X-EPUB-Title": "Test%20work",
         },
         status: 200,
       })
@@ -90,10 +93,16 @@ describe("mutations", () => {
       file: new File(["dummy"], "test.epub", { type: "application/epub+zip" }),
     });
 
-    expect(result.images).toHaveLength(1);
-    expect(result.images[0]?.name).toBe("1.jpg");
-    expect(result.zipBlob).toBeInstanceOf(Blob);
-    expect(result.zipFilename).toBe("extracted.zip");
+    expect(result).toMatchObject({
+      images: [
+        expect.objectContaining({ mimeType: "image/jpeg", name: "1.jpg" }),
+      ],
+      readingDirection: "ltr",
+      spreadStartIndex: 1,
+      title: "Test work",
+      zipBlob: expect.any(Blob),
+      zipFilename: "extracted.zip",
+    });
     expect(createObjectURL).toHaveBeenCalledOnce();
   }, 1000);
 

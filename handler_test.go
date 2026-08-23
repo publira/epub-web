@@ -442,6 +442,15 @@ func TestHandleExtract_ReturnsZipArchive(t *testing.T) {
 	if got := rec.Header().Get("Content-Type"); !strings.Contains(got, "application/zip") {
 		t.Fatalf("expected zip content type, got %q", got)
 	}
+	if got := rec.Header().Get("X-EPUB-Reading-Direction"); got != "rtl" {
+		t.Fatalf("expected RTL reading direction, got %q", got)
+	}
+	if got := rec.Header().Get("X-EPUB-Spread-Start"); got != "0" {
+		t.Fatalf("expected spread start index %q, got %q", "0", got)
+	}
+	if got := rec.Header().Get("X-EPUB-Title"); got != "test" {
+		t.Fatalf("expected EPUB title %q, got %q", "test", got)
+	}
 	contentDisposition := rec.Header().Get("Content-Disposition")
 	if !strings.Contains(contentDisposition, `filename*=UTF-8''`+url.PathEscape("test.zip")) {
 		t.Fatalf("expected UTF-8 filename* derived from epub name, got %q", contentDisposition)

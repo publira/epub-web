@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"net/url"
+	"strconv"
 
 	"github.com/publira/epub"
 )
@@ -80,7 +82,7 @@ func handleExtract(w http.ResponseWriter, r *http.Request) {
 
 	slog.Info("extract: start", "filename", header.Filename, "size", header.Size)
 
-	refs, err := extractSpineImageRefs(r.Context(), file, header)
+	extracted, err := extractSpineImageRefs(r.Context(), file, header)
 	if err != nil {
 		if writeHandledRequestError(w, err) {
 			return
@@ -95,16 +97,19 @@ func handleExtract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slog.Info("extract: checks done", "filename", header.Filename, "images", len(refs))
+	slog.Info("extract: checks done", "filename", header.Filename, "images", len(extracted.refs))
 
 	w.Header().Set("Content-Type", "application/zip")
 	w.Header().Set("Content-Disposition", buildExtractContentDisposition(header.Filename))
+	w.Header().Set("X-EPUB-Reading-Direction", extracted.readingDirection)
+	w.Header().Set("X-EPUB-Spread-Start", strconv.Itoa(extracted.spreadStartIndex))
+	w.Header().Set("X-EPUB-Title", url.PathEscape(extracted.title))
 
-	if err := writeExtractArchive(r.Context(), w, header.Filename, refs); err != nil {
+	if err := writeExtractArchive(r.Context(), w, header.Filename, extracted.refs); err != nil {
 		return
 	}
 
-	slog.Info("extract: done", "filename", header.Filename, "images", len(refs))
+	slog.Info("extract: done", "filename", header.Filename, "images", len(extracted.refs))
 }
 
 func handleBuild(w http.ResponseWriter, r *http.Request) {

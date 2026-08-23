@@ -25,6 +25,7 @@ export const useBuildImagePreviews = (buildFiles: File[]): ImagePreview[] => {
         id: `${key}:${index}`,
         index,
         lastModifiedLabel: formatLastModified(file.lastModified),
+        mimeType: file.type,
         name: file.name,
         url,
       };

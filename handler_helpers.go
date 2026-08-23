@@ -37,6 +37,13 @@ type imageMetrics struct {
 	longEdge int64
 }
 
+type extractedSpineImages struct {
+	refs             []epub.SpineImageReference
+	readingDirection string
+	spreadStartIndex int
+	title            string
+}
+
 func (e *requestError) Error() string {
 	if e == nil {
 		return ""
@@ -211,7 +218,7 @@ func toASCIIFilename(filename string) string {
 	return result
 }
 
-func extractSpineImageRefs(ctx context.Context, file multipart.File, header *multipart.FileHeader) ([]epub.SpineImageReference, error) {
+func extractSpineImageRefs(ctx context.Context, file multipart.File, header *multipart.FileHeader) (*extractedSpineImages, error) {
 	size, err := getFileSize(file)
 	if err != nil {
 		slog.Error("extract: failed to get file size", "error", err)
@@ -250,7 +257,49 @@ func extractSpineImageRefs(ctx context.Context, file multipart.File, header *mul
 		return nil, err
 	}
 
-	return refs, nil
+	return &extractedSpineImages{
+		refs:             refs,
+		readingDirection: normalizeReadingDirection(doc.Direction),
+		spreadStartIndex: findSpreadStartIndex(refs),
+		title:            extractDocumentTitle(doc),
+	}, nil
+}
+
+func extractDocumentTitle(doc *epub.Document) string {
+	if doc == nil {
+		return "Untitled"
+	}
+
+	if title := strings.TrimSpace(doc.Metadata.Title); title != "" {
+		return title
+	}
+
+	if title := strings.TrimSpace(doc.Title); title != "" {
+		return title
+	}
+
+	return "Untitled"
+}
+
+func normalizeReadingDirection(direction string) string {
+	if strings.EqualFold(strings.TrimSpace(direction), "ltr") {
+		return "ltr"
+	}
+
+	return "rtl"
+}
+
+func findSpreadStartIndex(refs []epub.SpineImageReference) int {
+	if len(refs) < 2 {
+		return len(refs)
+	}
+
+	firstPage := refs[0].Page
+	if firstPage != nil && strings.EqualFold(strings.TrimSpace(firstPage.Spread), "center") {
+		return 1
+	}
+
+	return 0
 }
 
 func validateExtractRefs(ctx context.Context, filename string, refs []epub.SpineImageReference) error {
