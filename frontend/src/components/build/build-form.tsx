@@ -35,6 +35,7 @@ import { useAppConfig, useDrop } from "../../lib/hooks";
 import { compressImageFile } from "../../lib/image";
 import { buildMutationFn, getApiErrorMessage } from "../../lib/mutations";
 import { triggerDownload } from "../../lib/utils";
+import { ComicViewerDialog } from "../comic-viewer/comic-viewer-dialog";
 import { LimitNotes } from "../limit-notes";
 import { AddableSortableTextFields } from "../ui/addable-sortable-text-fields";
 import type { SortableTextFieldItem } from "../ui/addable-sortable-text-fields";
@@ -46,7 +47,6 @@ import { SelectInput } from "../ui/select-input";
 import { Skeleton } from "../ui/skeleton";
 import { TextInput } from "../ui/text-input";
 import { SortableImagePreviewList } from "./sortable-image-preview-list";
-import { ComicViewerDialog } from "../extract/comic-viewer-dialog";
 import { useBuildImagePreviews } from "./use-build-image-previews";
 
 export const BuildFormSkeleton = () => (
