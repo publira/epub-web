@@ -11,8 +11,60 @@ import { unzipAsync } from "./zip";
 export interface ExtractedImage {
   name: string;
   blob: Blob;
+  mimeType: string;
   url: string;
 }
+
+const imageMimeTypes: Record<string, string> = {
+  gif: "image/gif",
+  jpeg: "image/jpeg",
+  jpg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+};
+
+const parseExtractImageMimeTypes = (
+  encodedMimeTypes: string | null
+): Record<string, string> => {
+  if (!encodedMimeTypes) {
+    return {};
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(decodeURIComponent(encodedMimeTypes));
+    if (
+      typeof parsed !== "object" ||
+      parsed === null ||
+      Array.isArray(parsed)
+    ) {
+      return {};
+    }
+
+    const mimeTypes: Record<string, string> = {};
+    for (const [path, mimeType] of Object.entries(parsed)) {
+      if (
+        typeof mimeType === "string" &&
+        mimeType.toLowerCase().startsWith("image/")
+      ) {
+        mimeTypes[path] = mimeType;
+      }
+    }
+    return mimeTypes;
+  } catch {
+    return {};
+  }
+};
+
+const getExtractedImageMimeType = (
+  path: string,
+  extractedImageMimeTypes: Record<string, string>
+): string | undefined => {
+  const extension = path.split(".").pop()?.toLowerCase();
+  return (
+    extractedImageMimeTypes[path] ??
+    (extension === undefined ? undefined : imageMimeTypes[extension])
+  );
+};
 
 const apiErrorSchema = z.object({
   code: z.string(),
@@ -174,8 +226,13 @@ export const buildMutationFn = async (
   return { blob, filename };
 };
 
+export type ReadingDirection = "ltr" | "rtl";
+
 export interface ExtractResult {
   images: ExtractedImage[];
+  readingDirection: ReadingDirection;
+  spreadStartIndex: number;
+  title: string;
   zipBlob: Blob;
   zipFilename: string;
 }
@@ -208,6 +265,26 @@ export const extractMutationFn = async (
     res.headers.get("Content-Disposition"),
     "extracted.zip"
   );
+  const readingDirection: ReadingDirection =
+    res.headers.get("X-EPUB-Reading-Direction") === "ltr" ? "ltr" : "rtl";
+  const fallbackTitle = params.file.name.toLowerCase().endsWith(".epub")
+    ? params.file.name.slice(0, -5)
+    : params.file.name;
+  const encodedTitle = res.headers.get("X-EPUB-Title");
+  let title = fallbackTitle || "Untitled";
+  if (encodedTitle) {
+    try {
+      title = decodeURIComponent(encodedTitle);
+    } catch {
+      // Keep the file name as a safe fallback for malformed response headers.
+    }
+  }
+  const rawSpreadStartIndex = Math.trunc(
+    Number(res.headers.get("X-EPUB-Spread-Start") ?? "0")
+  );
+  const extractedImageMimeTypes = parseExtractImageMimeTypes(
+    res.headers.get("X-EPUB-Image-MIME-Types")
+  );
   const arrayBuffer = await zipBlob.arrayBuffer();
   const uint8Array = new Uint8Array(arrayBuffer);
 
@@ -220,14 +297,15 @@ export const extractMutationFn = async (
 
   const images: ExtractedImage[] = [];
   for (const [path, content] of Object.entries(unzippedFiles)) {
-    const isImage = /\.(?<ext>jpg|jpeg|png|gif|webp)$/iu.test(path);
-    if (isImage) {
+    const mimeType = getExtractedImageMimeType(path, extractedImageMimeTypes);
+    if (mimeType !== undefined) {
       const blob = new Blob([new Uint8Array(content)], {
-        type: "application/octet-stream",
+        type: mimeType,
       });
       const filename = path.split("/").pop() || path;
       images.push({
         blob,
+        mimeType,
         name: filename,
         url: URL.createObjectURL(blob),
       });
@@ -238,7 +316,17 @@ export const extractMutationFn = async (
     throw new Error("画像ファイルが見つかりません。");
   }
 
-  return { images, zipBlob, zipFilename };
+  return {
+    images,
+    readingDirection,
+    spreadStartIndex:
+      Number.isSafeInteger(rawSpreadStartIndex) && rawSpreadStartIndex >= 0
+        ? Math.min(rawSpreadStartIndex, images.length)
+        : 0,
+    title,
+    zipBlob,
+    zipFilename,
+  };
 };
 
 export const configSchema = z.object({

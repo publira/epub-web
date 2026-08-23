@@ -46,6 +46,7 @@ import { SelectInput } from "../ui/select-input";
 import { Skeleton } from "../ui/skeleton";
 import { TextInput } from "../ui/text-input";
 import { SortableImagePreviewList } from "./sortable-image-preview-list";
+import { ComicViewerDialog } from "../extract/comic-viewer-dialog";
 import { useBuildImagePreviews } from "./use-build-image-previews";
 
 export const BuildFormSkeleton = () => (
@@ -244,10 +245,46 @@ export const BuildForm = () => {
     (s) => s.values.buildFiles.length
   );
   const buildFiles = useStore(form.store, (s) => s.values.buildFiles);
+  const buildDirection = useStore(form.store, (s) => s.values.direction);
+  const buildSpread = useStore(form.store, (s) => s.values.spread);
+  const buildTitle = useStore(form.store, (s) => s.values.title);
   const isSubmitting = useStore(form.store, (s) => s.isSubmitting);
 
   const imagePreviews = useBuildImagePreviews(buildFiles);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [isPreviewViewerOpen, setIsPreviewViewerOpen] = useState(false);
+  const previewViewerDialogRef = useRef<HTMLDialogElement>(null);
+  const viewerReadingDirection = buildDirection === "ltr" ? "ltr" : "rtl";
+  const viewerSpreadStartIndex = useMemo(() => {
+    if (imagePreviews.length < 2) {
+      return imagePreviews.length;
+    }
+
+    return buildSpread === "center" ? imagePreviews.length : 1;
+  }, [buildSpread, imagePreviews.length]);
+  const viewerPages = useMemo(
+    () =>
+      imagePreviews.map((preview) => ({
+        id: preview.id,
+        mimeType: preview.mimeType,
+        src: preview.url,
+        title: preview.name,
+      })),
+    [imagePreviews]
+  );
+  const handleOpenPreviewViewer = useCallback(() => {
+    setIsPreviewViewerOpen(true);
+  }, []);
+  const handleClosePreviewViewer = useCallback(() => {
+    setIsPreviewViewerOpen(false);
+  }, []);
+
+  useEffect(() => {
+    const dialog = previewViewerDialogRef.current;
+    if (isPreviewViewerOpen && dialog && !dialog.open) {
+      dialog.showModal();
+    }
+  }, [isPreviewViewerOpen]);
 
   const activePreview = useMemo(() => {
     if (activeId === null) {
@@ -732,7 +769,16 @@ export const BuildForm = () => {
 
         {imagePreviews.length > 0 && (
           <div className="grid gap-3">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-row-reverse flex-wrap items-center justify-between gap-2">
+              <button
+                type="button"
+                className="cursor-pointer rounded-lg border border-primary/20 bg-transparent px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:bg-primary-subtle hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={isSubmitting}
+                onClick={handleOpenPreviewViewer}
+              >
+                コミックビューアーで開く
+              </button>
+              <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 className="cursor-pointer rounded-lg border border-error/35 bg-error/10 px-3 py-1.5 text-xs font-semibold text-error transition hover:bg-error/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error/45 disabled:cursor-not-allowed disabled:opacity-50"
@@ -758,10 +804,11 @@ export const BuildForm = () => {
               >
                 更新日順
               </button>
-              <p className="m-0 text-xs text-muted-foreground">
-                画像をドラッグして順番を変更できます。
-              </p>
+              </div>
             </div>
+            <p className="m-0 text-xs text-muted-foreground">
+              画像をドラッグして順番を変更できます。
+              </p>
 
             <SortableImagePreviewList
               sensors={sensors}
@@ -811,6 +858,17 @@ export const BuildForm = () => {
           </span>
         </Button>
       </form>
+
+      {isPreviewViewerOpen && (
+        <ComicViewerDialog
+          dialogRef={previewViewerDialogRef}
+          onClose={handleClosePreviewViewer}
+          pages={viewerPages}
+          readingDirection={viewerReadingDirection}
+          spreadStartIndex={viewerSpreadStartIndex}
+          title={buildTitle.trim() || "Untitled"}
+        />
+      )}
 
       {error && <p className="mb-0 font-semibold text-error">{error}</p>}
       {success && <p className="mb-0 font-semibold text-success">{success}</p>}

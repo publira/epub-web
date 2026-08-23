@@ -81,6 +81,9 @@ describe("mutations", () => {
       new Response(new Blob([new Uint8Array(zipped)]), {
         headers: {
           "Content-Disposition": 'attachment; filename="extracted.zip"',
+          "X-EPUB-Reading-Direction": "ltr",
+          "X-EPUB-Spread-Start": "1",
+          "X-EPUB-Title": "Test%20work",
         },
         status: 200,
       })
@@ -90,10 +93,41 @@ describe("mutations", () => {
       file: new File(["dummy"], "test.epub", { type: "application/epub+zip" }),
     });
 
-    expect(result.images).toHaveLength(1);
-    expect(result.images[0]?.name).toBe("1.jpg");
-    expect(result.zipBlob).toBeInstanceOf(Blob);
-    expect(result.zipFilename).toBe("extracted.zip");
+    expect(result).toMatchObject({
+      images: [
+        expect.objectContaining({ mimeType: "image/jpeg", name: "1.jpg" }),
+      ],
+      readingDirection: "ltr",
+      spreadStartIndex: 1,
+      title: "Test work",
+      zipBlob: expect.any(Blob),
+      zipFilename: "extracted.zip",
+    });
+    expect(createObjectURL).toHaveBeenCalledOnce();
+  }, 1000);
+
+  it("extractMutationFn preserves extensionless images using the EPUB MIME metadata", async () => {
+    const zipped = await zipAsync({
+      "images/1": new Uint8Array([1, 2, 3]),
+    });
+    fetchMock.mockResolvedValueOnce(
+      new Response(new Blob([new Uint8Array(zipped)]), {
+        headers: {
+          "X-EPUB-Image-MIME-Types": encodeURIComponent(
+            JSON.stringify({ "images/1": "image/png" })
+          ),
+        },
+        status: 200,
+      })
+    );
+
+    const result = await extractMutationFn({
+      file: new File(["dummy"], "test.epub", { type: "application/epub+zip" }),
+    });
+
+    expect(result.images).toStrictEqual([
+      expect.objectContaining({ mimeType: "image/png", name: "1" }),
+    ]);
     expect(createObjectURL).toHaveBeenCalledOnce();
   }, 1000);
 
