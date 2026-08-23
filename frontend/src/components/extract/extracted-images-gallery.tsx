@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { ComicViewerDialog } from "../comic-viewer/comic-viewer-dialog";
 import { ScrollRow } from "../ui/scroll-row";
-import { ComicViewerDialog } from "./comic-viewer-dialog";
 
 interface ExtractedPreviewItem {
   key: string;
