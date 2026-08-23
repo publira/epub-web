@@ -302,6 +302,28 @@ func findSpreadStartIndex(refs []epub.SpineImageReference) int {
 	return 0
 }
 
+func encodeExtractImageMimeTypes(refs []epub.SpineImageReference) string {
+	mimeTypes := make(map[string]string, len(refs))
+	for _, ref := range refs {
+		if ref.Asset == nil {
+			continue
+		}
+
+		mimeType := strings.TrimSpace(ref.Asset.MimeType)
+		if !strings.HasPrefix(strings.ToLower(mimeType), "image/") {
+			continue
+		}
+		mimeTypes[ref.Href] = mimeType
+	}
+
+	encoded, err := json.Marshal(mimeTypes)
+	if err != nil {
+		return ""
+	}
+
+	return url.PathEscape(string(encoded))
+}
+
 func validateExtractRefs(ctx context.Context, filename string, refs []epub.SpineImageReference) error {
 	maxAssetSize := getMaxAssetSizeBytes()
 	maxImagePixels := getMaxImagePixels()

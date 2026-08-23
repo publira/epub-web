@@ -106,6 +106,31 @@ describe("mutations", () => {
     expect(createObjectURL).toHaveBeenCalledOnce();
   }, 1000);
 
+  it("extractMutationFn preserves extensionless images using the EPUB MIME metadata", async () => {
+    const zipped = await zipAsync({
+      "images/1": new Uint8Array([1, 2, 3]),
+    });
+    fetchMock.mockResolvedValueOnce(
+      new Response(new Blob([new Uint8Array(zipped)]), {
+        headers: {
+          "X-EPUB-Image-MIME-Types": encodeURIComponent(
+            JSON.stringify({ "images/1": "image/png" })
+          ),
+        },
+        status: 200,
+      })
+    );
+
+    const result = await extractMutationFn({
+      file: new File(["dummy"], "test.epub", { type: "application/epub+zip" }),
+    });
+
+    expect(result.images).toStrictEqual([
+      expect.objectContaining({ mimeType: "image/png", name: "1" }),
+    ]);
+    expect(createObjectURL).toHaveBeenCalledOnce();
+  }, 1000);
+
   it("buildMutationFn throws ApiError from JSON response", async () => {
     fetchMock.mockResolvedValueOnce(
       Response.json(

@@ -104,6 +104,9 @@ func handleExtract(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-EPUB-Reading-Direction", extracted.readingDirection)
 	w.Header().Set("X-EPUB-Spread-Start", strconv.Itoa(extracted.spreadStartIndex))
 	w.Header().Set("X-EPUB-Title", url.PathEscape(extracted.title))
+	if imageMimeTypes := encodeExtractImageMimeTypes(extracted.refs); imageMimeTypes != "" {
+		w.Header().Set("X-EPUB-Image-MIME-Types", imageMimeTypes)
+	}
 
 	if err := writeExtractArchive(r.Context(), w, header.Filename, extracted.refs); err != nil {
 		return

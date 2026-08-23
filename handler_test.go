@@ -451,6 +451,19 @@ func TestHandleExtract_ReturnsZipArchive(t *testing.T) {
 	if got := rec.Header().Get("X-EPUB-Title"); got != "test" {
 		t.Fatalf("expected EPUB title %q, got %q", "test", got)
 	}
+	encodedMimeTypes := rec.Header().Get("X-EPUB-Image-MIME-Types")
+	decodedMimeTypes, err := url.PathUnescape(encodedMimeTypes)
+	if err != nil {
+		t.Fatalf("failed to decode image MIME types: %v", err)
+	}
+	var mimeTypes map[string]string
+	if err := json.Unmarshal([]byte(decodedMimeTypes), &mimeTypes); err != nil {
+		t.Fatalf("failed to parse image MIME types: %v", err)
+	}
+	if got := mimeTypes["item/image/p-001.png"]; got != "image/png" {
+		t.Fatalf("expected image MIME type %q, got %q", "image/png", got)
+	}
+
 	contentDisposition := rec.Header().Get("Content-Disposition")
 	if !strings.Contains(contentDisposition, `filename*=UTF-8''`+url.PathEscape("test.zip")) {
 		t.Fatalf("expected UTF-8 filename* derived from epub name, got %q", contentDisposition)

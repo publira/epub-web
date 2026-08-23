@@ -23,6 +23,49 @@ const imageMimeTypes: Record<string, string> = {
   webp: "image/webp",
 };
 
+const parseExtractImageMimeTypes = (
+  encodedMimeTypes: string | null
+): Record<string, string> => {
+  if (!encodedMimeTypes) {
+    return {};
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(decodeURIComponent(encodedMimeTypes));
+    if (
+      typeof parsed !== "object" ||
+      parsed === null ||
+      Array.isArray(parsed)
+    ) {
+      return {};
+    }
+
+    const mimeTypes: Record<string, string> = {};
+    for (const [path, mimeType] of Object.entries(parsed)) {
+      if (
+        typeof mimeType === "string" &&
+        mimeType.toLowerCase().startsWith("image/")
+      ) {
+        mimeTypes[path] = mimeType;
+      }
+    }
+    return mimeTypes;
+  } catch {
+    return {};
+  }
+};
+
+const getExtractedImageMimeType = (
+  path: string,
+  extractedImageMimeTypes: Record<string, string>
+): string | undefined => {
+  const extension = path.split(".").pop()?.toLowerCase();
+  return (
+    extractedImageMimeTypes[path] ??
+    (extension === undefined ? undefined : imageMimeTypes[extension])
+  );
+};
+
 const apiErrorSchema = z.object({
   code: z.string(),
   message: z.string(),
@@ -239,6 +282,9 @@ export const extractMutationFn = async (
   const rawSpreadStartIndex = Math.trunc(
     Number(res.headers.get("X-EPUB-Spread-Start") ?? "0")
   );
+  const extractedImageMimeTypes = parseExtractImageMimeTypes(
+    res.headers.get("X-EPUB-Image-MIME-Types")
+  );
   const arrayBuffer = await zipBlob.arrayBuffer();
   const uint8Array = new Uint8Array(arrayBuffer);
 
@@ -251,11 +297,7 @@ export const extractMutationFn = async (
 
   const images: ExtractedImage[] = [];
   for (const [path, content] of Object.entries(unzippedFiles)) {
-    const extension = /\.(?<ext>jpg|jpeg|png|gif|webp)$/iu
-      .exec(path)
-      ?.groups?.ext?.toLowerCase();
-    const mimeType =
-      extension === undefined ? undefined : imageMimeTypes[extension];
+    const mimeType = getExtractedImageMimeType(path, extractedImageMimeTypes);
     if (mimeType !== undefined) {
       const blob = new Blob([new Uint8Array(content)], {
         type: mimeType,
