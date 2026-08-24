@@ -1,5 +1,4 @@
 import * as ComicViewer from "@publira/comic-viewer";
-import { useViewerContext } from "@publira/comic-viewer";
 import type { ViewerPage } from "@publira/comic-viewer";
 import { X } from "lucide-react";
 
@@ -15,23 +14,11 @@ interface ComicViewerDialogProps {
   title: string;
 }
 
-// The rail reverses the pair for right-to-left reading, so the side is physical.
-const ReaderPage = () => {
-  const { index } = ComicViewer.usePageLoadState();
-  const { readingDirection, spreadStartIndex } = useViewerContext();
-  const startsSpread = (index - spreadStartIndex) % 2 === 0;
-
-  return (
-    <ComicViewer.ViewportPage
-      className="flex h-full min-h-0 min-w-0 flex-1 items-center justify-center group-data-[view-mode=double]:data-[page-side=left]:justify-end group-data-[view-mode=double]:data-[page-side=right]:justify-start"
-      data-page-side={
-        startsSpread === (readingDirection === "ltr") ? "left" : "right"
-      }
-    >
-      <ComicViewer.PageCanvas className="h-full max-h-full w-auto max-w-full bg-slate-900 object-contain" />
-    </ComicViewer.ViewportPage>
-  );
-};
+const ReaderPage = () => (
+  <ComicViewer.ViewportPage className="flex h-full min-h-0 min-w-0 flex-1 items-center justify-center data-[page-side=left]:justify-end data-[page-side=right]:justify-start">
+    <ComicViewer.PageCanvas className="h-full max-h-full w-auto max-w-full bg-slate-900 object-contain" />
+  </ComicViewer.ViewportPage>
+);
 
 const ReaderViewport = () => (
   <ComicViewer.Viewport
@@ -39,8 +26,8 @@ const ReaderViewport = () => (
     className="flex min-h-0 min-w-0 flex-1 overflow-hidden outline-none"
   >
     <ComicViewer.ViewportTrack className="flex h-full w-[300%] flex-none basis-[300%] transform-[translateX(-33.3333%)_translateX(var(--pcv-drag-offset,0px))] data-dragging:transition-none data-[transition-state=active]:transition-transform data-[transition-state=active]:duration-260 data-[transition-state=active]:ease-out data-[transition-state=active]:data-[slide-direction=left]:transform-[translateX(-66.6667%)_translateX(var(--pcv-drag-offset,0px))] data-[transition-state=active]:data-[slide-direction=right]:transform-[translateX(0)_translateX(var(--pcv-drag-offset,0px))] motion-reduce:transition-none">
-      <ComicViewer.ViewportPageSet className="flex h-full min-w-0 flex-none basis-1/3 items-stretch justify-center data-[view-mode=double]:data-[page-count=1]:has-data-[page-side=left]:justify-start data-[view-mode=double]:data-[page-count=1]:has-data-[page-side=right]:justify-end">
-        <ComicViewer.ViewportPageSlot className="group flex min-w-0 flex-1 items-center justify-center data-[view-mode=double]:max-w-1/2 data-[view-mode=double]:flex-none data-[view-mode=double]:basis-1/2">
+      <ComicViewer.ViewportPageSet className="flex h-full min-w-0 flex-none basis-1/3 items-stretch justify-center data-[page-side=left]:justify-start data-[page-side=right]:justify-end">
+        <ComicViewer.ViewportPageSlot className="flex min-w-0 flex-1 items-center justify-center data-[view-mode=double]:max-w-1/2 data-[view-mode=double]:flex-none data-[view-mode=double]:basis-1/2">
           <ReaderPage />
         </ComicViewer.ViewportPageSlot>
       </ComicViewer.ViewportPageSet>
