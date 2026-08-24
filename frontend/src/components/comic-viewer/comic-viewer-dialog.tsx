@@ -1,10 +1,11 @@
-import { ComicViewer, useViewerContext } from "@publira/comic-viewer";
+import * as ComicViewer from "@publira/comic-viewer";
+import { useViewerContext } from "@publira/comic-viewer";
 import type { ViewerPage } from "@publira/comic-viewer";
 import { X } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 
 import { Dialog } from "../ui/dialog";
-import { ReaderPageNavigation } from "./reader-page-navigation";
+import { ReaderPageNavigation, ReaderToolbar } from "./reader-page-navigation";
 
 interface ComicViewerDialogProps {
   dialogRef: React.RefObject<HTMLDialogElement | null>;
@@ -98,7 +99,7 @@ export const ComicViewerDialog = ({
         </form>
       </header>
 
-      <ComicViewer
+      <ComicViewer.Root
         className="relative flex min-h-0 flex-1 overflow-hidden bg-slate-950 text-slate-50"
         initialReadingDirection={readingDirection}
         initialViewMode="double"
@@ -106,8 +107,9 @@ export const ComicViewerDialog = ({
         spreadStartIndex={spreadStartIndex}
       >
         <ReaderViewport />
+        <ReaderToolbar />
         <ReaderPageNavigation />
-      </ComicViewer>
+      </ComicViewer.Root>
     </div>
   </Dialog>
 );
