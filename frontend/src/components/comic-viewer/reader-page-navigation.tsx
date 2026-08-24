@@ -1,4 +1,4 @@
-import { ComicViewer } from "@publira/comic-viewer";
+import * as ComicViewer from "@publira/comic-viewer";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { twMerge } from "tailwind-merge";
@@ -56,7 +56,7 @@ const ReaderNavigationIcon = ({ direction }: ReaderNavigationIconProps) =>
 export const ReaderPageNavigation = () => (
   <ComicViewer.PageNavigation
     aria-label="ページ移動"
-    className="pointer-events-none absolute inset-0 z-10"
+    className="pointer-events-none absolute inset-0 z-10 transition duration-200 aria-hidden:translate-y-2 aria-hidden:opacity-0 motion-reduce:transition-none"
   >
     <ReaderNavigationButton
       className="left-3 rtl:right-3 rtl:left-auto"
@@ -70,15 +70,16 @@ export const ReaderPageNavigation = () => (
     >
       <ReaderNavigationIcon direction="next" />
     </ReaderNavigationButton>
-    <ComicViewer.PageProgressTrigger
-      aria-label="読書位置を表示"
-      className="pointer-events-auto absolute inset-y-0 right-[30%] left-[30%] cursor-pointer border-0 bg-transparent"
-    />
+  </ComicViewer.PageNavigation>
+);
+
+export const ReaderToolbar = () => (
+  <ComicViewer.Toolbar className="absolute inset-x-0 bottom-0 z-10 flex items-center bg-linear-to-t from-black/80 via-black/55 to-transparent px-4 pt-8 pb-4 transition duration-200 aria-hidden:pointer-events-none aria-hidden:translate-y-2 aria-hidden:opacity-0 motion-reduce:transition-none">
     <ComicViewer.PageProgress
       aria-label="読書の進行状況"
-      className="pointer-events-none absolute inset-x-[20%] bottom-4 grid translate-y-2 gap-1 opacity-0 transition duration-200 aria-[hidden=false]:translate-y-0 aria-[hidden=false]:opacity-100"
+      className="pointer-events-none mx-auto grid w-3/5 min-w-0 gap-1"
     >
-      <ComicViewer.PageProgressTrack className="h-1 w-full overflow-hidden rounded-full accent-secondary" />
+      <ComicViewer.PageProgressTrack className="h-1 w-full overflow-hidden rounded-full bg-black/65 accent-secondary [&::-moz-progress-bar]:bg-secondary [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-secondary" />
       <ComicViewer.PageStatus
         className="text-center text-xs text-slate-100"
         format={({ firstPage, lastPage, pageCount }) =>
@@ -88,5 +89,5 @@ export const ReaderPageNavigation = () => (
         }
       />
     </ComicViewer.PageProgress>
-  </ComicViewer.PageNavigation>
+  </ComicViewer.Toolbar>
 );
