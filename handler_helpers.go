@@ -257,10 +257,12 @@ func extractSpineImageRefs(ctx context.Context, file multipart.File, header *mul
 		return nil, err
 	}
 
+	readingDirection := normalizeReadingDirection(doc.Direction)
+
 	return &extractedSpineImages{
 		refs:             refs,
-		readingDirection: normalizeReadingDirection(doc.Direction),
-		spreadStartIndex: findSpreadStartIndex(refs),
+		readingDirection: readingDirection,
+		spreadStartIndex: findSpreadStartIndex(refs, readingDirection),
 		title:            extractDocumentTitle(doc),
 	}, nil
 }
@@ -289,13 +291,27 @@ func normalizeReadingDirection(direction string) string {
 	return "rtl"
 }
 
-func findSpreadStartIndex(refs []epub.SpineImageReference) int {
+func findSpreadStartIndex(refs []epub.SpineImageReference, direction string) int {
 	if len(refs) < 2 {
 		return len(refs)
 	}
 
 	firstPage := refs[0].Page
-	if firstPage != nil && strings.EqualFold(strings.TrimSpace(firstPage.Spread), "center") {
+	if firstPage == nil {
+		return 0
+	}
+
+	spread := strings.ToLower(strings.TrimSpace(firstPage.Spread))
+	if spread == "center" {
+		return 1
+	}
+
+	// The viewer pairs pages from spreadStartIndex and assigns the first page
+	// to the reading side at an even offset: right for RTL, left for LTR.
+	// Leave the first page unpaired when its EPUB page-spread position is the
+	// opposite side, so the next page starts the viewer's paired spreads.
+	if (direction == "rtl" && spread == "left") ||
+		(direction == "ltr" && spread == "right") {
 		return 1
 	}
 

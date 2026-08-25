@@ -42,6 +42,40 @@ func TestParseBuildRequest_Defaults(t *testing.T) {
 	}
 }
 
+func TestFindSpreadStartIndex(t *testing.T) {
+	refs := func(spread string, count int) []epub.SpineImageReference {
+		result := make([]epub.SpineImageReference, count)
+		if count > 0 {
+			result[0].Page = &epub.Page{Spread: spread}
+		}
+		return result
+	}
+
+	tests := []struct {
+		name      string
+		refs      []epub.SpineImageReference
+		direction string
+		want      int
+	}{
+		{name: "no pages", refs: refs("", 0), direction: "rtl", want: 0},
+		{name: "one page", refs: refs("right", 1), direction: "rtl", want: 1},
+		{name: "center page", refs: refs("center", 2), direction: "rtl", want: 1},
+		{name: "RTL right start", refs: refs("right", 2), direction: "rtl", want: 0},
+		{name: "RTL left start", refs: refs("left", 2), direction: "rtl", want: 1},
+		{name: "LTR left start", refs: refs("left", 2), direction: "ltr", want: 0},
+		{name: "LTR right start", refs: refs("right", 2), direction: "ltr", want: 1},
+		{name: "unspecified spread", refs: refs("", 2), direction: "rtl", want: 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := findSpreadStartIndex(tt.refs, tt.direction); got != tt.want {
+				t.Fatalf("expected spread start index %d, got %d", tt.want, got)
+			}
+		})
+	}
+}
+
 func TestParseBuildRequest_AuthorsAreTrimmed(t *testing.T) {
 	body := strings.NewReader("title=Book&authors=%20Alice%20&authors=%20Bob%20")
 	req := httptest.NewRequest(http.MethodPost, "/api/build", body)
