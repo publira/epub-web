@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
-import { buildFileKey } from "../../lib/build";
-import { formatLastModified } from "../../lib/format";
+import { buildFileKey } from "#lib/build";
+import { formatLastModified } from "#lib/format";
 import type { ImagePreview } from "./image-preview-cards";
 
 export const useBuildImagePreviews = (buildFiles: File[]): ImagePreview[] => {

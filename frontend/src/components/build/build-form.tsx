@@ -18,25 +18,25 @@ import {
   useState,
 } from "react";
 
-import { getSafeImageConcurrency, mapConcurrent } from "../../lib/async";
+import { getSafeImageConcurrency, mapConcurrent } from "#lib/async";
 import {
   compareFilesByLastModified,
   compareFilesByName,
   getFileImagePixels,
   validateSelectedBuildFiles,
-} from "../../lib/build";
+} from "#lib/build";
 import {
   formatInteger,
   formatLanguageName,
   formatMiBFromBytes,
   formatSecondsFromMs,
-} from "../../lib/format";
-import { getSpreadStartIndex } from "../../lib/comic-viewer";
-import type { ComicViewerSpreadPosition } from "../../lib/comic-viewer";
-import { useAppConfig, useDrop } from "../../lib/hooks";
-import { compressImageFile } from "../../lib/image";
-import { buildMutationFn, getApiErrorMessage } from "../../lib/mutations";
-import { triggerDownload } from "../../lib/utils";
+} from "#lib/format";
+import { getSpreadStartIndex } from "#lib/comic-viewer";
+import type { ComicViewerSpreadPosition } from "#lib/comic-viewer";
+import { useAppConfig, useDrop } from "#lib/hooks";
+import { compressImageFile } from "#lib/image";
+import { buildMutationFn, getApiErrorMessage } from "#lib/mutations";
+import { triggerDownload } from "#lib/utils";
 import { ComicViewerDialog } from "../comic-viewer/comic-viewer-dialog";
 import { LimitNotes } from "../limit-notes";
 import { AddableSortableTextFields } from "../ui/addable-sortable-text-fields";
