@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 
-import { useDialogScrollLock } from "../../lib/hooks";
+import { useDialogScrollLock } from "#lib/hooks";
 
 interface DialogProps extends Omit<
   React.DialogHTMLAttributes<HTMLDialogElement>,

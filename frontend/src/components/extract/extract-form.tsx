@@ -14,11 +14,12 @@ import {
   formatMiBFromBytes,
   formatSecondsFromMs,
   formatSizeLabel,
-} from "../../lib/format";
-import { useAppConfig, useDrop, useImageDimensions } from "../../lib/hooks";
-import type { ExtractedImage, ExtractResult } from "../../lib/mutations";
-import { extractMutationFn, getApiErrorMessage } from "../../lib/mutations";
-import { triggerDownload } from "../../lib/utils";
+} from "#lib/format";
+import { useAppConfig, useDrop, useImageDimensions } from "#lib/hooks";
+import type { ExtractedImage, ExtractResult } from "#lib/mutations";
+import { extractMutationFn, getApiErrorMessage } from "#lib/mutations";
+import { triggerDownload } from "#lib/utils";
+
 import { LimitNotes } from "../limit-notes";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";

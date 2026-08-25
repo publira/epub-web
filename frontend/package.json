@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "imports": {
+    "#lib/*": "./src/lib/*.ts"
+  },
   "scripts": {
     "build": "vite build",
     "check": "ultracite check",
