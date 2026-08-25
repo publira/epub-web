@@ -31,6 +31,8 @@ import {
   formatMiBFromBytes,
   formatSecondsFromMs,
 } from "../../lib/format";
+import { getSpreadStartIndex } from "../../lib/comic-viewer";
+import type { ComicViewerSpreadPosition } from "../../lib/comic-viewer";
 import { useAppConfig, useDrop } from "../../lib/hooks";
 import { compressImageFile } from "../../lib/image";
 import { buildMutationFn, getApiErrorMessage } from "../../lib/mutations";
@@ -69,6 +71,17 @@ export const BuildFormSkeleton = () => (
     <Skeleton className="h-12" />
   </Card>
 );
+
+const getViewerFirstPageSpread = (
+  cover: boolean,
+  spread: string
+): ComicViewerSpreadPosition => {
+  if (cover || spread === "center") {
+    return "center";
+  }
+
+  return spread === "left" ? "left" : "right";
+};
 
 export const BuildForm = () => {
   const [error, setError] = useState<string | null>(null);
@@ -245,6 +258,7 @@ export const BuildForm = () => {
     (s) => s.values.buildFiles.length
   );
   const buildFiles = useStore(form.store, (s) => s.values.buildFiles);
+  const buildCover = useStore(form.store, (s) => s.values.cover);
   const buildDirection = useStore(form.store, (s) => s.values.direction);
   const buildSpread = useStore(form.store, (s) => s.values.spread);
   const buildTitle = useStore(form.store, (s) => s.values.title);
@@ -255,13 +269,19 @@ export const BuildForm = () => {
   const [isPreviewViewerOpen, setIsPreviewViewerOpen] = useState(false);
   const previewViewerDialogRef = useRef<HTMLDialogElement>(null);
   const viewerReadingDirection = buildDirection === "ltr" ? "ltr" : "rtl";
-  const viewerSpreadStartIndex = useMemo(() => {
-    if (imagePreviews.length < 2) {
-      return imagePreviews.length;
-    }
-
-    return buildSpread === "center" ? imagePreviews.length : 1;
-  }, [buildSpread, imagePreviews.length]);
+  const viewerFirstPageSpread = getViewerFirstPageSpread(
+    buildCover,
+    buildSpread
+  );
+  const viewerSpreadStartIndex = useMemo(
+    () =>
+      getSpreadStartIndex({
+        firstPageSpread: viewerFirstPageSpread,
+        pageCount: imagePreviews.length,
+        readingDirection: viewerReadingDirection,
+      }),
+    [imagePreviews.length, viewerFirstPageSpread, viewerReadingDirection]
+  );
   const viewerPages = useMemo(
     () =>
       imagePreviews.map((preview) => ({
