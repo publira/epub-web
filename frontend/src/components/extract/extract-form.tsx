@@ -6,7 +6,6 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 
@@ -43,6 +42,7 @@ export const ExtractForm = () => {
   const [error, setError] = useState<string | null>(null);
   const [isClientValidationBlocked, setIsClientValidationBlocked] =
     useState(false);
+  const [shouldResetForm, setShouldResetForm] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
 
   const { data: config } = useAppConfig();
@@ -83,8 +83,6 @@ export const ExtractForm = () => {
     setIsClientValidationBlocked(false);
   }, []);
 
-  const resetFormRef = useRef<(() => void) | null>(null);
-
   const mutation = useMutation({
     mutationFn: extractMutationFn,
     onError: (caughtError) => {
@@ -109,7 +107,7 @@ export const ExtractForm = () => {
       setExtractedImages(result.images);
       setExtractResult(result);
       setSuccess(`${result.images.length} 個の画像を抽出しました。`);
-      resetFormRef.current?.();
+      setShouldResetForm(true);
     },
   });
 
@@ -141,7 +139,14 @@ export const ExtractForm = () => {
     },
   });
 
-  resetFormRef.current = form.reset.bind(form);
+  useEffect(() => {
+    if (!shouldResetForm) {
+      return;
+    }
+
+    form.reset();
+    setShouldResetForm(false);
+  }, [form, shouldResetForm]);
 
   const extractFilename = useStore(
     form.store,
