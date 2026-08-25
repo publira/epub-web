@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { buildFileKey } from "../../lib/build";
 import { formatLastModified } from "../../lib/format";
@@ -6,8 +6,9 @@ import type { ImagePreview } from "./image-preview-cards";
 
 export const useBuildImagePreviews = (buildFiles: File[]): ImagePreview[] => {
   const objectUrlCacheRef = useRef<Map<string, string>>(new Map());
+  const [imagePreviews, setImagePreviews] = useState<ImagePreview[]>([]);
 
-  const imagePreviews = useMemo(() => {
+  useEffect(() => {
     const cache = objectUrlCacheRef.current;
     const activeKeys = new Set<string>();
 
@@ -38,7 +39,7 @@ export const useBuildImagePreviews = (buildFiles: File[]): ImagePreview[] => {
       }
     }
 
-    return previews;
+    setImagePreviews(previews);
   }, [buildFiles]);
 
   useEffect(() => {

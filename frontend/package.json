@@ -32,6 +32,7 @@
     "fflate": "0.8.3",
     "jsdom": "30.0.1",
     "lucide-react": "1.33.0",
+    "oxc-transform-react": "0.145.0",
     "oxfmt": "0.64.0",
     "oxlint": "1.79.0",
     "react": "19.2.8",

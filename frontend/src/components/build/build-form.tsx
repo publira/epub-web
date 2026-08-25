@@ -87,6 +87,7 @@ export const BuildForm = () => {
   const [error, setError] = useState<string | null>(null);
   const [isClientValidationBlocked, setIsClientValidationBlocked] =
     useState(false);
+  const [shouldResetForm, setShouldResetForm] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const authorIdRef = useRef(0);
 
@@ -169,8 +170,6 @@ export const BuildForm = () => {
     setIsClientValidationBlocked(false);
   }, []);
 
-  const resetFormRef = useRef<(() => void) | null>(null);
-
   const mutation = useMutation({
     mutationFn: buildMutationFn,
     onError: (caughtError) => {
@@ -192,7 +191,7 @@ export const BuildForm = () => {
       clearClientValidationBlock();
       triggerDownload(blob, filename);
       setSuccess("EPUBを生成してダウンロードしました。");
-      resetFormRef.current?.();
+      setShouldResetForm(true);
     },
   });
 
@@ -251,7 +250,14 @@ export const BuildForm = () => {
     },
   });
 
-  resetFormRef.current = form.reset.bind(form);
+  useEffect(() => {
+    if (!shouldResetForm) {
+      return;
+    }
+
+    form.reset();
+    setShouldResetForm(false);
+  }, [form, shouldResetForm]);
 
   const buildFilesCount = useStore(
     form.store,
