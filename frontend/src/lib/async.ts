@@ -9,8 +9,8 @@ export const mapConcurrent = async <T, R>(
   const worker = async () => {
     while (currentIndex < items.length) {
       const index = currentIndex;
-      results[index] = await fn(items[index]); // oxlint-disable-line eslint/no-await-in-loop -- sequential work-stealing worker
       currentIndex += 1;
+      results[index] = await fn(items[index]); // oxlint-disable-line eslint/no-await-in-loop -- sequential work-stealing worker
     }
   };
 

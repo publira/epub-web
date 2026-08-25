@@ -1,8 +1,14 @@
-import { expect, describe, it } from "vitest";
+// @vitest-environment jsdom
+import { afterEach, expect, describe, it, vi } from "vitest";
 
-import { parseFilename } from "./utils";
+import { parseFilename, triggerDownload } from "./utils";
 
 describe("parseFilename()", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
   it("returns fallback when header is missing", () => {
     expect(parseFilename(null, "fallback.epub")).toBe("fallback.epub");
   }, 1000);
@@ -16,5 +22,21 @@ describe("parseFilename()", () => {
   it("parses plain filename", () => {
     const header = 'attachment; filename="sample.epub"';
     expect(parseFilename(header, "fallback.epub")).toBe("sample.epub");
+  }, 1000);
+
+  it("triggers a download and always removes its temporary link", () => {
+    const createObjectURL = vi.fn<(blob: Blob) => string>(() => "blob:book");
+    const revokeObjectURL = vi.fn<(url: string) => void>();
+    const click = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => {});
+    vi.stubGlobal("URL", { createObjectURL, revokeObjectURL });
+
+    triggerDownload(new Blob(["book"]), "book.epub");
+
+    expect(createObjectURL).toHaveBeenCalledOnce();
+    expect(click).toHaveBeenCalledOnce();
+    expect(document.body.querySelector("a")).toBeNull();
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:book");
   }, 1000);
 });
