@@ -2,6 +2,8 @@ import { vi, describe, expect, it } from "vitest";
 
 import {
   buildFileKey,
+  compareFilesByLastModified,
+  compareFilesByName,
   getFileImagePixels,
   validateSelectedBuildFiles,
 } from "./build";
@@ -10,6 +12,21 @@ const createMockFile = (name: string, size: number, lastModified = 1): File =>
   ({ lastModified, name, size }) as File;
 
 describe("build helpers", () => {
+  it("sorts files by natural name and last modified time", () => {
+    const files = [
+      createMockFile("page-10.png", 1, 30),
+      createMockFile("page-2.png", 1, 10),
+      createMockFile("Page-1.png", 1, 20),
+    ];
+
+    expect(
+      [...files].toSorted(compareFilesByName).map((file) => file.name)
+    ).toStrictEqual(["Page-1.png", "page-2.png", "page-10.png"]);
+    expect(
+      [...files].toSorted(compareFilesByLastModified).map((file) => file.name)
+    ).toStrictEqual(["page-2.png", "Page-1.png", "page-10.png"]);
+  }, 1000);
+
   it("buildFileKey() returns stable key from file metadata", () => {
     const file = createMockFile("page-01.png", 1024, 123_456);
     expect(buildFileKey(file)).toBe("page-01.png:1024:123456");

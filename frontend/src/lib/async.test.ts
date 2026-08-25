@@ -30,6 +30,19 @@ describe("mapConcurrent()", () => {
     expect(maxConcurrent).toBe(2);
   }, 1000);
 
+  it("processes each item exactly once when tasks resolve asynchronously", async () => {
+    const processed = vi.fn<(item: number) => Promise<number>>((item) =>
+      delay(1).then(() => item)
+    );
+
+    const results = await mapConcurrent([1, 2, 3, 4], 2, processed);
+
+    expect(results).toStrictEqual([1, 2, 3, 4]);
+    expect(processed.mock.calls.map(([item]) => item).toSorted()).toStrictEqual(
+      [1, 2, 3, 4]
+    );
+  }, 1000);
+
   it("handles single item", async () => {
     const results = await mapConcurrent([42], 1, (item) =>
       Promise.resolve(item + 1)

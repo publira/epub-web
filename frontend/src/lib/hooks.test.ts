@@ -1,7 +1,13 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 // @vitest-environment jsdom
 import { createElement, useEffect, useRef } from "react";
-import { beforeEach, vi, expect, describe, it } from "vitest";
+import { afterEach, beforeEach, vi, expect, describe, it } from "vitest";
 import * as z from "zod";
 
 import {
@@ -123,6 +129,10 @@ describe("hooks", () => {
     window.history.replaceState(null, "", "/");
     vi.unstubAllGlobals();
     document.body.style.overflow = "";
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("toConfigFetchError() returns same error when message exists", () => {
