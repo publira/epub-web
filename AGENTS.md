@@ -8,9 +8,11 @@ A single Go binary that serves a React SPA and two EPUB APIs: `POST /api/build` 
 
 The backend is a flat `package main` at the root, each file paired with a `*_test.go`. Keep new backend code in the root package.
 
+The root is also a pnpm workspace whose only package is `frontend`. The root `package.json` carries the Ultracite setup, so `oxlint.config.ts` and `oxfmt.config.ts` live at the root and cover the repository-level JSON and YAML as well as the SPA. Run `pnpm install`, `pnpm check`, and `pnpm fix` from the root, never `npm`.
+
 ## Verification
 
-`static.go` embeds `frontend/dist`, which is git-ignored, so `go build`, `go test`, and `go run` all fail until `npm run build` has been run once in `frontend/`. CI builds the frontend first for the same reason and hands its `dist` to the Go job.
+`static.go` embeds `frontend/dist`, which is git-ignored, so `go build`, `go test`, and `go run` all fail until `pnpm build` has been run once at the root. CI builds the frontend first for the same reason and hands its `dist` to the Go job.
 
 After a backend change, run `go build ./...`, `golangci-lint run`, and `go test ./...` from the root.
 

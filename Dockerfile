@@ -1,12 +1,17 @@
 FROM --platform=$BUILDPLATFORM node:24.20.0-alpine3.23@sha256:0388af2af070cd4736a1567cfed02469ba117848845b4165d87a333edb53d2ca AS frontend-builder
 
-WORKDIR /app/frontend
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 
-COPY frontend/package.json frontend/package-lock.json ./
-RUN npm ci
+WORKDIR /app
 
-COPY frontend/ ./
-RUN npm run build
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY frontend/package.json ./frontend/
+RUN pnpm install --frozen-lockfile --filter @publira/epub-web
+
+COPY frontend/ ./frontend/
+RUN pnpm --filter @publira/epub-web run build
 
 FROM --platform=$BUILDPLATFORM golang:1.27.1-alpine3.23@sha256:c8500dc1e6c8d8db60a2c6986bc591517c3be360ca448b9df43449dec430cc34 AS go-builder
 

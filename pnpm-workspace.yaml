@@ -1,0 +1,7 @@
+packages:
+  - frontend
+
+savePrefix: ""
+
+overrides:
+  "@vitejs/plugin-react>oxc-transform-react": 0.147.0
