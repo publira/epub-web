@@ -1,4 +1,4 @@
+.git/
 .pnpm-store/
-dist/
+frontend/dist/
 node_modules/
-epub-web

@@ -4,15 +4,15 @@ Conventions for `frontend/`, the React SPA that the Go binary embeds.
 
 ## Build output
 
-`npm run build` writes `dist/`, which `static.go` embeds, so run it before building or testing the backend.
+`pnpm build`, from either this directory or the workspace root, writes `dist/`, which `static.go` embeds, so run it before building or testing the backend.
 
 ## Dependencies
 
-npm, not pnpm — this is not a workspace. `.npmrc` sets `save-prefix=""`, so dependencies are pinned with no range.
+pnpm, from the workspace root: this directory is the only package in the root `pnpm-workspace.yaml`, which also sets `savePrefix: ""`, so dependencies are pinned with no range.
 
 ## Lint and format
 
-ultracite, through `npm run check` and `npm run fix`, which cover the Markdown in this directory as well as the source. Suppressions carry a reason (`// oxlint-disable-next-line rule -- why`), and the rules disabled in `oxlint.config.ts` are known debts rather than licence to add more.
+ultracite, through `pnpm check` and `pnpm fix` at the workspace root, which cover the Markdown in this directory as well as the source. Suppressions carry a reason (`// oxlint-disable-next-line rule -- why`), and the rules disabled in the root `oxlint.config.ts` are known debts rather than licence to add more.
 
 ## React
 

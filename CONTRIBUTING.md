@@ -11,7 +11,7 @@
 
 - Go 1.26以上
 - Node.js 24以上
-- npm
+- pnpm
 
 ### 1. 依存関係のインストール
 
@@ -20,8 +20,7 @@ go mod download
 ```
 
 ```bash
-cd frontend
-npm ci
+pnpm install
 ```
 
 ### 2. フロントエンドをビルド
@@ -29,9 +28,7 @@ npm ci
 `static.go`は`frontend/dist`を埋め込むため、最初にビルドが必要です。
 
 ```bash
-cd frontend
-npm run build
-cd ..
+pnpm build
 ```
 
 ### 3. 開発サーバーの起動
@@ -45,8 +42,7 @@ go run ./...
 
 ```bash
 # ターミナル2: frontend
-cd frontend
-npm run dev
+pnpm dev
 ```
 
 Viteの開発サーバーは`/api`を`http://localhost:8080`にプロキシします。
@@ -60,7 +56,6 @@ go test ./...
 
 ```bash
 # frontend
-cd frontend
-npm run test
-npm run check
+pnpm test
+pnpm check
 ```
