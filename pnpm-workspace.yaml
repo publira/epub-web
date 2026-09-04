@@ -4,4 +4,4 @@ packages:
 savePrefix: ""
 
 overrides:
-  "@vitejs/plugin-react>oxc-transform-react": 0.147.0
+  "@vitejs/plugin-react>oxc-transform-react": 0.148.0
