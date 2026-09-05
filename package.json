@@ -12,8 +12,8 @@
     "typecheck": "pnpm --recursive run typecheck"
   },
   "devDependencies": {
-    "oxfmt": "0.65.0",
-    "oxlint": "1.80.0",
+    "oxfmt": "0.66.0",
+    "oxlint": "1.81.0",
     "ultracite": "7.10.7"
   },
   "devEngines": {
