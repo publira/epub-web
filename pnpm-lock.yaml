@@ -106,7 +106,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@vitejs/plugin-react>oxc-transform-react': 0.148.0
+  '@vitejs/plugin-react>oxc-transform-react': 0.149.0
 
 importers:
 
@@ -1129,7 +1129,7 @@ packages:
     peerDependencies:
       '@rolldown/plugin-babel': ^0.1.7 || ^0.2.0
       babel-plugin-react-compiler: ^1.0.0
-      oxc-transform-react: 0.148.0
+      oxc-transform-react: 0.149.0
       vite: ^8.0.0
     peerDependenciesMeta:
       '@rolldown/plugin-babel':
