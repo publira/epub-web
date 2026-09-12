@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@publira/comic-viewer": "0.7.0"
+    "@publira/comic-viewer": "0.8.0"
   },
   "devDependencies": {
     "@dnd-kit/core": "6.3.1",
