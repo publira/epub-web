@@ -13,7 +13,7 @@ RUN pnpm install --frozen-lockfile --filter @publira/epub-web
 COPY frontend/ ./frontend/
 RUN pnpm --filter @publira/epub-web run build
 
-FROM --platform=$BUILDPLATFORM golang:1.27.1-alpine3.23@sha256:d9e2f2f07b10cc922da3e80e035c3058810b328d5aef82d2c63680967c5e2ec9 AS go-builder
+FROM --platform=$BUILDPLATFORM golang:1.27.1-alpine3.23@sha256:96a6b037cd95ee2d72dc63fec59ad8250110fe795111d783d97aa980ec59ec32 AS go-builder
 
 WORKDIR /app
 
