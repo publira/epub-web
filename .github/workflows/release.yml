@@ -11,7 +11,7 @@ permissions:
 jobs:
   docker:
     name: Build and Push Docker Image
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
       - name: Checkout
