@@ -19,11 +19,11 @@ describe("application shell", () => {
 
   beforeEach(() => {
     window.history.replaceState(null, "", "/");
-    showModal = vi.fn<(this: HTMLDialogElement) => void>(
-      function showDialog(this: HTMLDialogElement) {
-        this.setAttribute("open", "");
-      }
-    );
+    showModal = vi.fn<(this: HTMLDialogElement) => void>(function showDialog(
+      this: HTMLDialogElement
+    ) {
+      this.setAttribute("open", "");
+    });
     Object.defineProperty(HTMLDialogElement.prototype, "showModal", {
       configurable: true,
       value: showModal,
