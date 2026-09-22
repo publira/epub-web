@@ -1,17 +1,17 @@
 # EPUB Web
 
-画像ファイル群からのEPUB生成、およびEPUBからの画像抽出機能を備えたWebアプリケーションです。
+A web application that builds EPUB files from images and extracts the images from EPUB files.
 
-## 主な機能
+## Features
 
-- **Build**: 複数の画像ファイルから、固定レイアウトのEPUBを生成します。
-- **Extract**: 既存のEPUBファイルから画像を抽出し、ZIPファイルとしてダウンロードします。
+- **Build**: Generates a fixed-layout EPUB from multiple image files.
+- **Extract**: Extracts the images from an existing EPUB file and downloads them as a ZIP file.
 
-画面は英語と日本語に対応し、初回はブラウザの言語設定 (`Accept-Language`) に合わせて表示します。画面上の言語メニューか `/?lang=ja`・`/?lang=en` で選んだ言語は URL の `lang` に反映され、ブラウザ (localStorage) に保存されて次回以降も使われます。
+The interface is available in English and Japanese. On the first visit it follows the browser's language setting (`Accept-Language`). A language chosen from the on-screen language menu or with `/?lang=ja` or `/?lang=en` is reflected in the URL's `lang` parameter and saved in the browser (localStorage) for later visits.
 
-## 起動方法 (Docker)
+## Running with Docker
 
-環境変数を使用して、リソース制限やタイムアウトなどを設定できます。
+Resource limits, timeouts, and other settings are configured with environment variables.
 
 ```bash
 docker run --rm -p 8080:8080 \
@@ -21,67 +21,67 @@ docker run --rm -p 8080:8080 \
   ghcr.io/publira/epub-web:latest
 ```
 
-### メモリサイズ別の推奨設定
+### Recommended settings by memory size
 
-ホスト環境のメモリサイズ (例: Cloud Run のメモリ割り当て) に応じた、環境変数の推奨設定値です。画像処理時のメモリ枯渇 (OOM) を防ぐために調整してください。
+Recommended environment variable values for the memory available to the host (for example, the memory allocation of a Cloud Run service). Adjust them to prevent running out of memory (OOM) while processing images.
 
-| 設定項目 | 512MiB (デフォルト) | 1GiB | 2GiB |
+| Setting | 512MiB (default) | 1GiB | 2GiB |
 | :-- | :-- | :-- | :-- |
 | `EPUB_WEB_MAX_UPLOAD_SIZE` (MB) | `64` | `128` | `256` |
 | `EPUB_WEB_MAX_PAGES` | `100` | `200` | `400` |
 | `EPUB_WEB_MAX_ASSET_BYTES` (bytes) | `16777216` | `33554432` | `67108864` |
 | `EPUB_WEB_WORKERS` | `2` | `4` | `8` |
 
-### 環境変数リファレンス
+### Environment variables
 
-| 変数名 | 既定値 | 説明 |
+| Variable | Default | Description |
 | --- | --: | --- |
-| `HOST` | `""` | バインドするホスト |
-| `PORT` | `8080` | リッスンポート |
-| `EPUB_WEB_MAX_UPLOAD_SIZE` | `64` | 最大アップロードサイズ (MB)。`0`で無制限 |
-| `EPUB_WEB_MAX_PAGES` | `100` | 最大ページ数。`0`で無制限 |
-| `EPUB_WEB_MAX_ASSET_BYTES` | `16777216` | 1ファイルあたり最大サイズ (bytes)。`0`で無制限 |
-| `EPUB_WEB_MAX_IMAGE_LONG_EDGE` | `2048` | 画像の長辺上限 (px)。`0`で無制限 |
-| `EPUB_WEB_MAX_IMAGE_PIXELS` | `4000000` | 画像の最大ピクセル数 (W × H)。`0`で無制限 |
-| `EPUB_WEB_WORKERS` | `2` | 画像処理の並列ワーカー数。`1`以上 |
-| `EPUB_WEB_REQUEST_TIMEOUT` | `60s` | APIリクエストのタイムアウト。`0`で無制限 |
-| `EPUB_WEB_SHUTDOWN_TIMEOUT` | `10s` | 終了時のグレースフルシャットダウン待機時間 |
-| `EPUB_WEB_SUPPORTED_LANGUAGES` | `ja,en` | EPUB の対応言語 (カンマ区切り)。画面の表示言語と一致するものが既定値になり、なければ先頭 |
-| `EPUB_WEB_PUBLIC_URL` | (未設定) | 公開URL (例: `https://epub.example.com`)。`hreflang` の `alternate` リンクを絶対URLで出力する。未設定なら `/` 起点の相対URL |
+| `HOST` | `""` | Host to bind to |
+| `PORT` | `8080` | Port to listen on |
+| `EPUB_WEB_MAX_UPLOAD_SIZE` | `64` | Maximum upload size (MB). `0` means unlimited |
+| `EPUB_WEB_MAX_PAGES` | `100` | Maximum number of pages. `0` means unlimited |
+| `EPUB_WEB_MAX_ASSET_BYTES` | `16777216` | Maximum size per file (bytes). `0` means unlimited |
+| `EPUB_WEB_MAX_IMAGE_LONG_EDGE` | `2048` | Maximum length of an image's long edge (px). `0` means unlimited |
+| `EPUB_WEB_MAX_IMAGE_PIXELS` | `4000000` | Maximum number of pixels in an image (W × H). `0` means unlimited |
+| `EPUB_WEB_WORKERS` | `2` | Number of parallel image processing workers. `1` or more |
+| `EPUB_WEB_REQUEST_TIMEOUT` | `60s` | Timeout for API requests. `0` means unlimited |
+| `EPUB_WEB_SHUTDOWN_TIMEOUT` | `10s` | How long to wait for a graceful shutdown on exit |
+| `EPUB_WEB_SUPPORTED_LANGUAGES` | `ja,en` | Languages offered for EPUB metadata (comma-separated). The one matching the interface language is the default; otherwise the first one |
+| `EPUB_WEB_PUBLIC_URL` | (unset) | Public URL (for example, `https://epub.example.com`). When set, the `hreflang` `alternate` links are absolute URLs; when unset, they are relative URLs starting with `/` |
 
-## API エンドポイント
+## API endpoints
 
-### 状態確認
+### Health checks
 
-- **`GET /livez`**: アプリケーションが起動していれば `200 OK` を返します。
-- **`GET /readyz`**: リクエスト受付可能なら `200 OK`、シャットダウン処理中などは `503 Service Unavailable` を返します。
+- **`GET /livez`**: Returns `200 OK` while the application is running.
+- **`GET /readyz`**: Returns `200 OK` when requests can be accepted, and `503 Service Unavailable` while shutting down or otherwise unable to accept them.
 
-### 設定の取得
+### Configuration
 
-- **`GET /api/config`**: クライアント側のバリデーション用に、現在の制限設定を返します。
+- **`GET /api/config`**: Returns the current limits for client-side validation.
 
-### EPUB 生成・画像抽出
+### EPUB building and image extraction
 
-リクエストは `multipart/form-data` で送信し、エラー時はJSON (`{"code": "...", "message": "..."}`) が返されます。
+Requests are sent as `multipart/form-data`. Errors are returned as JSON (`{"code": "...", "message": "..."}`).
 
-#### `POST /api/build` (EPUB 生成)
+#### `POST /api/build` (build an EPUB)
 
-- `images`: **[必須]** 画像ファイル群
-- `title`: EPUBのタイトル
-- `direction`: 綴じ方向 (`rtl` / `ltr`)
-- `layout`: レイアウト (`pre-paginated` 等)
-- `spread`: 見開き設定 (`left` / `right` / `center`)
-- `language`: 言語コード (例: `ja`)
-- `cover`: `true` を指定すると、1枚目の画像をカバーに設定します
+- `images`: **[required]** Image files
+- `title`: EPUB title
+- `direction`: Page progression direction (`rtl` / `ltr`)
+- `layout`: Layout (such as `pre-paginated`)
+- `spread`: Spread placement (`left` / `right` / `center`)
+- `language`: Language code (for example, `ja`)
+- `cover`: `true` makes the first image the cover
 
-#### `POST /api/extract` (画像抽出)
+#### `POST /api/extract` (extract images)
 
-- `epub`: **[必須]** 抽出対象のEPUBファイル
+- `epub`: **[required]** EPUB file to extract images from
 
-## 開発に参加する
+## Contributing
 
-[CONTRIBUTING.md](CONTRIBUTING.md) を参照してください。
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## ライセンス
+## License
 
-[Apache License 2.0](LICENSE) に基づいて公開されています。
+Released under the [Apache License 2.0](LICENSE).

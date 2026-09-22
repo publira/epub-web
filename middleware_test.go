@@ -134,7 +134,7 @@ func TestWithSecurityHeaders_SetsAllHeaders(t *testing.T) {
 		t.Fatalf("Content-Security-Policy should not be set, got %q", got)
 	}
 
-	// Permissions-Policy に制限対象が含まれていることを確認
+	// Permissions-Policy must disable the restricted features.
 	pp := rec.Header().Get("Permissions-Policy")
 	for _, feature := range []string{"camera=()", "microphone=()", "geolocation=()"} {
 		t.Run("Permissions-Policy/"+feature, func(t *testing.T) {
