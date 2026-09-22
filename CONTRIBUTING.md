@@ -1,19 +1,19 @@
 # Contributing
 
-## 技術スタック
+## Tech stack
 
-- Backend: Go 1.26
-- Frontend: React 19, TypeScript, Vite 8, Tailwind CSS 4
+- Backend: Go
+- Frontend: React, TypeScript, Vite, Tailwind CSS
 
-## セットアップ
+## Setup
 
-### 前提
+### Prerequisites
 
-- Go 1.26以上
-- Node.js 24以上
-- pnpm
+- Go, at the version in the `go` directive of `go.mod`
+- Node.js, at the version in `devEngines` of `package.json`
+- pnpm, at the version in `packageManager` of `package.json`
 
-### 1. 依存関係のインストール
+### 1. Install dependencies
 
 ```bash
 go mod download
@@ -23,31 +23,31 @@ go mod download
 pnpm install
 ```
 
-### 2. フロントエンドをビルド
+### 2. Build the frontend
 
-`static.go`は`frontend/dist`を埋め込むため、最初にビルドが必要です。
+`static.go` embeds `frontend/dist`, so the frontend has to be built first.
 
 ```bash
 pnpm build
 ```
 
-### 3. 開発サーバーの起動
+### 3. Start the development servers
 
-ターミナルを2つ使います。
+Use two terminals.
 
 ```bash
-# ターミナル1: backend
+# Terminal 1: backend
 go run ./...
 ```
 
 ```bash
-# ターミナル2: frontend
+# Terminal 2: frontend
 pnpm dev
 ```
 
-Viteの開発サーバーは`/api`を`http://localhost:8080`にプロキシします。
+The Vite development server proxies `/api` to `http://localhost:8080`.
 
-## テストとチェック
+## Tests and checks
 
 ```bash
 # backend
