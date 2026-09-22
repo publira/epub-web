@@ -195,8 +195,8 @@ importers:
         specifier: 3.2.2
         version: 3.2.2(react@19.3.0)
       '@publira/design-tokens':
-        specifier: 1.0.0
-        version: 1.0.0(tailwindcss@4.3.3)
+        specifier: 1.1.0
+        version: 1.1.0(tailwindcss@4.3.3)
       '@publira/epub-web-locales':
         specifier: workspace:*
         version: link:../locales
@@ -803,8 +803,8 @@ packages:
     peerDependencies:
       react: '>=19'
 
-  '@publira/design-tokens@1.0.0':
-    resolution: {integrity: sha512-ZaN01DF1GWrIpmVwBLGX2p1zetg3UVUbgZj5RUrEcx3qr072xfw0TEqU4mO4N8hdQhRLvmHsXi+z3YmZFMU6Ew==}
+  '@publira/design-tokens@1.1.0':
+    resolution: {integrity: sha512-Xsq6Omae/2gaZFR88h8/QMrmRahm7GEMcH5vhaeRZ3Sp/Q6Ss3LV0W56l6pqtVO7XIlkiNKcCJOM8phipAvkRg==}
     peerDependencies:
       tailwindcss: ^4.0.0
 
@@ -2439,7 +2439,7 @@ snapshots:
     dependencies:
       react: 19.3.0
 
-  '@publira/design-tokens@1.0.0(tailwindcss@4.3.3)':
+  '@publira/design-tokens@1.1.0(tailwindcss@4.3.3)':
     dependencies:
       tailwindcss: 4.3.3
 
