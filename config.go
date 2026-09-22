@@ -2,6 +2,7 @@ package main
 
 import (
 	"net"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -22,6 +23,9 @@ const (
 )
 
 var defaultSupportedLanguages = []string{"ja", "en"}
+
+// defaultPublicURL leaves the page's language alternates root-relative.
+const defaultPublicURL = ""
 
 func getListenAddress() string {
 	host := os.Getenv("HOST")
@@ -184,4 +188,21 @@ func getSupportedLanguages() []string {
 	}
 
 	return langs
+}
+
+// getPublicURL returns the absolute http(s) URL the app is published at,
+// without a trailing slash, or the default when unset or malformed.
+func getPublicURL() string {
+	value := strings.TrimSpace(os.Getenv("EPUB_WEB_PUBLIC_URL"))
+	if value == "" {
+		return defaultPublicURL
+	}
+
+	u, err := url.Parse(value)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" ||
+		u.User != nil || u.RawQuery != "" || u.Fragment != "" {
+		return defaultPublicURL
+	}
+
+	return strings.TrimSuffix(u.Scheme+"://"+u.Host+u.EscapedPath(), "/")
 }

@@ -1,4 +1,6 @@
-import { formatInteger, formatMiBFromBytes } from "./format";
+import { formatMiBFromBytes } from "./format";
+import { localized } from "./i18n";
+import type { LocalizedText } from "./i18n";
 
 export const compareFilesByName = (a: File, b: File): number =>
   a.name.localeCompare(b.name, undefined, {
@@ -26,23 +28,27 @@ export const validateSelectedBuildFiles = (
     maxUploadMB: number;
     maxAssetBytes: number;
   }
-): string | null => {
+): LocalizedText | null => {
   if (options.maxPages > 0 && files.length > options.maxPages) {
-    return `ページ数は最大 ${formatInteger(options.maxPages)} ページです。`;
+    return localized("error.pageLimit", { max: options.maxPages });
   }
 
   if (options.maxUploadMB > 0) {
     const maxUploadBytes = options.maxUploadMB * 1024 * 1024;
     const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
     if (totalBytes > maxUploadBytes) {
-      return `1リクエストあたり最大 ${options.maxUploadMB} MiB です。`;
+      return localized("error.requestTooLarge", { size: options.maxUploadMB });
     }
   }
 
   if (options.maxAssetBytes > 0) {
     const oversized = files.find((file) => file.size > options.maxAssetBytes);
     if (oversized) {
-      return `画像1枚あたり最大 ${formatMiBFromBytes(options.maxAssetBytes)} です。`;
+      return (intl) =>
+        intl.formatMessage(
+          { id: "error.assetSizeLimit" },
+          { size: formatMiBFromBytes(intl, options.maxAssetBytes) }
+        );
     }
   }
 

@@ -7,6 +7,8 @@
 - **Build**: 複数の画像ファイルから、固定レイアウトのEPUBを生成します。
 - **Extract**: 既存のEPUBファイルから画像を抽出し、ZIPファイルとしてダウンロードします。
 
+画面は英語と日本語に対応し、初回はブラウザの言語設定 (`Accept-Language`) に合わせて表示します。画面上の言語メニューか `/?lang=ja`・`/?lang=en` で選んだ言語は URL の `lang` に反映され、ブラウザ (localStorage) に保存されて次回以降も使われます。
+
 ## 起動方法 (Docker)
 
 環境変数を使用して、リソース制限やタイムアウトなどを設定できます。
@@ -44,7 +46,8 @@ docker run --rm -p 8080:8080 \
 | `EPUB_WEB_WORKERS` | `2` | 画像処理の並列ワーカー数。`1`以上 |
 | `EPUB_WEB_REQUEST_TIMEOUT` | `60s` | APIリクエストのタイムアウト。`0`で無制限 |
 | `EPUB_WEB_SHUTDOWN_TIMEOUT` | `10s` | 終了時のグレースフルシャットダウン待機時間 |
-| `EPUB_WEB_SUPPORTED_LANGUAGES` | `ja,en` | 対応言語 (カンマ区切り)。先頭がデフォルト |
+| `EPUB_WEB_SUPPORTED_LANGUAGES` | `ja,en` | EPUB の対応言語 (カンマ区切り)。画面の表示言語と一致するものが既定値になり、なければ先頭 |
+| `EPUB_WEB_PUBLIC_URL` | (未設定) | 公開URL (例: `https://epub.example.com`)。`hreflang` の `alternate` リンクを絶対URLで出力する。未設定なら `/` 起点の相対URL |
 
 ## API エンドポイント
 

@@ -11,12 +11,14 @@ import { afterEach, beforeEach, vi, expect, describe, it } from "vitest";
 import * as z from "zod";
 
 import {
-  toConfigFetchError,
+  ConfigFetchError,
+  getConfigFetchErrorMessage,
   useDialogScrollLock,
   useDrop,
   useImageDimensions,
   useSearchParamsState,
 } from "./hooks";
+import { getAppIntl } from "./i18n";
 
 interface ImageDimensionTarget {
   key: string;
@@ -135,20 +137,33 @@ describe("hooks", () => {
     cleanup();
   });
 
-  it("toConfigFetchError() returns same error when message exists", () => {
-    const error = new Error("boom");
-    expect(toConfigFetchError(error)).toBe(error);
+  it("getConfigFetchErrorMessage() localizes config fetch failures", () => {
+    const error = new ConfigFetchError("unavailable", "Unavailable.");
+
+    expect(getConfigFetchErrorMessage(getAppIntl("en"), error)).toBe(
+      "Failed to load the settings. Please wait a moment and try again."
+    );
+    expect(getConfigFetchErrorMessage(getAppIntl("ja"), error)).toBe(
+      "設定の取得に失敗しました。時間をおいて再試行してください。"
+    );
   }, 1000);
 
-  it("toConfigFetchError() returns fallback for non-error or empty message", () => {
+  it("getConfigFetchErrorMessage() keeps the message of other errors", () => {
+    expect(
+      getConfigFetchErrorMessage(getAppIntl("en"), new Error("boom"))
+    ).toBe("boom");
+  }, 1000);
+
+  it("getConfigFetchErrorMessage() returns fallback for non-error or empty message", () => {
     const emptyMessageError = new Error("placeholder");
     emptyMessageError.message = "";
+    const intl = getAppIntl("en");
 
-    expect(toConfigFetchError("x").message).toBe(
-      "設定の取得に失敗しました。ネットワーク状態を確認して再試行してください。"
+    expect(getConfigFetchErrorMessage(intl, "x")).toBe(
+      "Failed to load the settings. Check your network connection and try again."
     );
-    expect(toConfigFetchError(emptyMessageError).message).toBe(
-      "設定の取得に失敗しました。ネットワーク状態を確認して再試行してください。"
+    expect(getConfigFetchErrorMessage(intl, emptyMessageError)).toBe(
+      "Failed to load the settings. Check your network connection and try again."
     );
   }, 1000);
 

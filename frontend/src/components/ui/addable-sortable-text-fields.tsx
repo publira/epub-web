@@ -17,6 +17,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, X } from "lucide-react";
 import { useCallback, useMemo } from "react";
+import { useIntl } from "react-intl";
 
 import { TextInput } from "./text-input";
 
@@ -52,6 +53,10 @@ const SortableTextFieldRow = ({
   onChange,
   onRemove,
 }: SortableTextFieldRowProps) => {
+  const intl = useIntl();
+  const itemName =
+    item.value ||
+    intl.formatMessage({ id: "sortableFields.item" }, { index: index + 1 });
   const dragDisabled = disabled || item.value.trim().length === 0;
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ disabled: dragDisabled, id: item.id });
@@ -78,7 +83,10 @@ const SortableTextFieldRow = ({
         type="button"
         className="inline-flex h-12 w-8 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg text-muted-foreground transition hover:text-primary active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50"
         disabled={dragDisabled}
-        aria-label={`${item.value || `項目${index + 1}`} の並び順を変更`}
+        aria-label={intl.formatMessage(
+          { id: "sortableFields.reorder" },
+          { name: itemName }
+        )}
         {...attributes}
         {...listeners}
       >
@@ -103,7 +111,10 @@ const SortableTextFieldRow = ({
         className="ml-1 inline-flex h-12 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-error/35 bg-error/10 text-error transition hover:-translate-y-px hover:bg-error/15 disabled:cursor-not-allowed disabled:opacity-50"
         onClick={handleRemoveClick}
         disabled={disabled || !canRemove}
-        aria-label={`${item.value || `項目${index + 1}`} を削除`}
+        aria-label={intl.formatMessage(
+          { id: "sortableFields.remove" },
+          { name: itemName }
+        )}
       >
         <X aria-hidden="true" size={20} strokeWidth={2.25} />
       </button>

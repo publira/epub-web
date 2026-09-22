@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormattedMessage } from "react-intl";
 
 import { ComicViewerDialog } from "../comic-viewer/comic-viewer-dialog";
 import { ScrollRow } from "../ui/scroll-row";
@@ -61,7 +62,10 @@ export const ExtractedImagesGallery = ({
   return (
     <div className="mt-6 min-w-0 border-t border-current/20 pt-6">
       <h3 className="mb-3 text-sm font-semibold">
-        抽出された画像 ({extractedCount})
+        <FormattedMessage
+          id="gallery.heading"
+          values={{ count: extractedCount }}
+        />
       </h3>
       <div className="mb-3 flex flex-row-reverse flex-wrap items-center justify-between gap-2">
         <button
@@ -69,7 +73,7 @@ export const ExtractedImagesGallery = ({
           className="cursor-pointer rounded-lg border border-primary/20 bg-transparent px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:bg-primary-subtle hover:text-primary focus-visible:ring-2 focus-visible:ring-secondary/75 focus-visible:outline-none"
           onClick={handleOpenViewer}
         >
-          コミックビューアーで開く
+          <FormattedMessage id="common.openInComicViewer" />
         </button>
         <div className="flex flex-wrap items-center gap-2">
           <button
@@ -77,7 +81,7 @@ export const ExtractedImagesGallery = ({
             className="cursor-pointer rounded-lg border border-primary/28 bg-primary-subtle px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary-subtle-hover focus-visible:ring-2 focus-visible:ring-secondary/75 focus-visible:outline-none"
             onClick={onDownloadAllImages}
           >
-            全ダウンロード
+            <FormattedMessage id="gallery.downloadAll" />
           </button>
         </div>
       </div>
@@ -106,7 +110,7 @@ export const ExtractedImagesGallery = ({
               className="mt-2 w-full cursor-pointer rounded-lg border border-primary/28 bg-primary-subtle px-2 py-1 text-[11px] font-semibold text-primary transition hover:bg-primary-subtle-hover focus-visible:ring-2 focus-visible:ring-secondary/75 focus-visible:outline-none"
               onClick={onDownloadImage}
             >
-              ダウンロード
+              <FormattedMessage id="gallery.download" />
             </button>
           </div>
         ))}

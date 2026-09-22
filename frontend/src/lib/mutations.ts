@@ -1,10 +1,9 @@
+import type { MessageId } from "@publira/epub-web-locales";
+import type { IntlShape } from "react-intl";
 import * as z from "zod";
 
-import {
-  formatInteger,
-  formatMiBFromBytes,
-  formatSecondsFromMs,
-} from "./format";
+import { formatMiBFromBytes, formatSecondsFromMs } from "./format";
+import type { LocalizedText } from "./i18n";
 import { parseFilename } from "./utils";
 import { unzipAsync } from "./zip";
 
@@ -96,7 +95,7 @@ interface BuildMutationParams {
 }
 
 interface ErrorMessageOptions {
-  defaultMessage: string;
+  defaultMessageId: MessageId;
   maxPages?: number;
   maxUploadMB?: number;
   maxAssetBytes?: number;
@@ -105,47 +104,74 @@ interface ErrorMessageOptions {
   requestTimeoutMs?: number;
 }
 
+const isPositive = (value: number | undefined): value is number =>
+  value !== undefined && value > 0;
+
 const apiErrorMessageResolvers: Record<
   string,
-  (options: ErrorMessageOptions) => string
+  (intl: IntlShape, options: ErrorMessageOptions) => string
 > = {
-  asset_size_limit_exceeded: (options) =>
-    options.maxAssetBytes && options.maxAssetBytes > 0
-      ? `画像1枚あたり最大 ${formatMiBFromBytes(options.maxAssetBytes)} です。`
-      : "画像ファイルのサイズ上限を超えています。",
-  build_failed: () => "EPUBの生成に失敗しました。",
-  extract_failed: () => "画像抽出に失敗しました。",
-  extract_images_failed: () => "画像抽出に失敗しました。",
-  image_long_edge_limit_exceeded: (options) =>
-    options.maxImageLongEdge && options.maxImageLongEdge > 0
-      ? `画像の長辺は最大 ${formatInteger(options.maxImageLongEdge)} px です。`
-      : "画像の長辺が上限を超えています。",
-  image_pixels_limit_exceeded: (options) =>
-    options.maxImagePixels && options.maxImagePixels > 0
-      ? `画像の解像度は最大 ${formatInteger(options.maxImagePixels)} px です。`
-      : "画像の解像度が上限を超えています。",
-  invalid_epub: () => "EPUBの解析に失敗しました。",
-  invalid_image: () => "画像の解析に失敗しました。",
-  invalid_layout: () => "レイアウト指定が不正です。",
-  invalid_spread: () => "見開き指定が不正です。",
-  missing_epub_file: () => "EPUBファイルを選択してください。",
-  network_error: () =>
-    "サーバーに接続できませんでした。ネットワーク状態を確認して再試行してください。",
-  no_images_provided: () => "画像を1枚以上選択してください。",
-  open_image_failed: () => "画像ファイルを開けませんでした。",
-  page_limit_exceeded: (options) =>
-    options.maxPages && options.maxPages > 0
-      ? `ページ数は最大 ${formatInteger(options.maxPages)} ページです。`
-      : "ページ数の上限を超えています。",
-  read_epub_size_failed: () => "EPUBファイルの読み取りに失敗しました。",
-  request_timeout: (options) =>
-    options.requestTimeoutMs && options.requestTimeoutMs > 0
-      ? `処理が ${formatSecondsFromMs(options.requestTimeoutMs)} 秒でタイムアウトしました。しばらくしてから再試行してください。`
-      : "処理がタイムアウトしました。しばらくしてから再試行してください。",
-  request_too_large: (options) =>
-    options.maxUploadMB && options.maxUploadMB > 0
-      ? `1リクエストあたり最大 ${options.maxUploadMB} MiB です。`
-      : "アップロード容量の上限を超えています。",
+  asset_size_limit_exceeded: (intl, { maxAssetBytes }) =>
+    isPositive(maxAssetBytes)
+      ? intl.formatMessage(
+          { id: "error.assetSizeLimit" },
+          { size: formatMiBFromBytes(intl, maxAssetBytes) }
+        )
+      : intl.formatMessage({ id: "error.assetSizeLimit.unknown" }),
+  build_failed: (intl) => intl.formatMessage({ id: "error.buildFailed" }),
+  extract_failed: (intl) => intl.formatMessage({ id: "error.extractFailed" }),
+  extract_images_failed: (intl) =>
+    intl.formatMessage({ id: "error.extractFailed" }),
+  image_long_edge_limit_exceeded: (intl, { maxImageLongEdge }) =>
+    isPositive(maxImageLongEdge)
+      ? intl.formatMessage(
+          { id: "error.imageLongEdgeLimit" },
+          { max: maxImageLongEdge }
+        )
+      : intl.formatMessage({ id: "error.imageLongEdgeLimit.unknown" }),
+  image_pixels_limit_exceeded: (intl, { maxImagePixels }) =>
+    isPositive(maxImagePixels)
+      ? intl.formatMessage(
+          { id: "error.imagePixelsLimit" },
+          { max: maxImagePixels }
+        )
+      : intl.formatMessage({ id: "error.imagePixelsLimit.unknown" }),
+  invalid_epub: (intl) => intl.formatMessage({ id: "error.invalidEpub" }),
+  invalid_image: (intl) => intl.formatMessage({ id: "error.invalidImage" }),
+  invalid_layout: (intl) => intl.formatMessage({ id: "error.invalidLayout" }),
+  invalid_spread: (intl) => intl.formatMessage({ id: "error.invalidSpread" }),
+  missing_epub_file: (intl) =>
+    intl.formatMessage({ id: "error.missingEpubFile" }),
+  network_error: (intl) => intl.formatMessage({ id: "error.network" }),
+  no_images_found: (intl) => intl.formatMessage({ id: "error.noImagesFound" }),
+  no_images_provided: (intl) =>
+    intl.formatMessage({ id: "error.noImagesProvided" }),
+  open_image_failed: (intl) =>
+    intl.formatMessage({ id: "error.openImageFailed" }),
+  page_limit_exceeded: (intl, { maxPages }) =>
+    isPositive(maxPages)
+      ? intl.formatMessage({ id: "error.pageLimit" }, { max: maxPages })
+      : intl.formatMessage({ id: "error.pageLimit.unknown" }),
+  read_epub_size_failed: (intl) =>
+    intl.formatMessage({ id: "error.readEpubSizeFailed" }),
+  request_timeout: (intl, { requestTimeoutMs }) =>
+    isPositive(requestTimeoutMs)
+      ? intl.formatMessage(
+          { id: "error.requestTimeout" },
+          {
+            label: formatSecondsFromMs(intl, requestTimeoutMs),
+            seconds: requestTimeoutMs / 1000,
+          }
+        )
+      : intl.formatMessage({ id: "error.requestTimeout.unknown" }),
+  request_too_large: (intl, { maxUploadMB }) =>
+    isPositive(maxUploadMB)
+      ? intl.formatMessage(
+          { id: "error.requestTooLarge" },
+          { size: maxUploadMB }
+        )
+      : intl.formatMessage({ id: "error.requestTooLarge.unknown" }),
+  unzip_failed: (intl) => intl.formatMessage({ id: "error.unzipFailed" }),
 };
 
 const toApiError = async (
@@ -161,25 +187,26 @@ const toApiError = async (
   }
 };
 
-export const getApiErrorMessage = (
-  error: unknown,
-  options: ErrorMessageOptions
-): string => {
-  if (error instanceof ApiError) {
-    const resolver = apiErrorMessageResolvers[error.code];
-    if (resolver) {
-      return resolver(options);
+export const getApiErrorMessage =
+  (error: unknown, options: ErrorMessageOptions): LocalizedText =>
+  (intl) => {
+    if (error instanceof ApiError) {
+      const resolver = apiErrorMessageResolvers[error.code];
+      if (resolver) {
+        return resolver(intl, options);
+      }
+
+      return (
+        error.message || intl.formatMessage({ id: options.defaultMessageId })
+      );
     }
 
-    return error.message || options.defaultMessage;
-  }
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
 
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  return options.defaultMessage;
-};
+    return intl.formatMessage({ id: options.defaultMessageId });
+  };
 
 export const buildMutationFn = async (
   params: BuildMutationParams
@@ -207,10 +234,7 @@ export const buildMutationFn = async (
       method: "POST",
     });
   } catch {
-    throw new ApiError(
-      "network_error",
-      "サーバーに接続できませんでした。ネットワーク状態を確認して再試行してください。"
-    );
+    throw new ApiError("network_error", "Could not connect to the server.");
   }
 
   if (!res.ok) {
@@ -250,10 +274,7 @@ export const extractMutationFn = async (
       method: "POST",
     });
   } catch {
-    throw new ApiError(
-      "network_error",
-      "サーバーに接続できませんでした。ネットワーク状態を確認して再試行してください。"
-    );
+    throw new ApiError("network_error", "Could not connect to the server.");
   }
 
   if (!res.ok) {
@@ -292,7 +313,7 @@ export const extractMutationFn = async (
   try {
     unzippedFiles = await unzipAsync(uint8Array);
   } catch {
-    throw new Error("ZIPの展開に失敗しました。");
+    throw new ApiError("unzip_failed", "Failed to unpack the ZIP file.");
   }
 
   const images: ExtractedImage[] = [];
@@ -313,7 +334,7 @@ export const extractMutationFn = async (
   }
 
   if (images.length === 0) {
-    throw new Error("画像ファイルが見つかりません。");
+    throw new ApiError("no_images_found", "No image files were found.");
   }
 
   return {
@@ -330,6 +351,7 @@ export const extractMutationFn = async (
 };
 
 export const configSchema = z.object({
+  interfaceLanguages: z.array(z.string()),
   maxAssetBytes: z.number(),
   maxImageLongEdge: z.number(),
   maxImagePixels: z.number(),

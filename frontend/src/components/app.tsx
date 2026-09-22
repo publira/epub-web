@@ -1,11 +1,14 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Activity, Suspense, useCallback, useRef, useState } from "react";
+import type { ReactNode } from "react";
+import { FormattedMessage, useIntl } from "react-intl";
 import * as z from "zod";
 
 import { useSearchParamsState } from "../lib/hooks";
 import { BuildForm, BuildFormSkeleton } from "./build/build-form";
 import { ConfigQueryBoundary } from "./config-query-boundary";
 import { ExtractForm, ExtractFormSkeleton } from "./extract/extract-form";
+import { LanguageSwitcher } from "./i18n/language-switcher";
 import { PrivacyDialog } from "./privacy-dialog";
 import { TermsDialog } from "./terms-dialog";
 import { Badge } from "./ui/badge";
@@ -14,7 +17,19 @@ import { Card } from "./ui/card";
 
 const modeSchema = z.enum(["build", "extract"]);
 
+const renderEpubLibraryLink = (chunks: ReactNode[]) => (
+  <a
+    className="font-semibold text-primary underline underline-offset-4"
+    href="https://pkg.go.dev/github.com/publira/epub"
+    rel="noopener noreferrer"
+    target="_blank"
+  >
+    {chunks}
+  </a>
+);
+
 export const App = () => {
+  const intl = useIntl();
   const [queryClient, setQueryClient] = useState(() => new QueryClient());
   void setQueryClient;
   const [mode, setMode] = useSearchParamsState("mode", modeSchema, "build");
@@ -42,12 +57,15 @@ export const App = () => {
         <main className="mx-auto my-10 grid w-content flex-1 content-start gap-5 max-md:my-4 max-md:w-content-sm">
           <header>
             <Card className="animate-rise p-fluid">
-              <Badge>EPUB Web</Badge>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Badge>EPUB Web</Badge>
+                <LanguageSwitcher />
+              </div>
               <h1 className="mt-2 mb-3 text-hero">
-                画像をEPUBに、EPUBを画像に変換
+                <FormattedMessage id="app.heading" />
               </h1>
               <p className="m-0 leading-7">
-                画像ファイルからEPUBを作成したり、EPUBに含まれる画像をまとめて取り出したりできます。変換はサーバー側で処理され、結果はそのままダウンロードできます。
+                <FormattedMessage id="app.description" />
               </p>
             </Card>
           </header>
@@ -55,7 +73,7 @@ export const App = () => {
           <div
             className="grid grid-cols-2 gap-2"
             role="tablist"
-            aria-label="変換モード"
+            aria-label={intl.formatMessage({ id: "app.modeTabs.label" })}
           >
             <Button
               id="tab-build"
@@ -68,7 +86,7 @@ export const App = () => {
               aria-controls="panel-build"
               tabIndex={mode === "build" ? 0 : -1}
             >
-              画像からEPUB
+              <FormattedMessage id="app.modeTabs.build" />
             </Button>
             <Button
               id="tab-extract"
@@ -81,7 +99,7 @@ export const App = () => {
               aria-controls="panel-extract"
               tabIndex={mode === "extract" ? 0 : -1}
             >
-              EPUBから画像
+              <FormattedMessage id="app.modeTabs.extract" />
             </Button>
           </div>
 
@@ -126,19 +144,13 @@ export const App = () => {
         <footer className="pb-4">
           <div className="mx-auto w-content rounded-2xl border border-primary/15 bg-card-surface px-4 py-4 text-sm text-muted-foreground max-md:w-content-sm">
             <p className="m-0 leading-6">
-              このアプリは
-              <a
-                className="font-semibold text-primary underline underline-offset-4"
-                href="https://pkg.go.dev/github.com/publira/epub"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                github.com/publira/epub
-              </a>
-              のデモWebアプリです。
+              <FormattedMessage
+                id="app.footer.about"
+                values={{ link: renderEpubLibraryLink }}
+              />
             </p>
             <p className="mt-2 mb-0 leading-6">
-              本サービスの利用をもって、利用規約およびプライバシーポリシーに同意したものとみなします。
+              <FormattedMessage id="app.footer.consent" />
             </p>
             <div className="mt-3 flex flex-wrap justify-end gap-3">
               <a
@@ -147,21 +159,21 @@ export const App = () => {
                 rel="noopener noreferrer"
                 target="_blank"
               >
-                ソースコード
+                <FormattedMessage id="app.footer.source" />
               </a>
               <button
                 className="cursor-pointer text-sm font-semibold text-primary underline underline-offset-4"
                 onClick={handleOpenTerms}
                 type="button"
               >
-                利用規約
+                <FormattedMessage id="terms.title" />
               </button>
               <button
                 className="cursor-pointer text-sm font-semibold text-primary underline underline-offset-4"
                 onClick={handleOpenPrivacy}
                 type="button"
               >
-                プライバシーポリシー
+                <FormattedMessage id="privacy.title" />
               </button>
             </div>
           </div>

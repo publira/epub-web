@@ -10,13 +10,17 @@ import (
 //go:embed frontend/dist/*
 var frontendAssets embed.FS
 
-func GetFrontendFS() http.FileSystem {
+func getFrontendSubFS() fs.FS {
 	fsys, err := fs.Sub(frontendAssets, "frontend/dist")
 	if err != nil {
 		panic(err)
 	}
 
-	return http.FS(fsys)
+	return fsys
+}
+
+func GetFrontendFS() http.FileSystem {
+	return http.FS(getFrontendSubFS())
 }
 
 func cacheControlForFrontend(path string) (string, bool) {

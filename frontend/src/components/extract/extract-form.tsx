@@ -8,14 +8,16 @@ import {
   useMemo,
   useState,
 } from "react";
+import { FormattedMessage, useIntl } from "react-intl";
 
 import {
-  formatInteger,
   formatMiBFromBytes,
   formatSecondsFromMs,
   formatSizeLabel,
 } from "#lib/format";
 import { useAppConfig, useDrop, useImageDimensions } from "#lib/hooks";
+import { localized } from "#lib/i18n";
+import type { LocalizedText } from "#lib/i18n";
 import type { ExtractedImage, ExtractResult } from "#lib/mutations";
 import { extractMutationFn, getApiErrorMessage } from "#lib/mutations";
 import { triggerDownload } from "#lib/utils";
@@ -36,34 +38,39 @@ export const ExtractFormSkeleton = () => (
 );
 
 export const ExtractForm = () => {
+  const intl = useIntl();
   const [extractedImages, setExtractedImages] = useState<ExtractedImage[]>([]);
   const [extractResult, setExtractResult] = useState<ExtractResult | null>(
     null
   );
-  const [error, setError] = useState<string | null>(null);
+  // Messages are kept as formatters, so they are set through an updater
+  // function and re-rendered in the current locale.
+  const [error, setError] = useState<LocalizedText | null>(null);
   const [isClientValidationBlocked, setIsClientValidationBlocked] =
     useState(false);
   const [shouldResetForm, setShouldResetForm] = useState(false);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [success, setSuccess] = useState<LocalizedText | null>(null);
 
   const { data: config } = useAppConfig();
 
   const getExtractClientValidationError = useCallback(
-    (file: File | null): string | null => {
+    (file: File | null): LocalizedText | null => {
       if (!file) {
-        return "抽出するEPUBファイルを選択してください。";
+        return localized("extract.error.selectEpub");
       }
 
       const isEpub =
         file.type === "application/epub+zip" || /\.epub$/iu.test(file.name);
       if (!isEpub) {
-        return "EPUBファイルを選択してください。";
+        return localized("error.missingEpubFile");
       }
 
       if (config.maxUploadMB > 0) {
         const maxUploadBytes = config.maxUploadMB * 1024 * 1024;
         if (file.size > maxUploadBytes) {
-          return `1リクエストあたり最大 ${config.maxUploadMB} MiB です。`;
+          return localized("error.requestTooLarge", {
+            size: config.maxUploadMB,
+          });
         }
       }
 
@@ -72,8 +79,8 @@ export const ExtractForm = () => {
     [config.maxUploadMB]
   );
 
-  const setClientValidationError = useCallback((message: string) => {
-    setError(message);
+  const setClientValidationError = useCallback((message: LocalizedText) => {
+    setError(() => message);
     setSuccess(null);
     setExtractedImages([]);
     setExtractResult(null);
@@ -88,9 +95,9 @@ export const ExtractForm = () => {
     mutationFn: extractMutationFn,
     onError: (caughtError) => {
       clearClientValidationBlock();
-      setError(
+      setError(() =>
         getApiErrorMessage(caughtError, {
-          defaultMessage: "画像抽出に失敗しました。",
+          defaultMessageId: "error.extractFailed",
           maxAssetBytes: config.maxAssetBytes,
           maxImageLongEdge: config.maxImageLongEdge,
           maxImagePixels: config.maxImagePixels,
@@ -107,7 +114,9 @@ export const ExtractForm = () => {
       clearClientValidationBlock();
       setExtractedImages(result.images);
       setExtractResult(result);
-      setSuccess(`${result.images.length} 個の画像を抽出しました。`);
+      setSuccess(() =>
+        localized("extract.success", { count: result.images.length })
+      );
       setShouldResetForm(true);
     },
   });
@@ -127,7 +136,7 @@ export const ExtractForm = () => {
 
       const selectedFile = value.extractFile;
       if (!selectedFile) {
-        setClientValidationError("抽出するEPUBファイルを選択してください。");
+        setClientValidationError(localized("extract.error.selectEpub"));
         return;
       }
 
@@ -194,7 +203,7 @@ export const ExtractForm = () => {
         /\.epub$/iu.test(file.name)
       );
       if (!droppedEpub) {
-        setClientValidationError("EPUBファイルをドロップしてください。");
+        setClientValidationError(localized("extract.dropEpub"));
         return;
       }
 
@@ -227,9 +236,9 @@ export const ExtractForm = () => {
       extractedImages.map((image) => ({
         ...image,
         key: `${image.name}:${image.blob.size}`,
-        sizeLabel: formatSizeLabel(image.blob.size),
+        sizeLabel: formatSizeLabel(intl, image.blob.size),
       })),
-    [extractedImages]
+    [extractedImages, intl]
   );
 
   const revalidateIfBlocked = useEffectEvent(() => {
@@ -239,7 +248,7 @@ export const ExtractForm = () => {
 
     const validationError = getExtractClientValidationError(extractFile);
     if (validationError) {
-      setError(validationError);
+      setError(() => validationError);
       return;
     }
 
@@ -276,21 +285,38 @@ export const ExtractForm = () => {
 
   const limitItems: string[] = [];
   if (config.maxUploadMB > 0) {
-    limitItems.push(`1リクエストあたり最大 ${config.maxUploadMB} MiB`);
+    limitItems.push(
+      intl.formatMessage(
+        { id: "limits.requestSize" },
+        { size: config.maxUploadMB }
+      )
+    );
   }
   if (config.maxAssetBytes > 0) {
     limitItems.push(
-      `抽出対象の画像は1枚あたり最大 ${formatMiBFromBytes(config.maxAssetBytes)}`
+      intl.formatMessage(
+        { id: "limits.extractAssetSize" },
+        { size: formatMiBFromBytes(intl, config.maxAssetBytes) }
+      )
     );
   }
   if (config.maxImagePixels > 0) {
     limitItems.push(
-      `抽出対象の画像解像度は最大 ${formatInteger(config.maxImagePixels)} px`
+      intl.formatMessage(
+        { id: "limits.extractImagePixels" },
+        { max: config.maxImagePixels }
+      )
     );
   }
   if (config.requestTimeoutMs > 0) {
     limitItems.push(
-      `処理タイムアウト: 約 ${formatSecondsFromMs(config.requestTimeoutMs)} 秒`
+      intl.formatMessage(
+        { id: "limits.timeout" },
+        {
+          label: formatSecondsFromMs(intl, config.requestTimeoutMs),
+          seconds: config.requestTimeoutMs / 1000,
+        }
+      )
     );
   }
 
@@ -299,16 +325,23 @@ export const ExtractForm = () => {
       className="relative min-w-0 animate-rise space-y-2 p-fluid-sm"
       {...dragProps}
     >
-      {isFormDragOver && <DropOverlay message="ここにEPUBファイルをドロップ" />}
+      {isFormDragOver && (
+        <DropOverlay
+          message={intl.formatMessage({ id: "extract.dropOverlay" })}
+        />
+      )}
 
-      <LimitNotes title="抽出時の制限" items={limitItems} />
+      <LimitNotes
+        title={intl.formatMessage({ id: "extract.limits.title" })}
+        items={limitItems}
+      />
 
       <form className="grid gap-4" onSubmit={handleSubmit}>
         <form.Field
           name="extractFile"
           validators={{
             onSubmit: ({ value }) =>
-              value ? undefined : "抽出するEPUBファイルを選択してください。",
+              value ? undefined : localized("extract.error.selectEpub"),
           }}
         >
           {(field) => (
@@ -318,17 +351,21 @@ export const ExtractForm = () => {
                 className="m-0"
                 htmlFor="extract-epub"
               >
-                EPUBファイル{" "}
+                <FormattedMessage id="extract.epub" />{" "}
                 <span className="text-error" aria-hidden="true">
                   *
                 </span>
-                <span className="sr-only">必須</span>
+                <span className="sr-only">
+                  <FormattedMessage id="common.required" />
+                </span>
               </label>
               <FilePicker
                 id="extract-epub"
                 accept=".epub,application/epub+zip"
-                ctaText="EPUBファイルを選択"
-                helperText="クリックまたはドラッグ＆ドロップでEPUBファイルを指定"
+                ctaText={intl.formatMessage({ id: "extract.epubPicker.cta" })}
+                helperText={intl.formatMessage({
+                  id: "extract.epubPicker.helper",
+                })}
                 aria-labelledby="extract-epub-label"
                 aria-required="true"
                 disabled={isSubmitting}
@@ -336,7 +373,7 @@ export const ExtractForm = () => {
               />
               {field.state.meta.errors.length > 0 && (
                 <p className="m-0 text-sm font-semibold text-error">
-                  {field.state.meta.errors[0]}
+                  {field.state.meta.errors[0]?.(intl)}
                 </p>
               )}
             </div>
@@ -344,7 +381,14 @@ export const ExtractForm = () => {
         </form.Field>
 
         <p className="m-0 text-muted-foreground">
-          選択中: {extractFilename ?? "未選択"}
+          <FormattedMessage
+            id="extract.selected"
+            values={{
+              name:
+                extractFilename ??
+                intl.formatMessage({ id: "extract.selectedNone" }),
+            }}
+          />
         </p>
 
         <Button
@@ -359,7 +403,11 @@ export const ExtractForm = () => {
               className="size-4 animate-spin rounded-full border-2 border-slate-50/35 border-t-slate-50"
             />
           )}
-          <span>{isSubmitting ? "抽出中..." : "画像を抽出"}</span>
+          <span>
+            <FormattedMessage
+              id={isSubmitting ? "extract.submitting" : "extract.submit"}
+            />
+          </span>
         </Button>
       </form>
 
@@ -375,8 +423,10 @@ export const ExtractForm = () => {
           viewerTitle={extractResult?.title ?? "Untitled"}
         />
       )}
-      {error && <p className="mb-0 font-semibold text-error">{error}</p>}
-      {success && <p className="mb-0 font-semibold text-success">{success}</p>}
+      {error && <p className="mb-0 font-semibold text-error">{error(intl)}</p>}
+      {success && (
+        <p className="mb-0 font-semibold text-success">{success(intl)}</p>
+      )}
     </Card>
   );
 };

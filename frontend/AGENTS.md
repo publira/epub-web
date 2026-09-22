@@ -18,6 +18,10 @@ ultracite, through `pnpm check` and `pnpm fix` at the workspace root, which cove
 
 The React Compiler is enabled in `vite.config.ts`, so do not hand-write `useMemo`, `useCallback`, or `memo` for performance.
 
+## Localization
+
+UI copy goes through react-intl, never as a literal in a component. A message kept in state is a `LocalizedText` formatter rather than a string, so it re-renders in the new language after a switch; set it through an updater (`setError(() => message)`), since React would call a bare function. Tests assert the English copy unless switching language is what they test.
+
 ## Imports
 
 Shared modules are imported through `#lib/*`. Relative imports stay for siblings in a component directory and for a test importing its own subject.

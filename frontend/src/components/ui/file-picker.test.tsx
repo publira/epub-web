@@ -18,13 +18,13 @@ describe("file picker", () => {
 
     render(
       <FilePicker
-        ctaText="EPUBファイルを選択"
+        ctaText="Select an EPUB file"
         onChange={onChange}
         onFileChange={onFileChange}
       />
     );
 
-    fireEvent.change(screen.getByLabelText("EPUBファイルを選択"), {
+    fireEvent.change(screen.getByLabelText("Select an EPUB file"), {
       target: { files: [file] },
     });
 
@@ -38,10 +38,14 @@ describe("file picker", () => {
     const second = new File(["second"], "002.png", { type: "image/png" });
 
     render(
-      <FilePicker ctaText="画像を選択" multiple onFilesChange={onFilesChange} />
+      <FilePicker
+        ctaText="Select images"
+        multiple
+        onFilesChange={onFilesChange}
+      />
     );
 
-    const input = screen.getByLabelText("画像を選択");
+    const input = screen.getByLabelText("Select images");
     const dropTarget = input.closest("label");
     expect(dropTarget).not.toBeNull();
 
@@ -68,13 +72,13 @@ describe("file picker", () => {
 
     render(
       <FilePicker
-        ctaText="EPUBファイルを選択"
+        ctaText="Select an EPUB file"
         disabled
         onFileChange={onFileChange}
       />
     );
 
-    const input = screen.getByLabelText("EPUBファイルを選択");
+    const input = screen.getByLabelText("Select an EPUB file");
     const dropTarget = input.closest("label");
     fireEvent.change(input, { target: { files: [file] } });
     fireEvent.drop(dropTarget as HTMLLabelElement, {

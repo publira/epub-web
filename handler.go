@@ -18,6 +18,7 @@ type ConfigResponse struct {
 	MaxImageLongEdge   int64    `json:"maxImageLongEdge"`
 	RequestTimeoutMs   int64    `json:"requestTimeoutMs"`
 	SupportedLanguages []string `json:"supportedLanguages"`
+	InterfaceLanguages []string `json:"interfaceLanguages"`
 }
 
 type ErrorResponse struct {
@@ -66,6 +67,7 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
 		MaxImageLongEdge:   maxImageLongEdge,
 		RequestTimeoutMs:   requestTimeoutMs,
 		SupportedLanguages: supportedLanguages,
+		InterfaceLanguages: interfaceLanguages(),
 	}); err != nil {
 		slog.Error("config: failed to encode response", "error", err)
 	}

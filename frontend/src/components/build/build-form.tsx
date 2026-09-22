@@ -17,6 +17,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { FormattedMessage, useIntl } from "react-intl";
 
 import { getSafeImageConcurrency, mapConcurrent } from "#lib/async";
 import {
@@ -26,7 +27,6 @@ import {
   validateSelectedBuildFiles,
 } from "#lib/build";
 import {
-  formatInteger,
   formatLanguageName,
   formatMiBFromBytes,
   formatSecondsFromMs,
@@ -34,10 +34,13 @@ import {
 import { getSpreadStartIndex } from "#lib/comic-viewer";
 import type { ComicViewerSpreadPosition } from "#lib/comic-viewer";
 import { useAppConfig, useDrop } from "#lib/hooks";
+import { localized, resolveEpubLanguage } from "#lib/i18n";
+import type { LocalizedText } from "#lib/i18n";
 import { compressImageFile } from "#lib/image";
 import { buildMutationFn, getApiErrorMessage } from "#lib/mutations";
 import { triggerDownload } from "#lib/utils";
 import { ComicViewerDialog } from "../comic-viewer/comic-viewer-dialog";
+import { useLocale } from "../i18n/locale-provider";
 import { LimitNotes } from "../limit-notes";
 import { AddableSortableTextFields } from "../ui/addable-sortable-text-fields";
 import type { SortableTextFieldItem } from "../ui/addable-sortable-text-fields";
@@ -84,11 +87,15 @@ const getViewerFirstPageSpread = (
 };
 
 export const BuildForm = () => {
-  const [error, setError] = useState<string | null>(null);
+  const intl = useIntl();
+  const locale = useLocale();
+  // Messages are kept as formatters, so they are set through an updater
+  // function and re-rendered in the current locale.
+  const [error, setError] = useState<LocalizedText | null>(null);
   const [isClientValidationBlocked, setIsClientValidationBlocked] =
     useState(false);
   const [shouldResetForm, setShouldResetForm] = useState(false);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [success, setSuccess] = useState<LocalizedText | null>(null);
   const authorIdRef = useRef(0);
 
   const createAuthorField = useCallback((name = ""): SortableTextFieldItem => {
@@ -108,9 +115,9 @@ export const BuildForm = () => {
   const { data: config } = useAppConfig();
 
   const getBuildClientValidationError = useCallback(
-    (files: File[]): string | null => {
+    (files: File[]): LocalizedText | null => {
       if (files.length === 0) {
-        return "画像を1枚以上選択してください。";
+        return localized("error.noImagesProvided");
       }
 
       return validateSelectedBuildFiles(files, {
@@ -123,7 +130,7 @@ export const BuildForm = () => {
   );
 
   const getImagePixelsValidationError = useCallback(
-    async (files: File[]): Promise<string | null> => {
+    async (files: File[]): Promise<LocalizedText | null> => {
       if (config.maxImagePixels <= 0) {
         return null;
       }
@@ -133,11 +140,13 @@ export const BuildForm = () => {
         try {
           pixels = await getFileImagePixels(file);
         } catch {
-          return "画像の解像度を確認できませんでした。別の画像でお試しください。";
+          return localized("build.error.pixelsUnreadable");
         }
 
         if (pixels > config.maxImagePixels) {
-          return `画像の解像度は最大 ${formatInteger(config.maxImagePixels)} px です。`;
+          return localized("error.imagePixelsLimit", {
+            max: config.maxImagePixels,
+          });
         }
       }
 
@@ -160,8 +169,8 @@ export const BuildForm = () => {
     [config.maxImageLongEdge]
   );
 
-  const setClientValidationError = useCallback((message: string) => {
-    setError(message);
+  const setClientValidationError = useCallback((message: LocalizedText) => {
+    setError(() => message);
     setSuccess(null);
     setIsClientValidationBlocked(true);
   }, []);
@@ -174,9 +183,9 @@ export const BuildForm = () => {
     mutationFn: buildMutationFn,
     onError: (caughtError) => {
       clearClientValidationBlock();
-      setError(
+      setError(() =>
         getApiErrorMessage(caughtError, {
-          defaultMessage: "EPUBの生成に失敗しました。",
+          defaultMessageId: "error.buildFailed",
           maxAssetBytes: config.maxAssetBytes,
           maxImageLongEdge: config.maxImageLongEdge,
           maxImagePixels: config.maxImagePixels,
@@ -190,12 +199,17 @@ export const BuildForm = () => {
     onSuccess: ({ blob, filename }) => {
       clearClientValidationBlock();
       triggerDownload(blob, filename);
-      setSuccess("EPUBを生成してダウンロードしました。");
+      setSuccess(() => localized("build.success"));
       setShouldResetForm(true);
     },
   });
 
-  const [defaultLanguage] = config.supportedLanguages;
+  // The EPUB language follows the interface language until the user picks one.
+  const defaultLanguage = resolveEpubLanguage(
+    locale,
+    config.supportedLanguages
+  );
+  const isLanguagePickedRef = useRef(false);
 
   const form = useForm({
     defaultValues: {
@@ -220,7 +234,7 @@ export const BuildForm = () => {
       try {
         compressedFiles = await compressBuildFiles(value.buildFiles);
       } catch {
-        setError("画像の圧縮処理中にエラーが発生しました。");
+        setError(() => localized("build.error.compressFailed"));
         return;
       }
 
@@ -256,8 +270,15 @@ export const BuildForm = () => {
     }
 
     form.reset();
+    isLanguagePickedRef.current = false;
     setShouldResetForm(false);
   }, [form, shouldResetForm]);
+
+  useEffect(() => {
+    if (!isLanguagePickedRef.current) {
+      form.setFieldValue("language", defaultLanguage, { dontUpdateMeta: true });
+    }
+  }, [defaultLanguage, form]);
 
   const buildFilesCount = useStore(
     form.store,
@@ -380,7 +401,7 @@ export const BuildForm = () => {
           /\.(?<ext>png|jpe?g|gif|webp|avif|bmp|svg)$/iu.test(file.name)
       );
       if (imageFiles.length === 0) {
-        setError("画像ファイルを選択してください。");
+        setError(() => localized("build.error.selectImages"));
         setSuccess(null);
         return;
       }
@@ -389,7 +410,7 @@ export const BuildForm = () => {
       const nextFiles = [...buildFiles, ...sortedImageFiles];
       if (config.maxPages > 0 && nextFiles.length > config.maxPages) {
         setClientValidationError(
-          `ページ数は最大 ${formatInteger(config.maxPages)} ページです。`
+          localized("error.pageLimit", { max: config.maxPages })
         );
         return;
       }
@@ -421,7 +442,7 @@ export const BuildForm = () => {
           /\.(?<ext>png|jpe?g|gif|webp|avif|bmp|svg)$/iu.test(file.name)
       );
       if (droppedImages.length === 0) {
-        setClientValidationError("画像ファイルをドロップしてください。");
+        setClientValidationError(localized("build.dropImages"));
         return;
       }
 
@@ -430,7 +451,7 @@ export const BuildForm = () => {
 
       if (config.maxPages > 0 && nextFiles.length > config.maxPages) {
         setClientValidationError(
-          `ページ数は最大 ${formatInteger(config.maxPages)} ページです。`
+          localized("error.pageLimit", { max: config.maxPages })
         );
         return;
       }
@@ -519,7 +540,7 @@ export const BuildForm = () => {
         compressedFiles = await compressBuildFiles(nextBuildFiles);
       } catch {
         if (!signal.aborted) {
-          setError("画像の圧縮処理中にエラーが発生しました。");
+          setError(() => localized("build.error.compressFailed"));
         }
         return;
       }
@@ -531,7 +552,7 @@ export const BuildForm = () => {
       const selectionError = getBuildClientValidationError(compressedFiles);
       if (selectionError) {
         if (!signal.aborted) {
-          setError(selectionError);
+          setError(() => selectionError);
         }
         return;
       }
@@ -542,7 +563,7 @@ export const BuildForm = () => {
       }
 
       if (pixelsError) {
-        setError(pixelsError);
+        setError(() => pixelsError);
         return;
       }
 
@@ -610,24 +631,43 @@ export const BuildForm = () => {
 
   const limitItems: string[] = [];
   if (config.maxUploadMB > 0) {
-    limitItems.push(`1リクエストあたり最大 ${config.maxUploadMB} MiB`);
+    limitItems.push(
+      intl.formatMessage(
+        { id: "limits.requestSize" },
+        { size: config.maxUploadMB }
+      )
+    );
   }
   if (config.maxPages > 0) {
-    limitItems.push(`EPUBは最大 ${formatInteger(config.maxPages)} ページ`);
+    limitItems.push(
+      intl.formatMessage({ id: "limits.pages" }, { max: config.maxPages })
+    );
   }
   if (config.maxAssetBytes > 0) {
     limitItems.push(
-      `画像1枚あたり最大 ${formatMiBFromBytes(config.maxAssetBytes)}`
+      intl.formatMessage(
+        { id: "limits.assetSize" },
+        { size: formatMiBFromBytes(intl, config.maxAssetBytes) }
+      )
     );
   }
   if (config.maxImagePixels > 0) {
     limitItems.push(
-      `画像の解像度は最大 ${formatInteger(config.maxImagePixels)} px`
+      intl.formatMessage(
+        { id: "limits.imagePixels" },
+        { max: config.maxImagePixels }
+      )
     );
   }
   if (config.requestTimeoutMs > 0) {
     limitItems.push(
-      `処理タイムアウト: 約 ${formatSecondsFromMs(config.requestTimeoutMs)} 秒`
+      intl.formatMessage(
+        { id: "limits.timeout" },
+        {
+          label: formatSecondsFromMs(intl, config.requestTimeoutMs),
+          seconds: config.requestTimeoutMs / 1000,
+        }
+      )
     );
   }
 
@@ -636,16 +676,21 @@ export const BuildForm = () => {
       className="relative min-w-0 space-y-2 animate-rise p-fluid-sm"
       {...dragProps}
     >
-      {isFormDragOver && <DropOverlay message="ここに画像ファイルをドロップ" />}
+      {isFormDragOver && (
+        <DropOverlay message={intl.formatMessage({ id: "build.dropOverlay" })} />
+      )}
 
-      <LimitNotes title="変換時の制限" items={limitItems} />
+      <LimitNotes
+        title={intl.formatMessage({ id: "build.limits.title" })}
+        items={limitItems}
+      />
 
       <form className="grid gap-4" onSubmit={handleSubmit}>
         <form.Field name="title">
           {(field) => (
             <div className="grid gap-1.5">
               <label className="font-semibold" htmlFor="build-title">
-                タイトル
+                <FormattedMessage id="build.title" />
               </label>
               <TextInput
                 id="build-title"
@@ -663,11 +708,13 @@ export const BuildForm = () => {
         <form.Field name="authors">
           {(field) => (
             <AddableSortableTextFields
-              label="著者"
+              label={intl.formatMessage({ id: "build.authors" })}
               items={field.state.value}
-              addButtonLabel="追加"
+              addButtonLabel={intl.formatMessage({ id: "build.addAuthor" })}
               inputIdPrefix="build-author"
-              placeholder="著者名を入力"
+              placeholder={intl.formatMessage({
+                id: "build.authorPlaceholder",
+              })}
               disabled={isSubmitting}
               addDisabled={field.state.value.some(
                 (author) => author.value.trim().length === 0
@@ -685,7 +732,7 @@ export const BuildForm = () => {
             {(field) => (
               <div className="grid gap-1.5">
                 <label className="font-semibold" htmlFor="build-direction">
-                  綴じ方向
+                  <FormattedMessage id="build.direction" />
                 </label>
                 <SelectInput
                   id="build-direction"
@@ -693,8 +740,12 @@ export const BuildForm = () => {
                   onValueChange={field.handleChange}
                   disabled={isSubmitting}
                 >
-                  <option value="rtl">右綴じ (RTL)</option>
-                  <option value="ltr">左綴じ (LTR)</option>
+                  <option value="rtl">
+                    {intl.formatMessage({ id: "build.direction.rtl" })}
+                  </option>
+                  <option value="ltr">
+                    {intl.formatMessage({ id: "build.direction.ltr" })}
+                  </option>
                 </SelectInput>
               </div>
             )}
@@ -704,7 +755,7 @@ export const BuildForm = () => {
             {(field) => (
               <div className="grid gap-1.5">
                 <label className="font-semibold" htmlFor="build-spread">
-                  見開き開始
+                  <FormattedMessage id="build.spread" />
                 </label>
                 <SelectInput
                   id="build-spread"
@@ -712,9 +763,15 @@ export const BuildForm = () => {
                   onValueChange={field.handleChange}
                   disabled={isSubmitting}
                 >
-                  <option value="right">右ページ</option>
-                  <option value="left">左ページ</option>
-                  <option value="center">中央</option>
+                  <option value="right">
+                    {intl.formatMessage({ id: "build.spread.right" })}
+                  </option>
+                  <option value="left">
+                    {intl.formatMessage({ id: "build.spread.left" })}
+                  </option>
+                  <option value="center">
+                    {intl.formatMessage({ id: "build.spread.center" })}
+                  </option>
                 </SelectInput>
               </div>
             )}
@@ -724,17 +781,20 @@ export const BuildForm = () => {
             {(field) => (
               <div className="grid gap-1.5">
                 <label className="font-semibold" htmlFor="build-language">
-                  言語
+                  <FormattedMessage id="build.language" />
                 </label>
                 <SelectInput
                   id="build-language"
                   value={field.state.value}
-                  onValueChange={field.handleChange}
+                  onValueChange={(value) => {
+                    isLanguagePickedRef.current = true;
+                    field.handleChange(value);
+                  }}
                   disabled={isSubmitting}
                 >
                   {config.supportedLanguages.map((code) => (
                     <option key={code} value={code}>
-                      {formatLanguageName(code)}
+                      {formatLanguageName(intl, code)}
                     </option>
                   ))}
                 </SelectInput>
@@ -748,10 +808,10 @@ export const BuildForm = () => {
           validators={{
             onSubmit: ({ value }) => {
               if (value.length === 0) {
-                return "画像を1枚以上選択してください。";
+                return localized("error.noImagesProvided");
               }
               if (config.maxPages > 0 && value.length > config.maxPages) {
-                return `ページ数は最大 ${formatInteger(config.maxPages)} ページです。`;
+                return localized("error.pageLimit", { max: config.maxPages });
               }
             },
           }}
@@ -763,18 +823,22 @@ export const BuildForm = () => {
                 className="m-0"
                 htmlFor="build-images"
               >
-                画像ファイル{" "}
+                <FormattedMessage id="build.images" />{" "}
                 <span className="text-error" aria-hidden="true">
                   *
                 </span>
-                <span className="sr-only">必須</span>
+                <span className="sr-only">
+                  <FormattedMessage id="common.required" />
+                </span>
               </label>
               <FilePicker
                 id="build-images"
                 accept="image/*"
                 multiple
-                ctaText="画像を選択"
-                helperText="クリックまたはドラッグ＆ドロップで画像を追加（複数選択可）"
+                ctaText={intl.formatMessage({ id: "build.imagePicker.cta" })}
+                helperText={intl.formatMessage({
+                  id: "build.imagePicker.helper",
+                })}
                 aria-labelledby="build-images-label"
                 aria-required="true"
                 disabled={isSubmitting}
@@ -782,7 +846,7 @@ export const BuildForm = () => {
               />
               {field.state.meta.errors.length > 0 && (
                 <p className="m-0 text-sm font-semibold text-error">
-                  {field.state.meta.errors[0]}
+                  {field.state.meta.errors[0]?.(intl)}
                 </p>
               )}
             </div>
@@ -790,7 +854,10 @@ export const BuildForm = () => {
         </form.Field>
 
         <p className="m-0 text-muted-foreground">
-          選択中: {buildFilesCount} ファイル
+          <FormattedMessage
+            id="build.selectedCount"
+            values={{ count: buildFilesCount }}
+          />
         </p>
 
         {imagePreviews.length > 0 && (
@@ -802,7 +869,7 @@ export const BuildForm = () => {
                 disabled={isSubmitting}
                 onClick={handleOpenPreviewViewer}
               >
-                コミックビューアーで開く
+                <FormattedMessage id="common.openInComicViewer" />
               </button>
               <div className="flex flex-wrap items-center gap-2">
               <button
@@ -811,7 +878,7 @@ export const BuildForm = () => {
                 disabled={isSubmitting}
                 onClick={handleRemoveAllImages}
               >
-                全削除
+                <FormattedMessage id="build.removeAll" />
               </button>
               <div className="h-4 w-px bg-primary/20" />
               <button
@@ -820,7 +887,7 @@ export const BuildForm = () => {
                 disabled={isSubmitting}
                 onClick={handleSortByName}
               >
-                名前順
+                <FormattedMessage id="build.sortByName" />
               </button>
               <button
                 type="button"
@@ -828,12 +895,12 @@ export const BuildForm = () => {
                 disabled={isSubmitting}
                 onClick={handleSortByDate}
               >
-                更新日順
+                <FormattedMessage id="build.sortByDate" />
               </button>
               </div>
             </div>
             <p className="m-0 text-xs text-muted-foreground">
-              画像をドラッグして順番を変更できます。
+              <FormattedMessage id="build.dragHint" />
               </p>
 
             <SortableImagePreviewList
@@ -862,7 +929,7 @@ export const BuildForm = () => {
                 disabled={isSubmitting}
                 className="size-4 rounded border-border accent-primary"
               />
-              1枚目を表紙にする
+              <FormattedMessage id="build.cover" />
             </label>
           )}
         </form.Field>
@@ -880,7 +947,9 @@ export const BuildForm = () => {
             />
           )}
           <span>
-            {isSubmitting ? "生成中..." : "EPUBを生成してダウンロード"}
+            <FormattedMessage
+              id={isSubmitting ? "build.submitting" : "build.submit"}
+            />
           </span>
         </Button>
       </form>
@@ -896,8 +965,12 @@ export const BuildForm = () => {
         />
       )}
 
-      {error && <p className="mb-0 font-semibold text-error">{error}</p>}
-      {success && <p className="mb-0 font-semibold text-success">{success}</p>}
+      {error && (
+        <p className="mb-0 font-semibold text-error">{error(intl)}</p>
+      )}
+      {success && (
+        <p className="mb-0 font-semibold text-success">{success(intl)}</p>
+      )}
     </Card>
   );
 };

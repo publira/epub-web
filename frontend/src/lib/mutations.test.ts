@@ -1,5 +1,6 @@
 import { it, vi, afterEach, expect, describe, beforeEach } from "vitest";
 
+import { getAppIntl } from "./i18n";
 import {
   ApiError,
   buildMutationFn,
@@ -7,6 +8,9 @@ import {
   getApiErrorMessage,
 } from "./mutations";
 import { zipAsync } from "./zip";
+
+const en = getAppIntl("en");
+const ja = getAppIntl("ja");
 
 describe("mutations", () => {
   const fetchMock = vi.fn<typeof fetch>();
@@ -164,27 +168,25 @@ describe("mutations", () => {
   it("getApiErrorMessage maps code to localized message", () => {
     const message = getApiErrorMessage(
       new ApiError("request_too_large", "Request too large."),
-      {
-        defaultMessage: "画像抽出に失敗しました。",
-        maxUploadMB: 8,
-      }
+      { defaultMessageId: "error.extractFailed", maxUploadMB: 8 }
     );
 
-    expect(message).toBe("1リクエストあたり最大 8 MiB です。");
+    expect(message(en)).toBe("Each request can be up to 8 MiB.");
+    expect(message(ja)).toBe("1リクエストあたり最大 8 MiB です。");
   }, 1000);
 
   it("getApiErrorMessage maps build option validation codes", () => {
     expect(
       getApiErrorMessage(new ApiError("invalid_layout", "Invalid layout."), {
-        defaultMessage: "EPUBの生成に失敗しました。",
-      })
-    ).toBe("レイアウト指定が不正です。");
+        defaultMessageId: "error.buildFailed",
+      })(en)
+    ).toBe("The layout setting is invalid.");
 
     expect(
       getApiErrorMessage(new ApiError("invalid_spread", "Invalid spread."), {
-        defaultMessage: "EPUBの生成に失敗しました。",
-      })
-    ).toBe("見開き指定が不正です。");
+        defaultMessageId: "error.buildFailed",
+      })(en)
+    ).toBe("The spread setting is invalid.");
 
     expect(
       getApiErrorMessage(
@@ -192,23 +194,48 @@ describe("mutations", () => {
           "image_long_edge_limit_exceeded",
           "Image long edge limit exceeded."
         ),
-        {
-          defaultMessage: "EPUBの生成に失敗しました。",
-          maxImageLongEdge: 2048,
-        }
-      )
-    ).toBe("画像の長辺は最大 2,048 px です。");
+        { defaultMessageId: "error.buildFailed", maxImageLongEdge: 2048 }
+      )(en)
+    ).toBe("The long edge of an image can be up to 2,048 px.");
+  }, 1000);
+
+  it("getApiErrorMessage pluralizes the timeout seconds", () => {
+    const error = new ApiError("request_timeout", "Request timed out.");
+
+    expect(
+      getApiErrorMessage(error, {
+        defaultMessageId: "error.buildFailed",
+        requestTimeoutMs: 1000,
+      })(en)
+    ).toBe(
+      "Processing timed out after 1 second. Please wait a moment and try again."
+    );
+    expect(
+      getApiErrorMessage(error, {
+        defaultMessageId: "error.buildFailed",
+        requestTimeoutMs: 2500,
+      })(en)
+    ).toBe(
+      "Processing timed out after 2.5 seconds. Please wait a moment and try again."
+    );
   }, 1000);
 
   it("getApiErrorMessage preserves server message for unknown api codes", () => {
     const message = getApiErrorMessage(
       new ApiError("unexpected_code", "Server supplied message."),
-      {
-        defaultMessage: "EPUBの生成に失敗しました。",
-      }
+      { defaultMessageId: "error.buildFailed" }
     );
 
-    expect(message).toBe("Server supplied message.");
+    expect(message(en)).toBe("Server supplied message.");
+  }, 1000);
+
+  it("getApiErrorMessage localizes client-side extraction failures", () => {
+    const message = getApiErrorMessage(
+      new ApiError("no_images_found", "No image files were found."),
+      { defaultMessageId: "error.extractFailed" }
+    );
+
+    expect(message(ja)).toBe("画像ファイルが見つかりません。");
   }, 1000);
 
   it("buildMutationFn converts network failures to ApiError", async () => {
