@@ -26,7 +26,7 @@ export const ImagePreviewCard = ({ preview }: { preview: ImagePreview }) => {
 
   return (
   <div className="w-32 shrink-0">
-    <div className="mb-2 aspect-square flex cursor-grabbing items-center justify-center overflow-hidden rounded-lg bg-muted shadow-lg ring-2 ring-primary/30">
+    <div className="mb-2 aspect-square flex cursor-grabbing items-center justify-center overflow-hidden rounded-control bg-muted shadow-floating ring-2 ring-ring">
       <img
         src={preview.url}
         alt={preview.name}
@@ -69,7 +69,7 @@ export const SortableImagePreviewCard = ({
       className="group w-32 shrink-0 snap-start"
     >
       <div
-        className="relative mb-2 aspect-square flex cursor-grab items-center justify-center overflow-hidden rounded-lg bg-muted active:cursor-grabbing"
+        className="relative mb-2 aspect-square flex cursor-grab items-center justify-center overflow-hidden rounded-control bg-muted active:cursor-grabbing"
         style={{ opacity: isDragging ? 0.3 : 1 }}
         {...attributes}
         {...listeners}
@@ -81,14 +81,14 @@ export const SortableImagePreviewCard = ({
         />
         {disabled && (
           <div
-            className="pointer-events-auto absolute inset-0 z-10 rounded-lg bg-background/50 backdrop-blur-xs"
+            className="pointer-events-auto absolute inset-0 z-10 bg-background/50 backdrop-blur-xs"
             aria-hidden="true"
           />
         )}
         <button
           type="button"
           data-index={preview.index}
-          className="absolute top-1.5 right-1.5 inline-flex size-7 cursor-pointer touch-none items-center justify-center rounded-full border border-slate-900/20 bg-slate-50/90 text-slate-700 shadow-sm transition hover:scale-105 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/75 disabled:cursor-not-allowed disabled:opacity-50"
+          className="absolute top-1.5 right-1.5 inline-flex size-7 cursor-pointer touch-none items-center justify-center rounded-control border border-border bg-card/90 text-foreground transition-colors duration-state ease-state hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           disabled={disabled}
           onClick={onRemove}
           aria-label={intl.formatMessage(

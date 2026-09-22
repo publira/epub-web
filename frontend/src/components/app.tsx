@@ -19,7 +19,7 @@ const modeSchema = z.enum(["build", "extract"]);
 
 const renderEpubLibraryLink = (chunks: ReactNode[]) => (
   <a
-    className="font-semibold text-primary underline underline-offset-4"
+    className="font-medium text-primary underline underline-offset-4"
     href="https://pkg.go.dev/github.com/publira/epub"
     rel="noopener noreferrer"
     target="_blank"
@@ -56,12 +56,12 @@ export const App = () => {
       <div className="flex min-h-dvh flex-col">
         <main className="mx-auto my-10 grid w-content flex-1 content-start gap-5 max-md:my-4 max-md:w-content-sm">
           <header>
-            <Card className="animate-rise p-fluid">
+            <Card className="p-fluid">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <Badge>EPUB Web</Badge>
                 <LanguageSwitcher />
               </div>
-              <h1 className="mt-2 mb-3 text-hero">
+              <h1 className="mt-2 mb-3 text-hero font-medium">
                 <FormattedMessage id="app.heading" />
               </h1>
               <p className="m-0 leading-7">
@@ -142,7 +142,7 @@ export const App = () => {
         </main>
 
         <footer className="pb-4">
-          <div className="mx-auto w-content rounded-2xl border border-primary/15 bg-card-surface px-4 py-4 text-sm text-muted-foreground max-md:w-content-sm">
+          <div className="mx-auto w-content border border-border bg-surface px-4 py-4 text-sm text-muted-foreground max-md:w-content-sm">
             <p className="m-0 leading-6">
               <FormattedMessage
                 id="app.footer.about"
@@ -154,7 +154,7 @@ export const App = () => {
             </p>
             <div className="mt-3 flex flex-wrap justify-end gap-3">
               <a
-                className="cursor-pointer text-sm font-semibold text-primary underline underline-offset-4"
+                className="cursor-pointer text-sm font-medium text-primary underline underline-offset-4"
                 href="https://github.com/publira/epub-web"
                 rel="noopener noreferrer"
                 target="_blank"
@@ -162,14 +162,14 @@ export const App = () => {
                 <FormattedMessage id="app.footer.source" />
               </a>
               <button
-                className="cursor-pointer text-sm font-semibold text-primary underline underline-offset-4"
+                className="cursor-pointer text-sm font-medium text-primary underline underline-offset-4"
                 onClick={handleOpenTerms}
                 type="button"
               >
                 <FormattedMessage id="terms.title" />
               </button>
               <button
-                className="cursor-pointer text-sm font-semibold text-primary underline underline-offset-4"
+                className="cursor-pointer text-sm font-medium text-primary underline underline-offset-4"
                 onClick={handleOpenPrivacy}
                 type="button"
               >

@@ -33,7 +33,7 @@ import { ExtractedImagesGallery } from "./extracted-images-gallery";
 export const ExtractFormSkeleton = () => (
   <Card className="min-w-0 p-fluid-sm">
     <Skeleton className="mb-4 h-28" />
-    <Skeleton className="h-12" />
+    <Skeleton className="h-10" />
   </Card>
 );
 
@@ -321,10 +321,7 @@ export const ExtractForm = () => {
   }
 
   return (
-    <Card
-      className="relative min-w-0 animate-rise space-y-2 p-fluid-sm"
-      {...dragProps}
-    >
+    <Card className="relative min-w-0 space-y-2 p-fluid-sm" {...dragProps}>
       {isFormDragOver && (
         <DropOverlay
           message={intl.formatMessage({ id: "extract.dropOverlay" })}
@@ -345,14 +342,14 @@ export const ExtractForm = () => {
           }}
         >
           {(field) => (
-            <div className="grid gap-1.5 font-semibold">
+            <div className="grid gap-1.5 font-medium">
               <label
                 id="extract-epub-label"
                 className="m-0"
                 htmlFor="extract-epub"
               >
                 <FormattedMessage id="extract.epub" />{" "}
-                <span className="text-error" aria-hidden="true">
+                <span className="text-destructive" aria-hidden="true">
                   *
                 </span>
                 <span className="sr-only">
@@ -372,7 +369,7 @@ export const ExtractForm = () => {
                 onFileChange={handleExtractFileChange}
               />
               {field.state.meta.errors.length > 0 && (
-                <p className="m-0 text-sm font-semibold text-error">
+                <p className="m-0 text-sm font-medium text-destructive">
                   {field.state.meta.errors[0]?.(intl)}
                 </p>
               )}
@@ -392,15 +389,14 @@ export const ExtractForm = () => {
         </p>
 
         <Button
-          className="inline-flex items-center justify-center gap-2"
+          size="lg"
           type="submit"
-          variant="primary"
           disabled={isSubmitting || isClientValidationBlocked}
         >
           {isSubmitting && (
             <span
               aria-hidden="true"
-              className="size-4 animate-spin rounded-full border-2 border-slate-50/35 border-t-slate-50"
+              className="size-4 animate-spin rounded-full border-2 border-primary-foreground/35 border-t-primary-foreground"
             />
           )}
           <span>
@@ -423,9 +419,11 @@ export const ExtractForm = () => {
           viewerTitle={extractResult?.title ?? "Untitled"}
         />
       )}
-      {error && <p className="mb-0 font-semibold text-error">{error(intl)}</p>}
+      {error && (
+        <p className="mb-0 font-medium text-destructive">{error(intl)}</p>
+      )}
       {success && (
-        <p className="mb-0 font-semibold text-success">{success(intl)}</p>
+        <p className="mb-0 font-medium text-success">{success(intl)}</p>
       )}
     </Card>
   );

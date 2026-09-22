@@ -21,7 +21,7 @@ const ReaderNavigationButton = ({
 }: ReaderNavigationButtonProps) => {
   const intl = useIntl();
   const buttonClassName = twMerge(
-    "pointer-events-auto absolute top-1/2 grid size-11 -translate-y-1/2 cursor-pointer place-items-center rounded-full border border-white/15 bg-slate-950/80 text-slate-50 shadow-lg backdrop-blur transition hover:bg-primary focus-visible:ring-2 focus-visible:ring-secondary focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40",
+    "pointer-events-auto absolute top-1/2 grid size-11 -translate-y-1/2 cursor-pointer place-items-center rounded-full border border-white/15 bg-slate-950/80 text-slate-50 shadow-floating backdrop-blur transition-colors duration-state ease-state hover:bg-primary focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40",
     className
   );
 
@@ -88,7 +88,7 @@ export const ReaderToolbar = () => {
         aria-label={intl.formatMessage({ id: "comicViewer.progress" })}
         className="pointer-events-none mx-auto grid w-3/5 min-w-0 gap-1"
       >
-        <ComicViewer.PageProgressTrack className="h-1 w-full overflow-hidden rounded-full bg-black/65 accent-secondary [&::-moz-progress-bar]:bg-secondary [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-secondary" />
+        <ComicViewer.PageProgressTrack className="h-1 w-full overflow-hidden bg-black/65 accent-secondary [&::-moz-progress-bar]:bg-secondary [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-secondary" />
         <ComicViewer.PageStatus
           className="text-center text-xs text-slate-100"
           format={({ firstPage, lastPage, pageCount }) =>

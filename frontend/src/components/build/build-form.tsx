@@ -57,21 +57,21 @@ import { useBuildImagePreviews } from "./use-build-image-previews";
 export const BuildFormSkeleton = () => (
   <Card className="min-w-0 p-fluid-sm">
     <div className="mb-4">
-      <Skeleton className="mb-1.5 h-4 w-16 rounded-md" />
+      <Skeleton className="mb-1.5 h-4 w-16" />
       <Skeleton className="h-10" />
     </div>
     <div className="mb-4 grid gap-3 md:grid-cols-2">
       <div>
-        <Skeleton className="mb-1.5 h-4 w-20 rounded-md" />
+        <Skeleton className="mb-1.5 h-4 w-20" />
         <Skeleton className="h-10" />
       </div>
       <div>
-        <Skeleton className="mb-1.5 h-4 w-20 rounded-md" />
+        <Skeleton className="mb-1.5 h-4 w-20" />
         <Skeleton className="h-10" />
       </div>
     </div>
     <Skeleton className="mb-4 h-28" />
-    <Skeleton className="h-12" />
+    <Skeleton className="h-10" />
   </Card>
 );
 
@@ -673,7 +673,7 @@ export const BuildForm = () => {
 
   return (
     <Card
-      className="relative min-w-0 space-y-2 animate-rise p-fluid-sm"
+      className="relative min-w-0 space-y-2 p-fluid-sm"
       {...dragProps}
     >
       {isFormDragOver && (
@@ -689,7 +689,7 @@ export const BuildForm = () => {
         <form.Field name="title">
           {(field) => (
             <div className="grid gap-1.5">
-              <label className="font-semibold" htmlFor="build-title">
+              <label className="font-medium" htmlFor="build-title">
                 <FormattedMessage id="build.title" />
               </label>
               <TextInput
@@ -731,7 +731,7 @@ export const BuildForm = () => {
           <form.Field name="direction">
             {(field) => (
               <div className="grid gap-1.5">
-                <label className="font-semibold" htmlFor="build-direction">
+                <label className="font-medium" htmlFor="build-direction">
                   <FormattedMessage id="build.direction" />
                 </label>
                 <SelectInput
@@ -754,7 +754,7 @@ export const BuildForm = () => {
           <form.Field name="spread">
             {(field) => (
               <div className="grid gap-1.5">
-                <label className="font-semibold" htmlFor="build-spread">
+                <label className="font-medium" htmlFor="build-spread">
                   <FormattedMessage id="build.spread" />
                 </label>
                 <SelectInput
@@ -780,7 +780,7 @@ export const BuildForm = () => {
           <form.Field name="language">
             {(field) => (
               <div className="grid gap-1.5">
-                <label className="font-semibold" htmlFor="build-language">
+                <label className="font-medium" htmlFor="build-language">
                   <FormattedMessage id="build.language" />
                 </label>
                 <SelectInput
@@ -817,14 +817,14 @@ export const BuildForm = () => {
           }}
         >
           {(field) => (
-            <div className="grid gap-1.5 font-semibold">
+            <div className="grid gap-1.5 font-medium">
               <label
                 id="build-images-label"
                 className="m-0"
                 htmlFor="build-images"
               >
                 <FormattedMessage id="build.images" />{" "}
-                <span className="text-error" aria-hidden="true">
+                <span className="text-destructive" aria-hidden="true">
                   *
                 </span>
                 <span className="sr-only">
@@ -845,7 +845,7 @@ export const BuildForm = () => {
                 onFilesChange={handleAddBuildFiles}
               />
               {field.state.meta.errors.length > 0 && (
-                <p className="m-0 text-sm font-semibold text-error">
+                <p className="m-0 text-sm font-medium text-destructive">
                   {field.state.meta.errors[0]?.(intl)}
                 </p>
               )}
@@ -863,40 +863,40 @@ export const BuildForm = () => {
         {imagePreviews.length > 0 && (
           <div className="grid gap-3">
             <div className="flex flex-row-reverse flex-wrap items-center justify-between gap-2">
-              <button
-                type="button"
-                className="cursor-pointer rounded-lg border border-primary/20 bg-transparent px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:bg-primary-subtle hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 disabled:cursor-not-allowed disabled:opacity-50"
+<Button
+                size="sm"
+                variant="ghost"
                 disabled={isSubmitting}
                 onClick={handleOpenPreviewViewer}
               >
                 <FormattedMessage id="common.openInComicViewer" />
-              </button>
+              </Button>
               <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                className="cursor-pointer rounded-lg border border-error/35 bg-error/10 px-3 py-1.5 text-xs font-semibold text-error transition hover:bg-error/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error/45 disabled:cursor-not-allowed disabled:opacity-50"
+<Button
+                size="sm"
+                variant="destructive"
                 disabled={isSubmitting}
                 onClick={handleRemoveAllImages}
               >
                 <FormattedMessage id="build.removeAll" />
-              </button>
-              <div className="h-4 w-px bg-primary/20" />
-              <button
-                type="button"
-                className="cursor-pointer rounded-lg border border-primary/25 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 disabled:cursor-not-allowed disabled:opacity-50"
+              </Button>
+              <div className="h-4 w-px bg-border" />
+<Button
+                size="sm"
+                variant="outline"
                 disabled={isSubmitting}
                 onClick={handleSortByName}
               >
                 <FormattedMessage id="build.sortByName" />
-              </button>
-              <button
-                type="button"
-                className="cursor-pointer rounded-lg border border-primary/25 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 disabled:cursor-not-allowed disabled:opacity-50"
+              </Button>
+<Button
+                size="sm"
+                variant="outline"
                 disabled={isSubmitting}
                 onClick={handleSortByDate}
               >
                 <FormattedMessage id="build.sortByDate" />
-              </button>
+              </Button>
               </div>
             </div>
             <p className="m-0 text-xs text-muted-foreground">
@@ -918,7 +918,7 @@ export const BuildForm = () => {
         <form.Field name="cover">
           {(field) => (
             <label
-              className="inline-flex items-center gap-2 font-semibold select-none"
+              className="inline-flex items-center gap-2 font-medium select-none"
               htmlFor="build-cover"
             >
               <input
@@ -927,7 +927,7 @@ export const BuildForm = () => {
                 checked={field.state.value}
                 onChange={handleCoverChange}
                 disabled={isSubmitting}
-                className="size-4 rounded border-border accent-primary"
+                className="size-4 rounded-control border-input accent-primary"
               />
               <FormattedMessage id="build.cover" />
             </label>
@@ -935,15 +935,14 @@ export const BuildForm = () => {
         </form.Field>
 
         <Button
-          className="inline-flex items-center justify-center gap-2"
+          size="lg"
           type="submit"
-          variant="primary"
           disabled={isSubmitting || isClientValidationBlocked}
         >
           {isSubmitting && (
             <span
               aria-hidden="true"
-              className="size-4 animate-spin rounded-full border-2 border-slate-50/35 border-t-slate-50"
+              className="size-4 animate-spin rounded-full border-2 border-primary-foreground/35 border-t-primary-foreground"
             />
           )}
           <span>
@@ -966,10 +965,10 @@ export const BuildForm = () => {
       )}
 
       {error && (
-        <p className="mb-0 font-semibold text-error">{error(intl)}</p>
+        <p className="mb-0 font-medium text-destructive">{error(intl)}</p>
       )}
       {success && (
-        <p className="mb-0 font-semibold text-success">{success(intl)}</p>
+        <p className="mb-0 font-medium text-success">{success(intl)}</p>
       )}
     </Card>
   );

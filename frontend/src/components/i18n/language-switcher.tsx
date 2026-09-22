@@ -56,7 +56,7 @@ export const LanguageSwitcher = () => {
     <>
       <button
         aria-label={label}
-        className="grid size-9 cursor-pointer place-items-center rounded-lg border border-primary/20 bg-transparent text-muted-foreground transition [anchor-name:--language-switcher] hover:bg-primary-subtle hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:outline-none"
+        className="grid size-9 cursor-pointer place-items-center rounded-control border border-input bg-card text-foreground transition-colors duration-state ease-state [anchor-name:--language-switcher] hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         popoverTarget={menuId}
         title={label}
         type="button"
@@ -65,7 +65,7 @@ export const LanguageSwitcher = () => {
       </button>
       <ul
         aria-label={label}
-        className="inset-auto m-0 mt-2 min-w-36 list-none rounded-xl border border-primary/20 bg-card-surface p-1 text-foreground shadow-card [position-anchor:--language-switcher] [position-area:bottom_span-left] [position-try-fallbacks:flip-block]"
+        className="inset-auto m-0 mt-2 min-w-36 list-none rounded-surface border border-border bg-popover p-1 text-popover-foreground shadow-floating [position-anchor:--language-switcher] [position-area:bottom_span-left] [position-try-fallbacks:flip-block]"
         id={menuId}
         popover="auto"
         ref={menuRef}
@@ -74,7 +74,7 @@ export const LanguageSwitcher = () => {
           <li key={option}>
             <a
               aria-current={option === locale ? "true" : undefined}
-              className="block rounded-lg px-3 py-1.5 text-sm text-foreground no-underline transition hover:bg-primary-subtle hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:outline-none aria-[current=true]:font-semibold aria-[current=true]:text-primary"
+              className="block rounded-control px-3 py-2 text-sm text-foreground no-underline transition-colors duration-state ease-state hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none aria-[current=true]:font-medium aria-[current=true]:text-primary"
               href={getLocaleHref(option)}
               hrefLang={option}
               lang={option}

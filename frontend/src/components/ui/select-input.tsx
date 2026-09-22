@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import { twMerge } from "tailwind-merge";
 
 const selectInputStyles = cva(
-  "w-full appearance-none rounded-xl border border-primary/22 bg-input px-4 py-3 outline-none focus:ring-2 focus:ring-secondary/60 disabled:cursor-not-allowed disabled:border-primary/10 disabled:text-foreground/35"
+  "h-10 w-full rounded-control border border-input bg-card px-3 py-2 text-sm text-foreground transition-colors duration-state ease-state outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
 );
 
 interface SelectInputProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
