@@ -298,3 +298,30 @@ func TestGetShutdownTimeout_InvalidReturnsDefault(t *testing.T) {
 		t.Fatalf("expected %v, got %v", defaultShutdownTimeout, got)
 	}
 }
+
+func TestGetPublicURL(t *testing.T) {
+	cases := []struct {
+		name  string
+		value string
+		want  string
+	}{
+		{name: "unset", value: "", want: defaultPublicURL},
+		{name: "origin", value: "https://epub.example.com", want: "https://epub.example.com"},
+		{name: "trailing slash", value: "https://epub.example.com/", want: "https://epub.example.com"},
+		{name: "path", value: "https://example.com/epub/", want: "https://example.com/epub"},
+		{name: "relative", value: "/epub", want: defaultPublicURL},
+		{name: "unsupported scheme", value: "ftp://example.com", want: defaultPublicURL},
+		{name: "query", value: "https://example.com/?lang=en", want: defaultPublicURL},
+		{name: "malformed", value: "https://%zz", want: defaultPublicURL},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("EPUB_WEB_PUBLIC_URL", tc.value)
+
+			if got := getPublicURL(); got != tc.want {
+				t.Fatalf("expected %q, got %q", tc.want, got)
+			}
+		})
+	}
+}

@@ -30,6 +30,7 @@ func run() int {
 	mux.Handle("POST /api/extract", withFetchSiteCheck(withTimeout(withLimit(handleExtract))))
 	mux.Handle("POST /api/build", withFetchSiteCheck(withTimeout(withLimit(handleBuild))))
 
+	mux.Handle("GET /{$}", withCache(handleLocalizedPage(getFrontendSubFS(), "index.html", "/", getPublicURL())))
 	mux.Handle("/", withCache(http.FileServer(GetFrontendFS())))
 
 	addr := getListenAddress()

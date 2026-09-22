@@ -2,12 +2,15 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { X } from "lucide-react";
 import type { MouseEventHandler } from "react";
+import { useIntl } from "react-intl";
+
+import { formatLastModified } from "#lib/format";
 
 export interface ImagePreview {
   id: string;
   mimeType: string;
   index: number;
-  lastModifiedLabel: string;
+  lastModified: number;
   name: string;
   url: string;
 }
@@ -18,7 +21,10 @@ interface SortableImagePreviewCardProps {
   onRemove: MouseEventHandler<HTMLButtonElement>;
 }
 
-export const ImagePreviewCard = ({ preview }: { preview: ImagePreview }) => (
+export const ImagePreviewCard = ({ preview }: { preview: ImagePreview }) => {
+  const intl = useIntl();
+
+  return (
   <div className="w-32 shrink-0">
     <div className="mb-2 aspect-square flex cursor-grabbing items-center justify-center overflow-hidden rounded-lg bg-muted shadow-lg ring-2 ring-primary/30">
       <img
@@ -31,16 +37,18 @@ export const ImagePreviewCard = ({ preview }: { preview: ImagePreview }) => (
       {preview.name}
     </p>
     <p className="mt-1 m-0 text-[11px] text-muted-foreground/70">
-      {preview.lastModifiedLabel}
+      {formatLastModified(intl, preview.lastModified)}
     </p>
   </div>
-);
+  );
+};
 
 export const SortableImagePreviewCard = ({
   preview,
   disabled,
   onRemove,
 }: SortableImagePreviewCardProps) => {
+  const intl = useIntl();
   const {
     attributes,
     listeners,
@@ -83,7 +91,10 @@ export const SortableImagePreviewCard = ({
           className="absolute top-1.5 right-1.5 inline-flex size-7 cursor-pointer touch-none items-center justify-center rounded-full border border-slate-900/20 bg-slate-50/90 text-slate-700 shadow-sm transition hover:scale-105 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/75 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={disabled}
           onClick={onRemove}
-          aria-label={`${preview.name} を選択から削除`}
+          aria-label={intl.formatMessage(
+            { id: "build.removeImage" },
+            { name: preview.name }
+          )}
         >
           <X aria-hidden="true" size={14} strokeWidth={2.25} />
         </button>
@@ -95,7 +106,7 @@ export const SortableImagePreviewCard = ({
         {preview.name}
       </p>
       <p className="mt-1 m-0 text-[11px] text-muted-foreground/70">
-        {preview.lastModifiedLabel}
+        {formatLastModified(intl, preview.lastModified)}
       </p>
     </div>
   );

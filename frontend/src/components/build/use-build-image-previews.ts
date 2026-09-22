@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
 import { buildFileKey } from "#lib/build";
-import { formatLastModified } from "#lib/format";
 import type { ImagePreview } from "./image-preview-cards";
 
 export const useBuildImagePreviews = (buildFiles: File[]): ImagePreview[] => {
@@ -25,7 +24,7 @@ export const useBuildImagePreviews = (buildFiles: File[]): ImagePreview[] => {
       return {
         id: `${key}:${index}`,
         index,
-        lastModifiedLabel: formatLastModified(file.lastModified),
+        lastModified: file.lastModified,
         mimeType: file.type,
         name: file.name,
         url,

@@ -5,6 +5,7 @@
     "noEmit": true,
     "module": "es2022",
     "moduleResolution": "bundler",
+    "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
     "target": "es2025",

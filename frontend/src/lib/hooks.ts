@@ -1,5 +1,6 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { IntlShape } from "react-intl";
 import type * as z from "zod";
 
 import { configSchema } from "./mutations";
@@ -22,14 +23,38 @@ const unlockScroll = () => {
   syncBodyScroll();
 };
 
-export const toConfigFetchError = (cause: unknown): Error => {
-  if (cause instanceof Error && cause.message.length > 0) {
-    return cause;
+type ConfigFetchErrorCode = "invalid" | "network" | "parse" | "unavailable";
+
+export class ConfigFetchError extends Error {
+  code: ConfigFetchErrorCode;
+
+  constructor(code: ConfigFetchErrorCode, message: string) {
+    super(message);
+    this.name = "ConfigFetchError";
+    this.code = code;
+  }
+}
+
+const configFetchErrorMessageIds = {
+  invalid: "config.error.invalid",
+  network: "error.network",
+  parse: "config.error.parse",
+  unavailable: "config.error.unavailable",
+} as const satisfies Record<ConfigFetchErrorCode, string>;
+
+export const getConfigFetchErrorMessage = (
+  intl: IntlShape,
+  cause: unknown
+): string => {
+  if (cause instanceof ConfigFetchError) {
+    return intl.formatMessage({ id: configFetchErrorMessageIds[cause.code] });
   }
 
-  return new Error(
-    "設定の取得に失敗しました。ネットワーク状態を確認して再試行してください。"
-  );
+  if (cause instanceof Error && cause.message.length > 0) {
+    return cause.message;
+  }
+
+  return intl.formatMessage({ id: "config.error.fallback" });
 };
 
 const fetchAppConfig = async (): Promise<AppConfig> => {
@@ -37,39 +62,46 @@ const fetchAppConfig = async (): Promise<AppConfig> => {
   try {
     response = await fetch("/api/config");
   } catch {
-    throw new Error(
-      "サーバーに接続できませんでした。ネットワーク状態を確認して再試行してください。"
-    );
+    throw new ConfigFetchError("network", "Could not connect to the server.");
   }
 
   if (!response.ok) {
-    throw new Error(
-      "設定の取得に失敗しました。時間をおいて再試行してください。"
-    );
+    throw new ConfigFetchError("unavailable", "Failed to load the settings.");
   }
 
   let payload: unknown;
   try {
     payload = await response.json();
   } catch {
-    throw new Error("設定レスポンスの解析に失敗しました。");
+    throw new ConfigFetchError(
+      "parse",
+      "Failed to parse the settings response."
+    );
   }
 
   const parsed = configSchema.safeParse(payload);
   if (!parsed.success) {
-    throw new Error("サーバー設定の形式が不正です。");
+    throw new ConfigFetchError(
+      "invalid",
+      "The server settings are in an invalid format."
+    );
   }
 
   return parsed.data;
 };
 
+const appConfigQueryOptions = {
+  queryFn: fetchAppConfig,
+  queryKey: ["config"],
+  retry: 1,
+  staleTime: Infinity,
+};
+
 export const useSuspenseAppConfigQuery = () =>
-  useSuspenseQuery({
-    queryFn: fetchAppConfig,
-    queryKey: ["config"],
-    retry: 1,
-    staleTime: Infinity,
-  });
+  useSuspenseQuery(appConfigQueryOptions);
+
+/** Reads the config without suspending, for UI that can wait for it. */
+export const useAppConfigQuery = () => useQuery(appConfigQueryOptions);
 
 export const useAppConfig = () => useSuspenseAppConfigQuery();
 

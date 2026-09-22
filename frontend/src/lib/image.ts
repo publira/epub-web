@@ -55,7 +55,7 @@ export const compressImageFile = async (
     return file;
   }
 
-  // 拡張子を新しいMIMEタイプに合わせる
+  // Match the file extension to the new MIME type.
   const ext = outType === "image/png" ? ".png" : ".jpg";
   const newName = file.name.replace(/\.[^/.]+$/u, "") + ext;
 

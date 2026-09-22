@@ -100,6 +100,9 @@ func TestHandleConfig_ReturnsLimits(t *testing.T) {
 	if len(payload.SupportedLanguages) != 2 || payload.SupportedLanguages[0] != "en" || payload.SupportedLanguages[1] != "ja" {
 		t.Fatalf("expected supportedLanguages [en ja], got %v", payload.SupportedLanguages)
 	}
+	if len(payload.InterfaceLanguages) != 2 || payload.InterfaceLanguages[0] != "en" || payload.InterfaceLanguages[1] != "ja" {
+		t.Fatalf("expected interfaceLanguages [en ja], got %v", payload.InterfaceLanguages)
+	}
 }
 
 func TestHandleReadyz_ReturnsOKWhenReady(t *testing.T) {

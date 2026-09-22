@@ -1,44 +1,32 @@
-const locale = "ja-JP";
+import type { IntlShape } from "react-intl";
 
-const jaIntegerFormatter = new Intl.NumberFormat(locale);
-const jaFixed1Formatter = new Intl.NumberFormat(locale, {
-  maximumFractionDigits: 1,
-  minimumFractionDigits: 1,
-});
-const jaFixed2Formatter = new Intl.NumberFormat(locale, {
-  maximumFractionDigits: 2,
-  minimumFractionDigits: 2,
-});
-const jaSecondsVariableFormatter = new Intl.NumberFormat(locale, {
-  maximumFractionDigits: 1,
-});
+const mebibyte = 1024 * 1024;
 
-export const formatInteger = (value: number): string =>
-  jaIntegerFormatter.format(value);
+const fixed1 = { maximumFractionDigits: 1, minimumFractionDigits: 1 };
+const fixed2 = { maximumFractionDigits: 2, minimumFractionDigits: 2 };
 
-export const formatMiBFromBytes = (bytes: number): string =>
-  `${jaFixed1Formatter.format(bytes / (1024 * 1024))} MiB`;
+export const formatMiBFromBytes = (intl: IntlShape, bytes: number): string =>
+  `${intl.formatNumber(bytes / mebibyte, fixed1)} MiB`;
 
-export const formatSizeLabel = (bytes: number): string =>
-  bytes >= 1024 * 1024
-    ? `${jaFixed2Formatter.format(bytes / (1024 * 1024))} MiB`
-    : `${jaFixed1Formatter.format(bytes / 1024)} KiB`;
+export const formatSizeLabel = (intl: IntlShape, bytes: number): string =>
+  bytes >= mebibyte
+    ? `${intl.formatNumber(bytes / mebibyte, fixed2)} MiB`
+    : `${intl.formatNumber(bytes / 1024, fixed1)} KiB`;
 
-export const formatSecondsFromMs = (ms: number): string =>
-  jaSecondsVariableFormatter.format(ms / 1000);
+export const formatSecondsFromMs = (intl: IntlShape, ms: number): string =>
+  intl.formatNumber(ms / 1000, { maximumFractionDigits: 1 });
 
-const jaLanguageNames = new Intl.DisplayNames(locale, { type: "language" });
+export const formatLanguageName = (intl: IntlShape, code: string): string =>
+  intl.formatDisplayName(code, { type: "language" }) ?? code;
 
-export const formatLanguageName = (code: string): string =>
-  jaLanguageNames.of(code) ?? code;
-
-const jaDateTimeFormatter = new Intl.DateTimeFormat(locale, {
-  day: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-});
-
-export const formatLastModified = (lastModified: number): string =>
-  jaDateTimeFormatter.format(new Date(lastModified));
+export const formatLastModified = (
+  intl: IntlShape,
+  lastModified: number
+): string =>
+  intl.formatDate(lastModified, {
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });

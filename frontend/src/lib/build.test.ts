@@ -7,6 +7,9 @@ import {
   getFileImagePixels,
   validateSelectedBuildFiles,
 } from "./build";
+import { getAppIntl } from "./i18n";
+
+const en = getAppIntl("en");
 
 const createMockFile = (name: string, size: number, lastModified = 1): File =>
   ({ lastModified, name, size }) as File;
@@ -67,8 +70,8 @@ describe("build helpers", () => {
         maxAssetBytes: 0,
         maxPages: 2,
         maxUploadMB: 0,
-      })
-    ).toBe("ページ数は最大 2 ページです。");
+      })?.(en)
+    ).toBe("An EPUB can have up to 2 pages.");
   }, 1000);
 
   it("validateSelectedBuildFiles() validates max upload size", () => {
@@ -79,8 +82,8 @@ describe("build helpers", () => {
         maxAssetBytes: 0,
         maxPages: 0,
         maxUploadMB: 1,
-      })
-    ).toBe("1リクエストあたり最大 1 MiB です。");
+      })?.(en)
+    ).toBe("Each request can be up to 1 MiB.");
   }, 1000);
 
   it("validateSelectedBuildFiles() validates max per-asset size", () => {
@@ -91,8 +94,8 @@ describe("build helpers", () => {
         maxAssetBytes: 1024 * 1024,
         maxPages: 0,
         maxUploadMB: 0,
-      })
-    ).toBe("画像1枚あたり最大 1.0 MiB です。");
+      })?.(en)
+    ).toBe("Each image can be up to 1.0 MiB.");
   }, 1000);
 
   it("validateSelectedBuildFiles() returns null when valid", () => {

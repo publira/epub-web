@@ -2,21 +2,23 @@ import { QueryErrorResetBoundary } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import type { FallbackProps } from "react-error-boundary";
+import { FormattedMessage, useIntl } from "react-intl";
 
-import { toConfigFetchError } from "../lib/hooks";
+import { getConfigFetchErrorMessage } from "#lib/hooks";
+
 import { Card } from "./ui/card";
 
 const ConfigErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => {
-  const normalizedError = toConfigFetchError(error);
+  const intl = useIntl();
 
   return (
     <Card className="grid gap-3 border-error/35 bg-error/6 p-fluid-sm">
       <div>
         <p className="m-0 text-sm font-semibold text-error">
-          {normalizedError.message}
+          {getConfigFetchErrorMessage(intl, error)}
         </p>
         <p className="mt-2 mb-0 text-sm text-muted-foreground">
-          サーバーが復旧したら再取得してください。
+          <FormattedMessage id="config.retryHint" />
         </p>
       </div>
       <div>
@@ -25,7 +27,7 @@ const ConfigErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => {
           className="cursor-pointer rounded-lg border border-error/35 bg-error/10 px-3 py-1.5 text-xs font-semibold text-error transition hover:bg-error/15 focus-visible:ring-2 focus-visible:ring-error/45 focus-visible:outline-none"
           onClick={resetErrorBoundary}
         >
-          設定を再取得
+          <FormattedMessage id="config.retry" />
         </button>
       </div>
     </Card>

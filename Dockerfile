@@ -10,6 +10,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY frontend/package.json ./frontend/
 RUN pnpm install --frozen-lockfile --filter @publira/epub-web
 
+COPY locales/ ./locales/
 COPY frontend/ ./frontend/
 RUN pnpm --filter @publira/epub-web run build
 

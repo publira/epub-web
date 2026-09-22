@@ -1,7 +1,10 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
+import { resolveInitialLocale } from "#lib/i18n";
+
 import { App } from "./components/app";
+import { LocaleProvider } from "./components/i18n/locale-provider";
 
 const main = () => {
   const root = document.querySelector("#root");
@@ -12,7 +15,9 @@ const main = () => {
 
   createRoot(root).render(
     <StrictMode>
-      <App />
+      <LocaleProvider initialLocale={resolveInitialLocale()}>
+        <App />
+      </LocaleProvider>
     </StrictMode>
   );
 };
