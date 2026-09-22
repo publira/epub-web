@@ -53,7 +53,7 @@ export const ComicViewerDialog = ({
   return (
     <Dialog
       aria-labelledby="comic-viewer-title"
-      className="h-[min(92dvh,900px)] max-h-none w-[min(96vw,1280px)] max-w-none overflow-hidden rounded-xl border-primary/30 bg-slate-950 text-slate-50 shadow-2xl backdrop:bg-slate-950/70"
+      className="h-[min(92dvh,900px)] max-h-none w-[min(96vw,1280px)] max-w-none overflow-hidden border-white/15 bg-slate-950 text-slate-50 backdrop:bg-slate-950/70"
       dialogRef={dialogRef}
       onClose={onClose}
     >
@@ -62,7 +62,7 @@ export const ComicViewerDialog = ({
           <div className="min-w-0">
             <h2
               id="comic-viewer-title"
-              className="m-0 truncate text-base font-bold"
+              className="m-0 truncate text-base font-medium"
             >
               {title}
             </h2>
@@ -76,7 +76,7 @@ export const ComicViewerDialog = ({
           <form method="dialog">
             <button
               aria-label={intl.formatMessage({ id: "comicViewer.close" })}
-              className="grid size-10 cursor-pointer place-items-center rounded-full text-slate-100 transition hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-secondary focus-visible:outline-none"
+              className="grid size-10 cursor-pointer place-items-center rounded-control text-slate-100 transition-colors duration-state ease-state hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
               type="submit"
             >
               <X aria-hidden="true" size={22} />

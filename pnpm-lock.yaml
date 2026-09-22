@@ -194,6 +194,9 @@ importers:
       '@dnd-kit/utilities':
         specifier: 3.2.2
         version: 3.2.2(react@19.3.0)
+      '@publira/design-tokens':
+        specifier: 1.0.0
+        version: 1.0.0(tailwindcss@4.3.3)
       '@publira/epub-web-locales':
         specifier: workspace:*
         version: link:../locales
@@ -799,6 +802,11 @@ packages:
     resolution: {integrity: sha512-6m+c1Ol6/m1TX3c3pN2wxCaYlRHKZ0CK0KI/+cYNlKIl2/NHPyyQKcKRCJ6ynTQ7R3x/5tfkeJLMs71elv/N/A==}
     peerDependencies:
       react: '>=19'
+
+  '@publira/design-tokens@1.0.0':
+    resolution: {integrity: sha512-ZaN01DF1GWrIpmVwBLGX2p1zetg3UVUbgZj5RUrEcx3qr072xfw0TEqU4mO4N8hdQhRLvmHsXi+z3YmZFMU6Ew==}
+    peerDependencies:
+      tailwindcss: ^4.0.0
 
   '@rolldown/binding-android-arm-eabi@1.2.9':
     resolution: {integrity: sha512-tNISae1QEf/vkb3xkRcjV5SEdzPE97We5IVaa2Z8jSszQPZ8U60B/YCYpw4QI7VidYsBtKavczXf+DyDs9WGxw==}
@@ -2430,6 +2438,10 @@ snapshots:
   '@publira/comic-viewer@0.9.0(react@19.3.0)':
     dependencies:
       react: 19.3.0
+
+  '@publira/design-tokens@1.0.0(tailwindcss@4.3.3)':
+    dependencies:
+      tailwindcss: 4.3.3
 
   '@rolldown/binding-android-arm-eabi@1.2.9':
     optional: true

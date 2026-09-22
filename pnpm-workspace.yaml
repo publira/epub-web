@@ -6,3 +6,6 @@ savePrefix: ""
 
 overrides:
   "@vitejs/plugin-react>oxc-transform-react": 0.150.0
+
+minimumReleaseAgeExclude:
+  - "@publira/*"

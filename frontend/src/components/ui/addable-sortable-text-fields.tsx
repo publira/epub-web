@@ -19,6 +19,7 @@ import { GripVertical, X } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { useIntl } from "react-intl";
 
+import { Button } from "./button";
 import { TextInput } from "./text-input";
 
 export interface SortableTextFieldItem {
@@ -81,7 +82,7 @@ const SortableTextFieldRow = ({
     <div ref={setNodeRef} style={style} className="flex items-center gap-1">
       <button
         type="button"
-        className="inline-flex h-12 w-8 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg text-muted-foreground transition hover:text-primary active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex h-10 w-8 shrink-0 cursor-grab touch-none items-center justify-center rounded-control text-muted-foreground transition-colors duration-state ease-state hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50"
         disabled={dragDisabled}
         aria-label={intl.formatMessage(
           { id: "sortableFields.reorder" },
@@ -106,9 +107,10 @@ const SortableTextFieldRow = ({
       <span id={rowLabelId} className="sr-only">
         {rowLabelText}
       </span>
-      <button
-        type="button"
-        className="ml-1 inline-flex h-12 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-error/35 bg-error/10 text-error transition hover:-translate-y-px hover:bg-error/15 disabled:cursor-not-allowed disabled:opacity-50"
+      <Button
+        className="ml-1 size-10 shrink-0"
+        size="icon"
+        variant="destructive"
         onClick={handleRemoveClick}
         disabled={disabled || !canRemove}
         aria-label={intl.formatMessage(
@@ -116,8 +118,8 @@ const SortableTextFieldRow = ({
           { name: itemName }
         )}
       >
-        <X aria-hidden="true" size={20} strokeWidth={2.25} />
-      </button>
+        <X aria-hidden="true" size={18} strokeWidth={2.25} />
+      </Button>
     </div>
   );
 };
@@ -185,7 +187,7 @@ export const AddableSortableTextFields = ({
     items.length > 0 ? `${inputIdPrefix}-${items.length - 1}` : undefined;
 
   return (
-    <div className="grid gap-1.5 font-semibold">
+    <div className="grid gap-1.5 font-medium">
       {lastInputId ? (
         <label id={groupLabelId} className="m-0" htmlFor={lastInputId}>
           {label}
@@ -232,15 +234,15 @@ export const AddableSortableTextFields = ({
         </DndContext>
       )}
       <div className="mt-1 flex items-center gap-1">
-        <div className="h-12 w-8 shrink-0" aria-hidden="true" />
-        <button
-          type="button"
-          className="h-12 shrink-0 cursor-pointer rounded-xl border border-primary/22 bg-primary-subtle px-4 text-sm font-bold text-primary transition hover:-translate-y-px hover:saturate-110 disabled:cursor-not-allowed disabled:opacity-60"
+        <div className="h-10 w-8 shrink-0" aria-hidden="true" />
+        <Button
+          className="shrink-0"
+          variant="outline"
           onClick={onAdd}
           disabled={disabled || addDisabled}
         >
           {addButtonLabel}
-        </button>
+        </Button>
       </div>
     </div>
   );

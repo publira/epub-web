@@ -6,15 +6,16 @@ import { FormattedMessage, useIntl } from "react-intl";
 
 import { getConfigFetchErrorMessage } from "#lib/hooks";
 
+import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 
 const ConfigErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => {
   const intl = useIntl();
 
   return (
-    <Card className="grid gap-3 border-error/35 bg-error/6 p-fluid-sm">
+    <Card className="grid gap-3 border-destructive/30 bg-destructive/10 p-fluid-sm">
       <div>
-        <p className="m-0 text-sm font-semibold text-error">
+        <p className="m-0 text-sm font-medium text-destructive">
           {getConfigFetchErrorMessage(intl, error)}
         </p>
         <p className="mt-2 mb-0 text-sm text-muted-foreground">
@@ -22,13 +23,9 @@ const ConfigErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => {
         </p>
       </div>
       <div>
-        <button
-          type="button"
-          className="cursor-pointer rounded-lg border border-error/35 bg-error/10 px-3 py-1.5 text-xs font-semibold text-error transition hover:bg-error/15 focus-visible:ring-2 focus-visible:ring-error/45 focus-visible:outline-none"
-          onClick={resetErrorBoundary}
-        >
+        <Button size="sm" variant="destructive" onClick={resetErrorBoundary}>
           <FormattedMessage id="config.retry" />
-        </button>
+        </Button>
       </div>
     </Card>
   );
