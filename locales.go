@@ -47,6 +47,11 @@ func loadInterfaceLocales(fsys fs.FS) ([]interfaceLocale, error) {
 
 	var locales []interfaceLocale
 	for _, name := range names {
+		// The directory is also the SPA's workspace package.
+		if path.Base(name) == "package.json" {
+			continue
+		}
+
 		data, err := fs.ReadFile(fsys, name)
 		if err != nil {
 			return nil, err

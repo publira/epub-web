@@ -8,6 +8,7 @@ RUN corepack enable
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY frontend/package.json ./frontend/
+COPY locales/package.json ./locales/
 RUN pnpm install --frozen-lockfile --filter @publira/epub-web
 
 COPY locales/ ./locales/

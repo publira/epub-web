@@ -1,8 +1,9 @@
+import type { MessageId } from "@publira/epub-web-locales";
 import type { IntlShape } from "react-intl";
 import * as z from "zod";
 
 import { formatMiBFromBytes, formatSecondsFromMs } from "./format";
-import type { LocalizedText, MessageId } from "./i18n";
+import type { LocalizedText } from "./i18n";
 import { parseFilename } from "./utils";
 import { unzipAsync } from "./zip";
 

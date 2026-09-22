@@ -1,7 +1,9 @@
 package main
 
 import (
+	"os"
 	"slices"
+	"strings"
 	"testing"
 	"testing/fstest"
 )
@@ -27,5 +29,30 @@ func TestLoadInterfaceLocales_RequiresTheFallback(t *testing.T) {
 
 	if _, err := loadInterfaceLocales(fsys); err == nil {
 		t.Fatal("expected an error without the fallback catalog")
+	}
+}
+
+func TestInterfaceLocales_AreAllExportedToTheSPA(t *testing.T) {
+	index, err := os.ReadFile("locales/index.ts")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, lang := range interfaceLanguages() {
+		if !strings.Contains(string(index), `"./`+lang+`.json"`) {
+			t.Errorf("locales/index.ts does not import %s.json, so the SPA cannot offer it", lang)
+		}
+	}
+}
+
+func TestLoadInterfaceLocales_SkipsThePackageManifest(t *testing.T) {
+	fsys := fstest.MapFS{
+		"locales/en.json":      {Data: []byte(`{"document.title": "Title"}`)},
+		"locales/package.json": {Data: []byte(`{"name": "locales", "exports": {".": "./index.ts"}}`)},
+	}
+
+	locales, err := loadInterfaceLocales(fsys)
+	if err != nil || len(locales) != 1 {
+		t.Fatalf("expected only the en catalog, got %v (%v)", locales, err)
 	}
 }

@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
+import { catalogs } from "@publira/epub-web-locales";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
-  catalogs,
   getDocumentLocale,
   getSwitchableLocales,
   localeStorageKey,
@@ -84,7 +84,7 @@ describe("locale helpers", () => {
 });
 
 describe("locale catalogs", () => {
-  it("loads every file in locales/ with the same message IDs as English", () => {
+  it("gives every catalog the same message IDs as English", () => {
     const englishIds = Object.keys(catalogs.en ?? {}).toSorted();
 
     expect(Object.keys(catalogs)).toStrictEqual(

@@ -1,38 +1,10 @@
+import { catalogs } from "@publira/epub-web-locales";
+import type { MessageId } from "@publira/epub-web-locales";
 import { createIntl, createIntlCache } from "react-intl";
 import type { IntlShape, PrimitiveType } from "react-intl";
 
-import type en from "../../../locales/en.json";
-
-/** The English catalog defines the message IDs every catalog provides. */
-export type MessageId = keyof typeof en;
-
-declare global {
-  // oxlint-disable-next-line typescript/no-namespace -- react-intl reads message IDs from this global declaration merge.
-  namespace FormatjsIntl {
-    interface Message {
-      ids: MessageId;
-    }
-  }
-}
-
-/** A language with a catalog in `locales/`, such as `en`. */
+/** A language with a catalog in `@publira/epub-web-locales`, such as `en`. */
 export type Locale = string;
-
-const catalogFiles = import.meta.glob<Record<MessageId, string>>(
-  "../../../locales/*.json",
-  { eager: true, import: "default" }
-);
-
-/** Every `locales/<language>.json`, keyed by language. */
-export const catalogs: Record<
-  Locale,
-  Record<MessageId, string>
-> = Object.fromEntries(
-  Object.entries(catalogFiles).map(([path, messages]) => [
-    path.slice(path.lastIndexOf("/") + 1, -".json".length),
-    messages,
-  ])
-);
 
 export const defaultLocale: Locale = "en";
 

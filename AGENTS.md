@@ -18,7 +18,7 @@ After a backend change, run `go build ./...`, `golangci-lint run`, and `go test 
 
 ## Language
 
-`README.md` and `CONTRIBUTING.md` are **Japanese**. The UI catalogs are `locales/*.json`, read by both the SPA and the Go server: `en.json` defines the message IDs, every file carries the same keys, and adding a file adds a language. Everything written for developers is **English**: code comments, test labels (`describe` / `it`, `t.Run`), commit messages, Issues, and pull requests. `EPUB_WEB_SUPPORTED_LANGUAGES` selects EPUB metadata languages, not the interface language.
+`README.md` and `CONTRIBUTING.md` are **Japanese**. The UI catalogs are `locales/*.json`, embedded by the Go server and imported by the SPA through the `@publira/epub-web-locales` workspace package: `en.json` defines the message IDs, every file carries the same keys, and a new language also needs its entry in `locales/index.ts`. Everything written for developers is **English**: code comments, test labels (`describe` / `it`, `t.Run`), commit messages, Issues, and pull requests. `EPUB_WEB_SUPPORTED_LANGUAGES` selects EPUB metadata languages, not the interface language.
 
 Answer the user in the language of their own prose — quoted logs or UI strings do not decide it — and in English when no user prose settles it, such as a scheduled or CI-started run.
 
