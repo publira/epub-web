@@ -2,16 +2,16 @@
 
 ## Tech stack
 
-- Backend: Go 1.26
-- Frontend: React 19, TypeScript, Vite 8, Tailwind CSS 4
+- Backend: Go
+- Frontend: React, TypeScript, Vite, Tailwind CSS
 
 ## Setup
 
 ### Prerequisites
 
-- Go 1.26 or later
-- Node.js 24 or later
-- pnpm
+- Go, at the version in the `go` directive of `go.mod`
+- Node.js, at the version in `devEngines` of `package.json`
+- pnpm, at the version in `packageManager` of `package.json`
 
 ### 1. Install dependencies
 
