@@ -39,7 +39,7 @@
     "oxc-transform-react": "0.150.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "react-error-boundary": "6.1.5",
+    "react-error-boundary": "6.1.6",
     "react-intl": "12.1.2",
     "tailwind-merge": "3.7.0",
     "tailwindcss": "4.3.3",
