@@ -1,6 +1,6 @@
 {
   "name": "epub-web",
-  "image": "ghcr.io/publira/base-images/publira-dev:2026.09.22@sha256:533228ab57097b3c303331bee10e126bd9c57880b0dd08b3914c4c1471969b9f",
+  "image": "ghcr.io/publira/base-images/publira-dev:2026.09.24@sha256:33bf6cd2c2a19cb4f5ef76916ab58f1fb57db4d4c2c5e77f4037e8b1777fb709",
   "features": {
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0.5": {},
     "ghcr.io/devcontainers/features/docker-in-docker:4.1.1": {
