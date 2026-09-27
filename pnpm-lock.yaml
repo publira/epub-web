@@ -202,7 +202,7 @@ importers:
         version: link:../locales
       '@tailwindcss/vite':
         specifier: 4.3.3
-        version: 4.3.3(vite@8.3.0(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1))
+        version: 4.3.3(vite@8.3.1(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1))
       '@tanstack/react-form':
         specifier: 1.33.5
         version: 1.33.5(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -226,7 +226,7 @@ importers:
         version: 19.3.0(@types/react@19.3.0)
       '@vitejs/plugin-react':
         specifier: 6.1.1
-        version: 6.1.1(oxc-transform-react@0.151.0)(vite@8.3.0(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1))
+        version: 6.1.1(oxc-transform-react@0.151.0)(vite@8.3.1(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1))
       class-variance-authority:
         specifier: 0.7.1
         version: 0.7.1
@@ -264,11 +264,11 @@ importers:
         specifier: 7.0.2
         version: 7.0.2
       vite:
-        specifier: 8.3.0
-        version: 8.3.0(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1)
+        specifier: 8.3.1
+        version: 8.3.1(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1)
       vitest:
         specifier: 5.0.1
-        version: 5.0.1(@types/node@24.13.6)(jsdom@30.1.1)(vite@8.3.0(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1))
+        version: 5.0.1(@types/node@24.13.6)(jsdom@30.1.1)(vite@8.3.1(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1))
       zod:
         specifier: 4.6.5
         version: 4.6.5
@@ -1975,8 +1975,8 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  vite@8.3.0:
-    resolution: {integrity: sha512-lhZBVvEHefgE+HQZC9O7EBJgCU/nVzFNl7vkS4RE0APtWLP02/8QVIkQtzBxPquh7lq5/78NHipTj7ODQ6XuyQ==}
+  vite@8.3.1:
+    resolution: {integrity: sha512-/bvH9E9tmCXRGp2uXY3WbOldqpTwFkbha/8ANaEQ6VkxhH60KyqLwgZq6lG2y+4uT55x9+9eUHMpQ7uGnOCKjA==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
     peerDependencies:
@@ -2555,12 +2555,12 @@ snapshots:
       '@tailwindcss/oxide-win32-arm64-msvc': 4.3.3
       '@tailwindcss/oxide-win32-x64-msvc': 4.3.3
 
-  '@tailwindcss/vite@4.3.3(vite@8.3.0(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1))':
+  '@tailwindcss/vite@4.3.3(vite@8.3.1(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1))':
     dependencies:
       '@tailwindcss/node': 4.3.3
       '@tailwindcss/oxide': 4.3.3
       tailwindcss: 4.3.3
-      vite: 8.3.0(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1)
+      vite: 8.3.1(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1)
 
   '@tanstack/devtools-event-client@0.4.4': {}
 
@@ -2700,21 +2700,21 @@ snapshots:
   '@typescript/typescript-win32-x64@7.0.2':
     optional: true
 
-  '@vitejs/plugin-react@6.1.1(oxc-transform-react@0.151.0)(vite@8.3.0(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1))':
+  '@vitejs/plugin-react@6.1.1(oxc-transform-react@0.151.0)(vite@8.3.1(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1))':
     dependencies:
       '@rolldown/pluginutils': 1.0.1
-      vite: 8.3.0(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1)
+      vite: 8.3.1(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1)
     optionalDependencies:
       oxc-transform-react: 0.151.0
 
-  '@vitest/mocker@5.0.1(vite@8.3.0(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1))':
+  '@vitest/mocker@5.0.1(vite@8.3.1(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1))':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       '@vitest/spy': 5.0.1
       estree-walker: 3.0.3
       magic-string: 1.4.1
     optionalDependencies:
-      vite: 8.3.0(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1)
+      vite: 8.3.1(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1)
 
   '@vitest/spy@5.0.1': {}
 
@@ -3417,7 +3417,7 @@ snapshots:
     dependencies:
       react: 19.3.0
 
-  vite@8.3.0(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1):
+  vite@8.3.1(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1):
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.7
@@ -3430,10 +3430,10 @@ snapshots:
       jiti: 2.7.0
       yaml: 2.9.1
 
-  vitest@5.0.1(@types/node@24.13.6)(jsdom@30.1.1)(vite@8.3.0(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1)):
+  vitest@5.0.1(@types/node@24.13.6)(jsdom@30.1.1)(vite@8.3.1(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1)):
     dependencies:
       '@types/chai': 5.2.3
-      '@vitest/mocker': 5.0.1(vite@8.3.0(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1))
+      '@vitest/mocker': 5.0.1(vite@8.3.1(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1))
       chai: 6.2.2
       es-module-lexer: 2.3.2
       expect-type: 1.4.0
@@ -3444,7 +3444,7 @@ snapshots:
       tinybench: 6.1.4
       tinyexec: 1.3.0
       tinyglobby: 0.2.17
-      vite: 8.3.0(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1)
+      vite: 8.3.1(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 24.13.6
