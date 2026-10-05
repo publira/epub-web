@@ -1,0 +1,13 @@
+{
+  "builder": {
+    "gc": {
+      "enabled": true,
+      "policy": [
+        { "filter": ["type=source.local"], "maxUsedSpace": "512MB" },
+        { "maxUsedSpace": "5GB" },
+        { "all": true, "maxUsedSpace": "5GB" }
+      ]
+    }
+  },
+  "registry-mirrors": ["https://mirror.gcr.io"]
+}
