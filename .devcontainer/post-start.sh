@@ -1,12 +1,8 @@
 #!/usr/bin/env bash
 
-# Docker Engine has no automatic image garbage collection, and the inner
-# daemon's storage is a volume that outlives Dev Container rebuilds, so images
-# pulled or built here would pile up on the host disk forever. BuildKit's build
-# cache is bounded by .devcontainer/daemon.json instead.
-#
-# Deliberately without `set -e`: a slow or absent dockerd must not fail the
-# container start.
+# Docker Engine never prunes images on its own, and the inner daemon's storage
+# outlives Dev Container rebuilds. No `set -e`: a slow or absent dockerd must
+# not fail the container start.
 
 set -uo pipefail
 

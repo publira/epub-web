@@ -14,11 +14,8 @@
     "source=epub-web-gemini-${devcontainerId},target=/home/vscode/.gemini,type=volume",
     "source=epub-web-gh-${devcontainerId},target=/home/vscode/.config/gh,type=volume",
     "source=epub-web-grok-${devcontainerId},target=/home/vscode/.grok,type=volume",
-    // The whole configuration of the inner Docker daemon: the docker-in-docker
-    // feature starts `dockerd` with flags only and never writes this file.
-    // Docker Hub pulls go to Google's cache first, so only an image missing
-    // from it counts against the anonymous rate limit, and BuildKit's build
-    // cache gets a size limit instead of one derived from the host disk.
+    // The inner Docker daemon's configuration: the docker-in-docker feature
+    // starts `dockerd` with flags only and never writes this file.
     "source=${localWorkspaceFolder}/.devcontainer/daemon.json,target=/etc/docker/daemon.json,type=bind,readonly"
   ],
   "customizations": {
