@@ -13,12 +13,19 @@
     "source=epub-web-codex-${devcontainerId},target=/home/vscode/.codex,type=volume",
     "source=epub-web-gemini-${devcontainerId},target=/home/vscode/.gemini,type=volume",
     "source=epub-web-gh-${devcontainerId},target=/home/vscode/.config/gh,type=volume",
-    "source=epub-web-grok-${devcontainerId},target=/home/vscode/.grok,type=volume"
+    "source=epub-web-grok-${devcontainerId},target=/home/vscode/.grok,type=volume",
+    // The whole configuration of the inner Docker daemon: the docker-in-docker
+    // feature starts `dockerd` with flags only and never writes this file.
+    // Docker Hub pulls go to Google's cache first, so only an image missing
+    // from it counts against the anonymous rate limit, and BuildKit's build
+    // cache gets a size limit instead of one derived from the host disk.
+    "source=${localWorkspaceFolder}/.devcontainer/daemon.json,target=/etc/docker/daemon.json,type=bind,readonly"
   ],
   "customizations": {
     "vscode": {
       "extensions": ["bradlc.vscode-tailwindcss", "golang.go", "oxc.oxc-vscode"]
     }
   },
-  "postCreateCommand": ".devcontainer/post-create.sh"
+  "postCreateCommand": ".devcontainer/post-create.sh",
+  "postStartCommand": ".devcontainer/post-start.sh"
 }
