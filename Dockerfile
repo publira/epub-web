@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM node:24.22.1-alpine3.23@sha256:eb37f58646a901dc7727cf448cae36daaefaba79de33b5058dab79aa4c04aefb AS frontend-builder
+FROM --platform=$BUILDPLATFORM node:24.22.1-alpine3.23@sha256:4b00b6d1aa138805aace94cc2482808f2b4f01e5e9c9f8cdc0e217fd70600ef9 AS frontend-builder
 
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 
