@@ -14,7 +14,7 @@
   "devDependencies": {
     "oxfmt": "0.74.0",
     "oxlint": "1.89.0",
-    "ultracite": "8.0.1"
+    "ultracite": "8.0.2"
   },
   "devEngines": {
     "runtime": {
