@@ -182,8 +182,8 @@ importers:
   frontend:
     dependencies:
       '@publira/comic-viewer':
-        specifier: 0.12.0
-        version: 0.12.0(react@19.3.1)
+        specifier: 1.0.0
+        version: 1.0.0(react@19.3.1)
     devDependencies:
       '@dnd-kit/core':
         specifier: 6.3.1
@@ -798,8 +798,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@publira/comic-viewer@0.12.0':
-    resolution: {integrity: sha512-w38B7U+RwLOmXOr242U7s95FNLtdlGzV3ZbUT+hbyLazOegoeeT1NKPQlR0penG+9tPp+KMwPa1axI9n3F4Z4g==}
+  '@publira/comic-viewer@1.0.0':
+    resolution: {integrity: sha512-tPBDGonQqrDSW6DhN1bg1sqK0UZmUoA2USJJip8dy73CYW1rK+oYHIMsiupjkIfm4/AAYd3KFOjotTeruk1Gsg==}
     peerDependencies:
       react: '>=19'
 
@@ -2433,7 +2433,7 @@ snapshots:
   '@oxlint/binding-win32-x64-msvc@1.89.0':
     optional: true
 
-  '@publira/comic-viewer@0.12.0(react@19.3.1)':
+  '@publira/comic-viewer@1.0.0(react@19.3.1)':
     dependencies:
       react: 19.3.1
 
