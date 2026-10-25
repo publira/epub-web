@@ -17,12 +17,11 @@ describe("mapConcurrent()", () => {
     let concurrent = 0;
     let maxConcurrent = 0;
 
-    const task = (): Promise<void> => {
+    const task = async (): Promise<void> => {
       concurrent += 1;
       maxConcurrent = Math.max(maxConcurrent, concurrent);
-      return delay(10).then(() => {
-        concurrent -= 1;
-      });
+      await delay(10);
+      concurrent -= 1;
     };
 
     await mapConcurrent([1, 2, 3, 4, 5], 2, task);
