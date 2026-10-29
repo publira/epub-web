@@ -62,3 +62,7 @@ Handlers stay thin in `handler.go`; parsing, validation, image work, and EPUB as
 ## CI and release
 
 `release.yml` pushes `ghcr.io/publira/epub-web` when a GitHub Release is published. Actions are pinned to a commit SHA with the version in a trailing comment, and base images are digest-pinned behind a readable tag. Keep both forms so Renovate can keep updating them.
+
+## Skill packages
+
+Entries in `.agents/skills/*` listed in `skills-lock.json` are vendored: `npx skills` overwrites them, and the maintenance bot in `publira/agents` runs `npx skills update -p -y` weekly and opens a pull request when there is a diff. Do not edit them; a patch is lost at the next update. Reading them for reference is fine. When this repository's policy and a skill disagree, this file wins. `.claude/skills/*` reaches the same skills through relative symlinks.
