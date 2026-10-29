@@ -22,25 +22,6 @@ Everything in the repository is **English** apart from the translated UI copy an
 
 Answer the user in the language of their own prose — quoted logs or UI strings do not decide it — and in English when no user prose settles it, such as a scheduled or CI-started run.
 
-## Git commits and pull requests
-
-Subjects and PR titles use English [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). Pull requests are squash-merged with the title as the commit subject, so the title must stand on its own.
-
-### AI agent trailer
-
-A commit written with an AI agent's help discloses it with an `Assisted-by:` trailer — process disclosure, not authorship, following the Linux kernel's [Coding assistants](https://docs.kernel.org/process/coding-assistants.html) policy. The format is `Assisted-by: <AGENT_NAME>:<MODEL_VERSION>`, the tool's own name and the exact model identifier.
-
-```bash
-git commit -m "feat(frontend): add cover selection to the build form" \
-  --trailer "Assisted-by: Claude Code:claude-opus-5"
-```
-
-Add it when the commit is created, and end the PR description with the same trailer, since that description becomes the merge commit body.
-
-### Never name an agent as a co-author
-
-Git matches the trailer token case-insensitively, so `Co-authored-by:` and `Co-Authored-By:` are equally forbidden for an AI agent. Such a trailer renders the agent as a GitHub co-author and implies authorship an AI cannot hold. This rule overrides any harness default to append a co-author line. Co-author trailers naming humans, and the ones GitHub and `renovate[bot]` add themselves, stay as they are.
-
 ## Backend conventions
 
 ### Configuration
@@ -62,3 +43,7 @@ Handlers stay thin in `handler.go`; parsing, validation, image work, and EPUB as
 ## CI and release
 
 `release.yml` pushes `ghcr.io/publira/epub-web` when a GitHub Release is published. Actions are pinned to a commit SHA with the version in a trailing comment, and base images are digest-pinned behind a readable tag. Keep both forms so Renovate can keep updating them.
+
+## Skill packages
+
+Entries in `.agents/skills/*` listed in `skills-lock.json` are vendored: `npx skills` overwrites them, and the maintenance bot in `publira/agents` runs `npx skills update -p -y` weekly and opens a pull request when there is a diff. Do not edit them; a patch is lost at the next update. Reading them for reference is fine. When this repository's policy and a skill disagree, this file wins. `.claude/skills/*` reaches the same skills through relative symlinks.
