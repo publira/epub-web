@@ -284,6 +284,8 @@ export const useImageDimensions = (
 export const useDialogScrollLock = (
   dialogRef: React.RefObject<HTMLDialogElement | null>
 ) => {
+  const isLockedRef = useRef(false);
+
   useEffect(() => {
     const dialog = dialogRef.current;
 
@@ -291,10 +293,10 @@ export const useDialogScrollLock = (
       return;
     }
 
-    let isLocked = false;
+    isLockedRef.current = false;
 
     const syncDialogLock = () => {
-      if (dialog.open === isLocked) {
+      if (dialog.open === isLockedRef.current) {
         return;
       }
 
@@ -304,7 +306,7 @@ export const useDialogScrollLock = (
         unlockScroll();
       }
 
-      isLocked = dialog.open;
+      isLockedRef.current = dialog.open;
     };
 
     const observer = new MutationObserver(syncDialogLock);
@@ -318,7 +320,7 @@ export const useDialogScrollLock = (
     return () => {
       observer.disconnect();
 
-      if (isLocked) {
+      if (isLockedRef.current) {
         unlockScroll();
       }
     };
