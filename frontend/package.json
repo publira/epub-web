@@ -41,7 +41,7 @@
     "react-dom": "19.3.1",
     "react-error-boundary": "6.1.6",
     "react-intl": "12.2.0",
-    "tailwind-merge": "3.7.0",
+    "tailwind-merge": "3.7.1",
     "tailwindcss": "4.3.5",
     "typescript": "7.0.2",
     "vite": "8.3.8",
